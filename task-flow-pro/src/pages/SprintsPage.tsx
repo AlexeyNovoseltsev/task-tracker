@@ -2,14 +2,21 @@ import { useState } from "react";
 import { useAppStore } from "@/store";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Plus, Calendar, Target, Users, TrendingUp, Edit } from "lucide-react";
+import { Plus, Calendar, Target, Users, TrendingUp, Edit, CheckCircle, Clock, AlertCircle, PlayCircle } from "lucide-react";
 import { SprintModal } from "@/components/sprint/SprintModal";
+import { SprintStatusDialog } from "@/components/sprint/SprintStatusDialog";
+import { useShowStoryPoints } from "@/store";
 
 export function SprintsPage() {
-  const { sprints, tasks, selectedProjectId } = useAppStore();
+  const { sprints, tasks, selectedProjectId, updateSprint, initializeWithDemoData } = useAppStore();
+  const showStoryPoints = useShowStoryPoints();
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sprintModalOpen, setSprintModalOpen] = useState(false);
   const [editingSprintId, setEditingSprintId] = useState<string | undefined>();
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
+  const [statusDialogAction, setStatusDialogAction] = useState<'start' | 'complete'>('start');
+  const [statusDialogSprintId, setStatusDialogSprintId] = useState<string>('');
+  const [statusDialogLoading, setStatusDialogLoading] = useState(false);
 
   const projectSprints = selectedProjectId 
     ? sprints.filter(sprint => sprint.projectId === selectedProjectId)
@@ -30,7 +37,7 @@ export function SprintsPage() {
     return Math.round((completedTasks.length / sprintTasks.length) * 100);
   };
 
-  const getStatusColor = (status: string) => {
+  const getSprintStatusColor = (status: string) => {
     switch (status) {
       case "active": return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
       case "planned": return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400";
@@ -55,6 +62,36 @@ export function SprintsPage() {
     return diffDays;
   };
 
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'done': return CheckCircle;
+      case 'in-progress': return PlayCircle;
+      case 'in-review': return AlertCircle;
+      case 'todo': return Clock;
+      default: return Clock;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'done': return 'text-green-600';
+      case 'in-progress': return 'text-blue-600';
+      case 'in-review': return 'text-yellow-600';
+      case 'todo': return 'text-gray-600';
+      default: return 'text-gray-600';
+    }
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'high': return 'bg-red-100 text-red-800';
+      case 'medium': return 'bg-yellow-100 text-yellow-800';
+      case 'low': return 'bg-green-100 text-green-800';
+      case 'urgent': return 'bg-purple-100 text-purple-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   const openCreateModal = () => {
     setEditingSprintId(undefined);
     setSprintModalOpen(true);
@@ -68,6 +105,70 @@ export function SprintsPage() {
   const closeModal = () => {
     setSprintModalOpen(false);
     setEditingSprintId(undefined);
+  };
+
+  const openStatusDialog = (sprintId: string, action: 'start' | 'complete') => {
+    setStatusDialogSprintId(sprintId);
+    setStatusDialogAction(action);
+    setStatusDialogOpen(true);
+  };
+
+  const closeStatusDialog = () => {
+    setStatusDialogOpen(false);
+    setStatusDialogSprintId('');
+    setStatusDialogLoading(false);
+  };
+
+  const handleStartSprint = async () => {
+    const sprint = sprints.find(s => s.id === statusDialogSprintId);
+    if (!sprint) return;
+
+    // Check if there's already an active sprint
+    const activeSprints = projectSprints.filter(s => s.status === 'active');
+    if (activeSprints.length > 0) {
+      alert('Только один спринт может быть активным одновременно. Завершите текущий активный спринт.');
+      closeStatusDialog();
+      return;
+    }
+
+    setStatusDialogLoading(true);
+    
+    try {
+      // Update sprint status to active
+      updateSprint(statusDialogSprintId, { status: 'active' });
+      
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      closeStatusDialog();
+    } catch (error) {
+      console.error('Error starting sprint:', error);
+      alert('Ошибка при запуске спринта');
+    } finally {
+      setStatusDialogLoading(false);
+    }
+  };
+
+  const handleCompleteSprint = async () => {
+    const sprint = sprints.find(s => s.id === statusDialogSprintId);
+    if (!sprint) return;
+
+    setStatusDialogLoading(true);
+    
+    try {
+      // Update sprint status to completed
+      updateSprint(statusDialogSprintId, { status: 'completed' });
+      
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      closeStatusDialog();
+    } catch (error) {
+      console.error('Error completing sprint:', error);
+      alert('Ошибка при завершении спринта');
+    } finally {
+      setStatusDialogLoading(false);
+    }
   };
 
   if (!selectedProjectId) {
@@ -85,10 +186,17 @@ export function SprintsPage() {
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">Управление спринтами</h1>
-        <Button onClick={openCreateModal}>
-          <Plus className="h-4 w-4 mr-2" />
-          Создать спринт
-        </Button>
+        <div className="flex items-center space-x-2">
+          {projectSprints.length === 0 && (
+            <Button variant="outline" onClick={initializeWithDemoData}>
+              Загрузить демо-данные
+            </Button>
+          )}
+          <Button onClick={openCreateModal}>
+            <Plus className="h-4 w-4 mr-2" />
+            Создать спринт
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -130,25 +238,29 @@ export function SprintsPage() {
                       <p className="text-muted-foreground text-sm mt-1">{sprint.goal}</p>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <span className={cn("px-2 py-1 rounded-full text-xs font-medium", getStatusColor(sprint.status))}>
-                        {sprint.status === "active" ? "АКТИВНЫЙ" : 
-                         sprint.status === "planned" ? "ЗАПЛАНИРОВАННЫЙ" : 
-                         sprint.status === "completed" ? "ЗАВЕРШЕННЫЙ" : sprint.status.toUpperCase()}
-                      </span>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => openEditModal(sprint.id)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        Завершить спринт
-                      </Button>
-                    </div>
-                  </div>
+                                             <span className={cn("px-2 py-1 rounded-full text-xs font-medium", getSprintStatusColor(sprint.status))}>
+                         {sprint.status === "active" ? "АКТИВНЫЙ" : 
+                          sprint.status === "planned" ? "ЗАПЛАНИРОВАННЫЙ" : 
+                          sprint.status === "completed" ? "ЗАВЕРШЕННЫЙ" : sprint.status}
+                       </span>
+                       <Button 
+                         variant="ghost" 
+                         size="sm"
+                         onClick={() => openEditModal(sprint.id)}
+                       >
+                         <Edit className="h-4 w-4" />
+                       </Button>
+                       <Button 
+                         variant="outline" 
+                         size="sm"
+                         onClick={() => openStatusDialog(sprint.id, 'complete')}
+                       >
+                         Завершить спринт
+                       </Button>
+                     </div>
+                   </div>
 
-                  <div className="grid grid-cols-4 gap-4 mb-4">
+                   <div className="grid grid-cols-4 gap-4 mb-4">
                     <div className="flex items-center space-x-2">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
                       <div>
@@ -163,20 +275,22 @@ export function SprintsPage() {
                         <div className="text-xs text-muted-foreground">Дата окончания</div>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <Target className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <div className="text-sm font-medium">{sprint.capacity} pts</div>
-                        <div className="text-xs text-muted-foreground">Емкость</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <div className="text-sm font-medium">{daysRemaining} дн.</div>
-                        <div className="text-xs text-muted-foreground">Осталось</div>
-                      </div>
-                    </div>
+                                         {showStoryPoints && sprint.capacity && (
+                       <div className="flex items-center space-x-2">
+                         <Target className="h-4 w-4 text-muted-foreground" />
+                         <div>
+                           <div className="text-sm font-medium">{sprint.capacity} pts</div>
+                           <div className="text-xs text-muted-foreground">Емкость</div>
+                         </div>
+                       </div>
+                     )}
+                     <div className="flex items-center space-x-2">
+                       <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                       <div>
+                         <div className="text-sm font-medium">{daysRemaining} дн.</div>
+                         <div className="text-xs text-muted-foreground">Осталось</div>
+                       </div>
+                     </div>
                   </div>
 
                   <div className="mb-4">
@@ -192,14 +306,55 @@ export function SprintsPage() {
                     </div>
                   </div>
 
-                  <div className="text-sm text-muted-foreground">
-                    {sprintTasks.length} задач • {sprintTasks.filter(t => t.status === "done").length} выполнено
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+                                     <div className="text-sm text-muted-foreground mb-4">
+                     {sprintTasks.length} задач • {sprintTasks.filter(t => t.status === "done").length} выполнено
+                   </div>
+
+                   {/* Sprint Tasks */}
+                   {sprintTasks.length > 0 && (
+                     <div className="border-t pt-4">
+                       <h4 className="text-sm font-medium mb-3">Задачи спринта</h4>
+                       <div className="space-y-2">
+                         {sprintTasks.map((task) => {
+                           const StatusIcon = getStatusIcon(task.status);
+                           return (
+                             <div key={task.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                               <div className="flex items-center space-x-3 flex-1">
+                                 <StatusIcon className={cn("h-4 w-4", getStatusColor(task.status))} />
+                                 <div className="flex-1 min-w-0">
+                                   <div className="text-sm font-medium truncate">{task.title}</div>
+                                   <div className="flex items-center space-x-2 mt-1">
+                                     <span className={cn("px-2 py-1 rounded-full text-xs font-medium", getPriorityColor(task.priority))}>
+                                       {task.priority === 'high' ? 'Высокий' : 
+                                        task.priority === 'medium' ? 'Средний' : 
+                                        task.priority === 'low' ? 'Низкий' : 
+                                        task.priority === 'urgent' ? 'Срочный' : task.priority}
+                                     </span>
+                                     {showStoryPoints && task.storyPoints && (
+                                       <span className="text-xs text-muted-foreground">
+                                         {task.storyPoints} SP
+                                       </span>
+                                     )}
+                                   </div>
+                                 </div>
+                               </div>
+                               <div className="text-xs text-muted-foreground">
+                                 {task.status === 'done' ? 'Выполнено' :
+                                  task.status === 'in-progress' ? 'В работе' :
+                                  task.status === 'in-review' ? 'На проверке' :
+                                  task.status === 'todo' ? 'К выполнению' : task.status}
+                               </div>
+                             </div>
+                           );
+                         })}
+                       </div>
+                     </div>
+                   )}
+                 </div>
+               );
+             })}
+           </div>
+         </div>
 
         {/* Planned Sprints */}
         <div>
@@ -218,12 +373,12 @@ export function SprintsPage() {
                       <h3 className="text-lg font-semibold">{sprint.name}</h3>
                       <p className="text-muted-foreground text-sm mt-1">{sprint.goal}</p>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <span className={cn("px-2 py-1 rounded-full text-xs font-medium", getStatusColor(sprint.status))}>
-                        {sprint.status === "active" ? "АКТИВНЫЙ" : 
-                         sprint.status === "planned" ? "ЗАПЛАНИРОВАННЫЙ" : 
-                         sprint.status === "completed" ? "ЗАВЕРШЕННЫЙ" : sprint.status.toUpperCase()}
-                      </span>
+                                         <div className="flex items-center space-x-2">
+                       <span className={cn("px-2 py-1 rounded-full text-xs font-medium", getSprintStatusColor(sprint.status))}>
+                         {sprint.status === "active" ? "АКТИВНЫЙ" : 
+                          sprint.status === "planned" ? "ЗАПЛАНИРОВАННЫЙ" : 
+                          sprint.status === "completed" ? "ЗАВЕРШЕННЫЙ" : sprint.status}
+                       </span>
                       <Button 
                         variant="ghost" 
                         size="sm"
@@ -231,7 +386,10 @@ export function SprintsPage() {
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button size="sm">
+                      <Button 
+                        size="sm"
+                        onClick={() => openStatusDialog(sprint.id, 'start')}
+                      >
                         Запустить спринт
                       </Button>
                     </div>
@@ -245,13 +403,15 @@ export function SprintsPage() {
                         <div className="text-xs text-muted-foreground">Длительность</div>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <Target className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <div className="text-sm font-medium">{sprint.capacity} pts</div>
-                        <div className="text-xs text-muted-foreground">Емкость</div>
+                    {showStoryPoints && sprint.capacity && (
+                      <div className="flex items-center space-x-2">
+                        <Target className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <div className="text-sm font-medium">{sprint.capacity} pts</div>
+                          <div className="text-xs text-muted-foreground">Емкость</div>
+                        </div>
                       </div>
-                    </div>
+                    )}
                     <div className="flex items-center space-x-2">
                       <Users className="h-4 w-4 text-muted-foreground" />
                       <div>
@@ -260,6 +420,47 @@ export function SprintsPage() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Sprint Tasks */}
+                  {sprintTasks.length > 0 && (
+                    <div className="border-t pt-4">
+                      <h4 className="text-sm font-medium mb-3">Задачи спринта</h4>
+                      <div className="space-y-2">
+                        {sprintTasks.map((task) => {
+                          const StatusIcon = getStatusIcon(task.status);
+                          return (
+                            <div key={task.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                              <div className="flex items-center space-x-3 flex-1">
+                                <StatusIcon className={cn("h-4 w-4", getStatusColor(task.status))} />
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-sm font-medium truncate">{task.title}</div>
+                                  <div className="flex items-center space-x-2 mt-1">
+                                    <span className={cn("px-2 py-1 rounded-full text-xs font-medium", getPriorityColor(task.priority))}>
+                                      {task.priority === 'high' ? 'Высокий' : 
+                                       task.priority === 'medium' ? 'Средний' : 
+                                       task.priority === 'low' ? 'Низкий' : 
+                                       task.priority === 'urgent' ? 'Срочный' : task.priority}
+                                    </span>
+                                    {showStoryPoints && task.storyPoints && (
+                                      <span className="text-xs text-muted-foreground">
+                                        {task.storyPoints} SP
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {task.status === 'done' ? 'Выполнено' :
+                                 task.status === 'in-progress' ? 'В работе' :
+                                 task.status === 'in-review' ? 'На проверке' :
+                                 task.status === 'todo' ? 'К выполнению' : task.status}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -284,9 +485,11 @@ export function SprintsPage() {
                       <h3 className="text-lg font-semibold">{sprint.name}</h3>
                       <p className="text-muted-foreground text-sm mt-1">{sprint.goal}</p>
                     </div>
-                    <span className={cn("px-2 py-1 rounded-full text-xs font-medium", getStatusColor(sprint.status))}>
-                      {sprint.status.toUpperCase()}
-                    </span>
+                                         <span className={cn("px-2 py-1 rounded-full text-xs font-medium", getSprintStatusColor(sprint.status))}>
+                       {sprint.status === "active" ? "АКТИВНЫЙ" : 
+                        sprint.status === "planned" ? "ЗАПЛАНИРОВАННЫЙ" : 
+                        sprint.status === "completed" ? "ЗАВЕРШЕННЫЙ" : sprint.status}
+                     </span>
                   </div>
 
                   <div className="grid grid-cols-3 gap-4">
@@ -312,6 +515,47 @@ export function SprintsPage() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Sprint Tasks */}
+                  {sprintTasks.length > 0 && (
+                    <div className="border-t pt-4">
+                      <h4 className="text-sm font-medium mb-3">Задачи спринта</h4>
+                      <div className="space-y-2">
+                        {sprintTasks.map((task) => {
+                          const StatusIcon = getStatusIcon(task.status);
+                          return (
+                            <div key={task.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                              <div className="flex items-center space-x-3 flex-1">
+                                <StatusIcon className={cn("h-4 w-4", getStatusColor(task.status))} />
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-sm font-medium truncate">{task.title}</div>
+                                  <div className="flex items-center space-x-2 mt-1">
+                                    <span className={cn("px-2 py-1 rounded-full text-xs font-medium", getPriorityColor(task.priority))}>
+                                      {task.priority === 'high' ? 'Высокий' : 
+                                       task.priority === 'medium' ? 'Средний' : 
+                                       task.priority === 'low' ? 'Низкий' : 
+                                       task.priority === 'urgent' ? 'Срочный' : task.priority}
+                                    </span>
+                                    {showStoryPoints && task.storyPoints && (
+                                      <span className="text-xs text-muted-foreground">
+                                        {task.storyPoints} SP
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {task.status === 'done' ? 'Выполнено' :
+                                 task.status === 'in-progress' ? 'В работе' :
+                                 task.status === 'in-review' ? 'На проверке' :
+                                 task.status === 'todo' ? 'К выполнению' : task.status}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -333,6 +577,16 @@ export function SprintsPage() {
         isOpen={sprintModalOpen}
         onClose={closeModal}
         sprintId={editingSprintId}
+      />
+
+      {/* Sprint Status Dialog */}
+      <SprintStatusDialog
+        isOpen={statusDialogOpen}
+        onClose={closeStatusDialog}
+        onConfirm={statusDialogAction === 'start' ? handleStartSprint : handleCompleteSprint}
+        sprintName={sprints.find(s => s.id === statusDialogSprintId)?.name || ''}
+        action={statusDialogAction}
+        isLoading={statusDialogLoading}
       />
     </div>
   );

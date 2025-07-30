@@ -3,6 +3,7 @@ import { immer } from 'zustand/middleware/immer';
 import { persist } from 'zustand/middleware';
 import type { Project, Task, Sprint, User, Comment, Activity, Attachment, TimeEntry } from '@/types';
 import { generateId } from '@/lib/utils';
+import { initialProjects, initialSprints, initialTasks } from './initialData';
 
 interface AppState {
   // Data
@@ -18,6 +19,9 @@ interface AppState {
   // UI State
   selectedProjectId: string | null;
   selectedSprintId: string | null;
+  
+  // Settings
+  showStoryPoints: boolean;
   
   // Actions
   addProject: (project: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>) => void;
@@ -46,6 +50,12 @@ interface AppState {
   
   setSelectedProject: (id: string | null) => void;
   setSelectedSprint: (id: string | null) => void;
+  
+  // Settings actions
+  toggleStoryPoints: () => void;
+  
+  // Initialization
+  initializeWithDemoData: () => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -81,6 +91,7 @@ export const useAppStore = create<AppState>()(
       timeEntries: [],
       selectedProjectId: null,
       selectedSprintId: null,
+      showStoryPoints: true,
       
       // Project actions
       addProject: (projectData) => set((state) => {
@@ -307,6 +318,66 @@ export const useAppStore = create<AppState>()(
       setSelectedSprint: (id) => set((state) => {
         state.selectedSprintId = id;
       }),
+      
+      // Settings actions
+      toggleStoryPoints: () => set((state) => {
+        state.showStoryPoints = !state.showStoryPoints;
+      }),
+      
+      // Initialization
+      initializeWithDemoData: () => set((state) => {
+        // Добавляем проекты
+        const projectIds = new Map<string, string>();
+        initialProjects.forEach((projectData, index) => {
+          const projectId = generateId();
+          projectIds.set(`project-${index + 1}`, projectId);
+          
+          const project: Project = {
+            ...projectData,
+            id: projectId,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
+          state.projects.push(project);
+        });
+        
+        // Добавляем спринты
+        const sprintIds = new Map<string, string>();
+        initialSprints.forEach((sprintData, index) => {
+          const sprintId = generateId();
+          sprintIds.set(`sprint-${index + 1}`, sprintId);
+          
+          const sprint: Sprint = {
+            ...sprintData,
+            id: sprintId,
+            projectId: projectIds.get(sprintData.projectId) || sprintData.projectId,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
+          state.sprints.push(sprint);
+        });
+        
+        // Добавляем задачи
+        initialTasks.forEach((taskData) => {
+          const task: Task = {
+            ...taskData,
+            id: generateId(),
+            projectId: projectIds.get(taskData.projectId) || taskData.projectId,
+            sprintId: sprintIds.get(taskData.sprintId || '') || taskData.sprintId,
+            watchers: [],
+            attachments: [],
+            linkedTasks: [],
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
+          state.tasks.push(task);
+        });
+        
+        // Устанавливаем первый проект как выбранный
+        if (state.projects.length > 0 && !state.selectedProjectId) {
+          state.selectedProjectId = state.projects[0].id;
+        }
+      }),
     })),
     {
       name: 'taskflow-storage',
@@ -327,4 +398,6 @@ export const useSelectedSprint = () => {
   const selectedSprintId = useAppStore(state => state.selectedSprintId);
   const sprints = useAppStore(state => state.sprints);
   return sprints.find(s => s.id === selectedSprintId);
-}; 
+};
+
+export const useShowStoryPoints = () => useAppStore(state => state.showStoryPoints); 

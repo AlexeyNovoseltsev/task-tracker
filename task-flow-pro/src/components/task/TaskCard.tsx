@@ -1,6 +1,6 @@
 import { Task } from '@/types';
 import { cn } from '@/lib/utils';
-import { useAppStore } from '@/store';
+import { useAppStore, useShowStoryPoints } from '@/store';
 import { 
   Calendar, 
   Clock, 
@@ -38,6 +38,7 @@ export function TaskCard({
   compact = false
 }: TaskCardProps) {
   const { users, projects } = useAppStore();
+  const showStoryPoints = useShowStoryPoints();
   
   const assignee = users.find(u => u.id === task.assigneeId);
   const project = projects.find(p => p.id === task.projectId);
@@ -212,7 +213,7 @@ export function TaskCard({
           )}
           
           {/* Story Points */}
-          {task.storyPoints && (
+          {showStoryPoints && task.storyPoints && (
             <div className="flex items-center space-x-1">
               <div className="w-4 h-4 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-bold">
                 {task.storyPoints}

@@ -1,29 +1,105 @@
+import React, { useEffect, useState } from 'react';
+import { CheckCircle, XCircle, AlertTriangle, Info, X } from 'lucide-react';
 import { useToast } from "@/hooks/useToast";
 
-export function Toaster() {
-  const { toasts } = useToast();
+interface ToastProps {
+  id: string;
+  title?: string;
+  description?: string;
+  variant?: 'success' | 'error' | 'warning' | 'info';
+  duration?: number;
+  action?: React.ReactNode;
+  onClose?: () => void;
+}
+
+const toastIcons = {
+  success: CheckCircle,
+  error: XCircle,
+  warning: AlertTriangle,
+  info: Info,
+};
+
+function Toast({ 
+  id, 
+  title, 
+  description, 
+  variant = 'info', 
+  duration = 5000, 
+  action, 
+  onClose 
+}: ToastProps) {
+  const [isVisible, setIsVisible] = useState(false);
+  const [isLeaving, setIsLeaving] = useState(false);
+  
+  const Icon = toastIcons[variant];
+
+  useEffect(() => {
+    // Show animation
+    const showTimer = setTimeout(() => setIsVisible(true), 10);
+    
+    // Auto-close timer
+    const closeTimer = setTimeout(() => {
+      handleClose();
+    }, duration);
+
+    return () => {
+      clearTimeout(showTimer);
+      clearTimeout(closeTimer);
+    };
+  }, [duration]);
+
+  const handleClose = () => {
+    setIsLeaving(true);
+    setTimeout(() => {
+      onClose?.();
+    }, 300); // Match CSS transition duration
+  };
 
   return (
-    <div className="fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]">
-      {toasts.map(function ({ id, title, description, action, ...props }) {
-        return (
-          <div
-            key={id}
-            className="group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all"
-            {...props}
-          >
-            <div className="grid gap-1">
-              {title && (
-                <div className="text-sm font-semibold">{title}</div>
-              )}
-              {description && (
-                <div className="text-sm opacity-90">{description}</div>
-              )}
-            </div>
-            {action}
-          </div>
-        );
-      })}
+    <div
+      className={`notification ${variant} ${isVisible && !isLeaving ? 'show' : ''} ${isLeaving ? 'hide' : ''}`}
+      role="alert"
+      aria-live="polite"
+    >
+      <div className="notification-icon">
+        <Icon size={20} />
+      </div>
+      
+      <div className="notification-content">
+        {title && (
+          <div className="notification-title">{title}</div>
+        )}
+        {description && (
+          <div className="notification-message">{description}</div>
+        )}
+        {action && (
+          <div className="mt-2">{action}</div>
+        )}
+      </div>
+      
+      <button
+        onClick={handleClose}
+        className="notification-close"
+        aria-label="Закрыть уведомление"
+      >
+        <X size={16} />
+      </button>
+    </div>
+  );
+}
+
+export function Toaster() {
+  const { toasts, dismiss } = useToast();
+
+  return (
+    <div className="notification-container">
+      {toasts.map((toast) => (
+        <Toast 
+          key={toast.id} 
+          {...toast} 
+          onClose={() => dismiss(toast.id)} 
+        />
+      ))}
     </div>
   );
 } 

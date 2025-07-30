@@ -1,14 +1,15 @@
 import * as React from "react";
 
-const TOAST_LIMIT = 1;
-const TOAST_REMOVE_DELAY = 1000000;
+const TOAST_LIMIT = 5;
+const TOAST_REMOVE_DELAY = 300;
 
 type ToasterToast = {
   id: string;
   title?: React.ReactNode;
   description?: React.ReactNode;
   action?: React.ReactElement;
-  variant?: "default" | "destructive";
+  variant?: "success" | "error" | "warning" | "info";
+  duration?: number;
 };
 
 const actionTypes = {
@@ -175,15 +176,29 @@ function useToast() {
     ...state,
     toast,
     dismiss: (toastId?: string) => dispatch({ type: "DISMISS_TOAST", toastId }),
-    success: (title: string, description?: string) => toast({
+    success: (title: string, description?: string, duration?: number) => toast({
       title,
       description,
-      variant: "default",
+      variant: "success",
+      duration,
     }),
-    error: (title: string, description?: string) => toast({
+    error: (title: string, description?: string, duration?: number) => toast({
       title,
       description,
-      variant: "destructive",
+      variant: "error",
+      duration,
+    }),
+    warning: (title: string, description?: string, duration?: number) => toast({
+      title,
+      description,
+      variant: "warning",
+      duration,
+    }),
+    info: (title: string, description?: string, duration?: number) => toast({
+      title,
+      description,
+      variant: "info",
+      duration,
     }),
   };
 }

@@ -189,7 +189,7 @@ export function SprintModal({ isOpen, onClose, sprintId }: SprintModalProps) {
           <div>
             <label className="block text-sm font-medium mb-2 flex items-center space-x-1">
               <Target className="h-4 w-4" />
-              <span>Sprint Goal</span>
+              <span>Цель спринта</span>
             </label>
             <textarea
               {...register("goal")}
@@ -203,7 +203,7 @@ export function SprintModal({ isOpen, onClose, sprintId }: SprintModalProps) {
             <div>
               <label className="block text-sm font-medium mb-2 flex items-center space-x-1">
                 <Calendar className="h-4 w-4" />
-                <span>Start Date <span className="text-red-500">*</span></span>
+                <span>Дата начала <span className="text-red-500">*</span></span>
               </label>
               <input
                 type="date"
@@ -219,7 +219,7 @@ export function SprintModal({ isOpen, onClose, sprintId }: SprintModalProps) {
             <div>
               <label className="block text-sm font-medium mb-2 flex items-center space-x-1">
                 <Calendar className="h-4 w-4" />
-                <span>End Date <span className="text-red-500">*</span></span>
+                <span>Дата окончания <span className="text-red-500">*</span></span>
               </label>
               <input
                 type="date"
@@ -255,7 +255,7 @@ export function SprintModal({ isOpen, onClose, sprintId }: SprintModalProps) {
           <div>
             <label className="block text-sm font-medium mb-2 flex items-center space-x-1">
               <Users className="h-4 w-4" />
-              <span>Team Capacity (Story Points)</span>
+              <span>Емкость команды (Очки истории)</span>
             </label>
             <input
               type="number"
@@ -294,7 +294,7 @@ export function SprintModal({ isOpen, onClose, sprintId }: SprintModalProps) {
           {/* Preview */}
           {watch("name") && (
             <div className="p-4 bg-muted rounded-lg">
-              <h4 className="font-medium mb-2">Preview:</h4>
+              <h4 className="font-medium mb-2">Предварительный просмотр:</h4>
               <div className="flex items-start space-x-3">
                 <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
                   <Target className="h-4 w-4 text-white" />

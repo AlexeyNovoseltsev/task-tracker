@@ -185,7 +185,7 @@ export function ProjectModal({ isOpen, onClose, projectId }: ProjectModalProps) 
           <div>
             <label className="block text-sm font-medium mb-2 flex items-center space-x-1">
               <Key className="h-4 w-4" />
-              <span>Project Key <span className="text-red-500">*</span></span>
+              <span>Ключ проекта <span className="text-red-500">*</span></span>
             </label>
             <input
               {...register("key", { 
@@ -210,7 +210,7 @@ export function ProjectModal({ isOpen, onClose, projectId }: ProjectModalProps) 
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium mb-2">Description</label>
+            <label className="block text-sm font-medium mb-2">Описание</label>
             <textarea
               {...register("description")}
               className="w-full p-3 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring h-24 resize-none"
@@ -222,7 +222,7 @@ export function ProjectModal({ isOpen, onClose, projectId }: ProjectModalProps) 
           <div>
             <label className="block text-sm font-medium mb-2 flex items-center space-x-1">
               <Palette className="h-4 w-4" />
-              <span>Project Color</span>
+              <span>Цвет проекта</span>
             </label>
             <div className="grid grid-cols-5 gap-2">
               {projectColors.map((color) => (
@@ -251,7 +251,7 @@ export function ProjectModal({ isOpen, onClose, projectId }: ProjectModalProps) 
           {/* Preview */}
           {watch("name") && (
             <div className="p-4 bg-muted rounded-lg">
-              <h4 className="font-medium mb-3">Preview:</h4>
+              <h4 className="font-medium mb-3">Предварительный просмотр:</h4>
               <div className="flex items-center space-x-3">
                 <div 
                   className="w-10 h-10 rounded-lg flex items-center justify-center"
@@ -269,7 +269,7 @@ export function ProjectModal({ isOpen, onClose, projectId }: ProjectModalProps) 
               </div>
               {watch("key") && (
                 <div className="mt-3 p-2 bg-background rounded border">
-                  <p className="text-xs text-muted-foreground mb-1">Sample task keys:</p>
+                  <p className="text-xs text-muted-foreground mb-1">Пример ключей задач:</p>
                   <div className="flex space-x-2">
                     <span className="px-2 py-1 bg-secondary rounded text-xs font-mono">
                       {watch("key")}-1

@@ -239,7 +239,7 @@ export function TaskModal({ isOpen, onClose, taskId }: TaskModalProps) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-2 flex items-center space-x-1">
-                <span>Story Points</span>
+                <span>Очки истории</span>
                 <span className="text-xs text-muted-foreground">(Фибоначчи: 1,2,3,5,8,13,21)</span>
               </label>
               <select

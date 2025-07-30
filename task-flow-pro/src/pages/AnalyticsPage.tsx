@@ -1,9 +1,10 @@
-import { useAppStore } from "@/store";
+import { useAppStore, useShowStoryPoints } from "@/store";
 import { cn } from "@/lib/utils";
 import { TrendingUp, Target, Users, Clock } from "lucide-react";
 
 export function AnalyticsPage() {
   const { tasks, sprints, selectedProjectId } = useAppStore();
+  const showStoryPoints = useShowStoryPoints();
 
   const projectTasks = selectedProjectId 
     ? tasks.filter(task => task.projectId === selectedProjectId)
@@ -77,31 +78,35 @@ export function AnalyticsPage() {
           </div>
         </div>
 
-        <div className="bg-card p-6 rounded-lg border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Story Points</p>
-              <p className="text-3xl font-bold text-primary">{completedStoryPoints}/{totalStoryPoints}</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {totalStoryPoints > 0 ? Math.round((completedStoryPoints / totalStoryPoints) * 100) : 0}% выполнено
-              </p>
+        {showStoryPoints && (
+          <div className="bg-card p-6 rounded-lg border">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Очки истории</p>
+                <p className="text-3xl font-bold text-primary">{completedStoryPoints}/{totalStoryPoints}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {totalStoryPoints > 0 ? Math.round((completedStoryPoints / totalStoryPoints) * 100) : 0}% выполнено
+                </p>
+              </div>
+              <TrendingUp className="h-8 w-8 text-muted-foreground" />
             </div>
-            <TrendingUp className="h-8 w-8 text-muted-foreground" />
           </div>
-        </div>
+        )}
 
-        <div className="bg-card p-6 rounded-lg border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Скорость команды</p>
-              <p className="text-3xl font-bold text-primary">{velocity}</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                оч./спринт в среднем
-              </p>
+        {showStoryPoints && (
+          <div className="bg-card p-6 rounded-lg border">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Скорость команды</p>
+                <p className="text-3xl font-bold text-primary">{velocity}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  оч./спринт в среднем
+                </p>
+              </div>
+              <Users className="h-8 w-8 text-muted-foreground" />
             </div>
-            <Users className="h-8 w-8 text-muted-foreground" />
           </div>
-        </div>
+        )}
 
         <div className="bg-card p-6 rounded-lg border">
           <div className="flex items-center justify-between">

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTheme } from "@/hooks/useTheme";
 import { useToast } from "@/hooks/useToast";
+import { useAppStore, useShowStoryPoints } from "@/store";
 import { Button } from "@/components/ui/button";
 import {
   Settings,
@@ -36,6 +37,8 @@ import {
 export function SettingsPage() {
   const { theme, toggleTheme } = useTheme();
   const { success, error } = useToast();
+  const { toggleStoryPoints } = useAppStore();
+  const showStoryPoints = useShowStoryPoints();
   
   // Settings state
   const [searchQuery, setSearchQuery] = useState("");
@@ -65,6 +68,7 @@ export function SettingsPage() {
     compactMode: false,
     showAvatars: true,
     animationsEnabled: true,
+    showStoryPoints: true,
     
     // Производительность
     autoSave: true,
@@ -383,7 +387,7 @@ export function SettingsPage() {
       <div className="bg-card p-6 rounded-lg border">
         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
           <Palette className="h-5 w-5" />
-          Внешний вид
+          Настройки интерфейса
         </h3>
         
         <div className="space-y-4">
@@ -410,6 +414,16 @@ export function SettingsPage() {
               ))}
             </div>
           </div>
+          
+          <ToggleSwitch
+            checked={showStoryPoints}
+            onChange={() => {
+              toggleStoryPoints();
+              success("Story Points", showStoryPoints ? "Story Points отключены" : "Story Points включены");
+            }}
+            label="Показывать Story Points"
+            description="Отображать story points в задачах и аналитике"
+          />
           
           <ToggleSwitch
             checked={settings.compactMode}

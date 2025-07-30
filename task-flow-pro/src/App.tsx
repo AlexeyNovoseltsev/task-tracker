@@ -13,11 +13,13 @@ import { AppLayout } from "@/components/layout/AppLayout";
 // Pages
 import { DashboardPage } from "@/pages/DashboardPage";
 import { ProjectsPage } from "@/pages/ProjectsPage";
+import { TasksPage } from "@/pages/TasksPage";
 import { BacklogPage } from "@/pages/BacklogPage";
 import { SprintsPage } from "@/pages/SprintsPage";
 import { KanbanPage } from "@/pages/KanbanPage";
 import { AnalyticsPage } from "@/pages/AnalyticsPage";
 import { SettingsPage } from "@/pages/SettingsPage";
+import ApiTestPage from "@/pages/ApiTestPage";
 
 function App() {
   const { theme, toggleTheme } = useTheme();
@@ -56,6 +58,10 @@ function App() {
         action: () => navigate('/projects'),
       },
       {
+        ...GLOBAL_SHORTCUTS.TASKS,
+        action: () => navigate('/tasks'),
+      },
+      {
         ...GLOBAL_SHORTCUTS.BACKLOG,
         action: () => navigate('/backlog'),
       },
@@ -84,11 +90,13 @@ function App() {
         <Route path="/" element={<AppLayout />}>
           <Route index element={<DashboardPage />} />
           <Route path="projects" element={<ProjectsPage />} />
+          <Route path="tasks" element={<TasksPage />} />
           <Route path="backlog" element={<BacklogPage />} />
           <Route path="sprints" element={<SprintsPage />} />
           <Route path="kanban" element={<KanbanPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route path="api-test" element={<ApiTestPage />} />
         </Route>
       </Routes>
       

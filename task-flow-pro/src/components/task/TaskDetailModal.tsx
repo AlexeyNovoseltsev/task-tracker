@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Task, User, Comment, Activity, Attachment, TaskLink, TimeEntry } from "@/types";
 import { Button } from "@/components/ui/button";
-import { useAppStore } from "@/store";
+import { useAppStore, useShowStoryPoints } from "@/store";
 import { useToast } from "@/hooks/useToast";
 import {
   X,
@@ -45,6 +45,7 @@ interface TaskDetailModalProps {
 export function TaskDetailModal({ task, isOpen, onClose }: TaskDetailModalProps) {
   const { users, updateTask, projects, deleteTask } = useAppStore();
   const { success, error } = useToast();
+  const showStoryPoints = useShowStoryPoints();
   
   const [activeTab, setActiveTab] = useState<'details' | 'comments' | 'activity' | 'attachments' | 'links' | 'time'>('details');
   const [isEditing, setIsEditing] = useState(false);
@@ -604,7 +605,7 @@ export function TaskDetailModal({ task, isOpen, onClose }: TaskDetailModalProps)
               </div>
 
               {/* Story Points */}
-              {task.storyPoints && (
+              {showStoryPoints && task.storyPoints && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Story Points

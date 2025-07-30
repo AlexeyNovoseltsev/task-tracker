@@ -15,9 +15,11 @@ import {
   Copy,
   Archive,
   Star,
-  StarOff
+  StarOff,
+  TrendingUp
 } from "lucide-react";
 import { ProjectModal } from "@/components/project/ProjectModal";
+import { ProjectViewModal } from "@/components/project/ProjectViewModal";
 
 export function ProjectsPage() {
   const { 
@@ -36,6 +38,8 @@ export function ProjectsPage() {
   const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [editingProject, setEditingProject] = useState<string | undefined>();
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [viewingProject, setViewingProject] = useState<string | undefined>();
 
   // Filter and sort projects
   const filteredProjects = projects
@@ -104,24 +108,41 @@ export function ProjectsPage() {
     setShowProjectModal(true);
   };
 
+  const openViewModal = (projectId: string) => {
+    setViewingProject(projectId);
+    setShowViewModal(true);
+  };
+
+  const handleProjectClick = (projectId: string) => {
+    // Вместо простого выбора, открываем модальное окно просмотра
+    openViewModal(projectId);
+  };
+
+  const handleNavigateToProject = (projectId: string) => {
+    setSelectedProject(projectId);
+    success("Проект выбран!", "Переходим к странице проекта", 2000);
+    // Здесь можно добавить навигацию к странице проекта
+  };
+
   return (
-    <div className="p-6 h-full">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Проекты</h1>
-          <p className="text-muted-foreground mt-1">
+    <div className="p-4 md:p-6 h-full max-w-7xl mx-auto">
+      {/* Compact Header */}
+      <div className="flex items-start justify-between mb-4">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-2xl md:text-3xl font-bold mb-1">Проекты</h1>
+          <p className="text-sm text-muted-foreground">
             Управление проектами и командной работой
           </p>
         </div>
-        <Button onClick={openCreateModal} className="gap-2">
+        <Button onClick={openCreateModal} className="gap-2 ml-4 flex-shrink-0" size="sm">
           <Plus className="h-4 w-4" />
-          Создать проект
+          <span className="hidden sm:inline">Создать проект</span>
+          <span className="sm:hidden">Создать</span>
         </Button>
       </div>
 
-      {/* Controls */}
-      <div className="flex items-center gap-4 mb-6">
+      {/* Compact Controls */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-5">
         {/* Search */}
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -171,51 +192,49 @@ export function ProjectsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-card p-4 rounded-lg border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">Всего проектов</p>
-              <p className="text-2xl font-bold">{filteredProjects.length}</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4 mb-6">
+        <div className="bg-card p-4 md:p-5 rounded-xl border shadow-sm hover-lift transition-all duration-200">
+          <div className="flex flex-col items-center text-center">
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
+              <Folder className="h-5 w-5 text-primary" />
             </div>
-            <Folder className="h-8 w-8 text-primary" />
+            <p className="text-sm font-semibold text-muted-foreground mb-1">Всего проектов</p>
+            <p className="text-2xl md:text-3xl font-bold text-foreground leading-none">{filteredProjects.length}</p>
           </div>
         </div>
-        <div className="bg-card p-4 rounded-lg border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">Активных задач</p>
-              <p className="text-2xl font-bold">
-                {projects.reduce((sum, p) => sum + getProjectStats(p.id).active, 0)}
-              </p>
+        <div className="bg-card p-4 md:p-5 rounded-xl border shadow-sm hover-lift transition-all duration-200">
+          <div className="flex flex-col items-center text-center">
+            <div className="w-10 h-10 rounded-lg bg-info/10 flex items-center justify-center mb-3">
+              <Users className="h-5 w-5 text-info" />
             </div>
-            <Users className="h-8 w-8 text-blue-500" />
+            <p className="text-sm font-semibold text-muted-foreground mb-1">Активных задач</p>
+            <p className="text-2xl md:text-3xl font-bold text-info leading-none">
+              {projects.reduce((sum, p) => sum + getProjectStats(p.id).active, 0)}
+            </p>
           </div>
         </div>
-        <div className="bg-card p-4 rounded-lg border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">Выполненных задач</p>
-              <p className="text-2xl font-bold">
-                {projects.reduce((sum, p) => sum + getProjectStats(p.id).completed, 0)}
-              </p>
+        <div className="bg-card p-4 md:p-5 rounded-xl border shadow-sm hover-lift transition-all duration-200">
+          <div className="flex flex-col items-center text-center">
+            <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center mb-3">
+              <Calendar className="h-5 w-5 text-success" />
             </div>
-            <Calendar className="h-8 w-8 text-green-500" />
+            <p className="text-sm font-semibold text-muted-foreground mb-1">Выполненных</p>
+            <p className="text-2xl md:text-3xl font-bold text-success leading-none">
+              {projects.reduce((sum, p) => sum + getProjectStats(p.id).completed, 0)}
+            </p>
           </div>
         </div>
-        <div className="bg-card p-4 rounded-lg border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">Общий прогресс</p>
-              <p className="text-2xl font-bold">
-                {projects.length > 0 
-                  ? Math.round(projects.reduce((sum, p) => sum + getProjectStats(p.id).progress, 0) / projects.length)
-                  : 0}%
-              </p>
+        <div className="bg-card p-4 md:p-5 rounded-xl border shadow-sm hover-lift transition-all duration-200">
+          <div className="flex flex-col items-center text-center">
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
+              <TrendingUp className="h-5 w-5 text-primary" />
             </div>
-            <div className="h-8 w-8 rounded-full bg-gradient-to-r from-green-500 to-blue-500 flex items-center justify-center">
-              <span className="text-white text-xs font-bold">%</span>
-            </div>
+            <p className="text-sm font-semibold text-muted-foreground mb-1">Прогресс</p>
+            <p className="text-2xl md:text-3xl font-bold text-foreground leading-none">
+              {projects.length > 0 
+                ? Math.round(projects.reduce((sum, p) => sum + getProjectStats(p.id).progress, 0) / projects.length)
+                : 0}%
+            </p>
           </div>
         </div>
       </div>
@@ -243,7 +262,7 @@ export function ProjectsPage() {
       ) : (
         <div className={
           viewMode === "grid" 
-            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" 
+            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" 
             : "space-y-4"
         }>
           {filteredProjects.map((project) => {
@@ -255,11 +274,11 @@ export function ProjectsPage() {
               <div
                 key={project.id}
                 className={`
-                  bg-card border rounded-lg p-6 hover:shadow-md transition-all duration-200 cursor-pointer
-                  ${isSelected ? "ring-2 ring-primary border-primary" : ""}
+                  bg-card border border-border/50 rounded-2xl p-6 interactive-card hover-lift cursor-pointer shadow-sm hover:shadow-md transition-all duration-200
+                  ${isSelected ? "ring-2 ring-primary/50 border-primary/50 shadow-lg" : ""}
                   ${viewMode === "list" ? "flex items-center" : ""}
                 `}
-                onClick={() => handleSelectProject(project.id)}
+                onClick={() => handleProjectClick(project.id)}
               >
                 {/* Project Icon and Header */}
                 <div className={`flex items-start ${viewMode === "list" ? "w-1/3" : "justify-between mb-4"}`}>
@@ -302,7 +321,7 @@ export function ProjectsPage() {
                             e.stopPropagation();
                             handleFavoriteToggle(project.id);
                           }}
-                          className="w-full text-left px-2 py-1 text-sm hover:bg-muted rounded flex items-center gap-2"
+                          className="w-full text-left px-2 py-1 text-sm hover:bg-muted rounded flex items-center gap-2 whitespace-nowrap"
                         >
                           {isFavorite ? <StarOff className="h-3 w-3" /> : <Star className="h-3 w-3" />}
                           {isFavorite ? "Убрать из избранного" : "В избранное"}
@@ -365,9 +384,14 @@ export function ProjectsPage() {
                         <span className="text-xs text-muted-foreground">Прогресс</span>
                         <span className="text-xs font-medium">{Math.round(stats.progress)}%</span>
                       </div>
-                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                      <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
                         <div
-                          className="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full transition-all duration-300"
+                          className={`h-3 rounded-full transition-all duration-500 ease-out ${
+                            stats.progress >= 80 ? 'progress-bar-success' :
+                            stats.progress >= 50 ? 'progress-bar-info' :
+                            stats.progress >= 25 ? 'progress-bar-warning' :
+                            'progress-bar'
+                          }`}
                           style={{ width: `${stats.progress}%` }}
                         />
                       </div>
@@ -375,9 +399,12 @@ export function ProjectsPage() {
                   )}
                 </div>
 
-                {/* Updated date */}
+                {/* Updated date and author */}
                 <div className={`text-xs text-muted-foreground ${viewMode === "grid" ? "mt-4 pt-4 border-t" : ""}`}>
-                  Обновлен: {new Date(project.updatedAt).toLocaleDateString('ru-RU')}
+                  <div className="flex items-center justify-between">
+                    <span>Обновлен: {new Date(project.updatedAt).toLocaleDateString('ru-RU')}</span>
+                    <span>Автор: {project.createdBy || 'Система'}</span>
+                  </div>
                 </div>
               </div>
             );
@@ -385,11 +412,24 @@ export function ProjectsPage() {
         </div>
       )}
 
-      {/* Project Modal */}
+      {/* Project Create/Edit Modal */}
       <ProjectModal
         isOpen={showProjectModal}
         onClose={() => setShowProjectModal(false)}
         projectId={editingProject}
+      />
+
+      {/* Project View Modal */}
+      <ProjectViewModal
+        isOpen={showViewModal}
+        onClose={() => setShowViewModal(false)}
+        project={viewingProject ? projects.find(p => p.id === viewingProject) || null : null}
+        onEditProject={(project) => {
+          setShowViewModal(false);
+          openEditModal(project.id);
+        }}
+        onDeleteProject={handleDeleteProject}
+        onNavigateToProject={handleNavigateToProject}
       />
     </div>
   );
