@@ -1,0 +1,70 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "TaskFlow Pro",
+  "version": "1.0.0",
+  "identifier": "com.taskflow-pro.app",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "TaskFlow Pro - Modern Task Management",
+        "width": 1400,
+        "height": 900,
+        "minWidth": 1200,
+        "minHeight": 700,
+        "resizable": true,
+        "maximizable": true,
+        "minimizable": true,
+        "closable": true,
+        "decorations": true,
+        "center": true,
+        "fullscreen": false,
+        "transparent": false,
+        "alwaysOnTop": false,
+        "skipTaskbar": false,
+        "theme": "Light"
+      }
+    ],
+    "security": {
+      "csp": null
+    },
+    "trayIcon": {
+      "iconPath": "icons/icon.ico",
+      "iconAsTemplate": false,
+      "menuOnLeftClick": false,
+      "tooltip": "TaskFlow Pro"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis", "msi"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "publisher": "TaskFlow Pro Team",
+    "copyright": "Copyright (c) 2025 TaskFlow Pro Team",
+    "category": "Productivity",
+    "shortDescription": "Modern task management for Product Managers",
+    "longDescription": "TaskFlow Pro is a comprehensive task management application designed specifically for Product Managers and development teams working with Agile methodologies.",
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": ""
+    }
+  },
+  "plugins": {
+    "updater": {
+      "active": false
+    }
+  }
+}
