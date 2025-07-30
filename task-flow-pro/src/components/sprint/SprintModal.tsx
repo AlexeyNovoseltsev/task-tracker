@@ -97,15 +97,15 @@ export function SprintModal({ isOpen, onClose, sprintId }: SprintModalProps) {
 
       if (sprintId) {
         updateSprint(sprintId, sprintData);
-        success("✅ Sprint updated successfully!");
+        success("✅ Спринт успешно обновлен!");
       } else {
         addSprint(sprintData);
-        success("🎉 Sprint created successfully!");
+        success("🎉 Спринт успешно создан!");
       }
       
       onClose();
     } catch (err) {
-      error("Failed to save sprint. Please try again.");
+      error("Не удалось сохранить спринт. Попробуйте еще раз.");
     }
   };
 
@@ -148,7 +148,7 @@ export function SprintModal({ isOpen, onClose, sprintId }: SprintModalProps) {
               <Target className="h-3 w-3 text-white" />
             </div>
             <h2 className="text-xl font-semibold">
-              {sprintId ? "Edit Sprint" : "Create New Sprint"}
+              {sprintId ? "Редактировать спринт" : "Создать новый спринт"}
             </h2>
           </div>
           <Button variant="ghost" size="sm" onClick={onClose}>
@@ -322,18 +322,18 @@ export function SprintModal({ isOpen, onClose, sprintId }: SprintModalProps) {
           {/* Actions */}
           <div className="flex justify-between pt-4">
             <div className="text-xs text-muted-foreground">
-              💡 Tip: Use Ctrl+Enter to save quickly
+              💡 Совет: используйте Ctrl+Enter для быстрого сохранения
             </div>
             <div className="flex space-x-2">
               <Button type="button" variant="outline" onClick={onClose}>
-                Cancel
+                Отмена
               </Button>
               <Button 
                 type="submit" 
                 disabled={isSubmitting || !selectedProjectId}
                 className="min-w-[120px]"
               >
-                {isSubmitting ? "Saving..." : (sprintId ? "Update Sprint" : "Create Sprint")}
+                {isSubmitting ? "Сохранение..." : (sprintId ? "Обновить спринт" : "Создать спринт")}
               </Button>
             </div>
           </div>

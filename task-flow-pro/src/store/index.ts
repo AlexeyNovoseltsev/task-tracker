@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { persist } from 'zustand/middleware';
-import type { Project, Task, Sprint, User } from '@/types';
+import type { Project, Task, Sprint, User, Comment, Activity, Attachment, TimeEntry } from '@/types';
 import { generateId } from '@/lib/utils';
 
 interface AppState {
@@ -10,6 +10,10 @@ interface AppState {
   tasks: Task[];
   sprints: Sprint[];
   users: User[];
+  comments: Comment[];
+  activities: Activity[];
+  attachments: Attachment[];
+  timeEntries: TimeEntry[];
   
   // UI State
   selectedProjectId: string | null;
@@ -20,13 +24,25 @@ interface AppState {
   updateProject: (id: string, updates: Partial<Project>) => void;
   deleteProject: (id: string) => void;
   
-  addTask: (task: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  addTask: (task: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'watchers' | 'attachments' | 'linkedTasks'>) => void;
   updateTask: (id: string, updates: Partial<Task>) => void;
   deleteTask: (id: string) => void;
   
   addSprint: (sprint: Omit<Sprint, 'id' | 'createdAt' | 'updatedAt'>) => void;
   updateSprint: (id: string, updates: Partial<Sprint>) => void;
   deleteSprint: (id: string) => void;
+  
+  addComment: (comment: Omit<Comment, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  updateComment: (id: string, updates: Partial<Comment>) => void;
+  deleteComment: (id: string) => void;
+  
+  addActivity: (activity: Omit<Activity, 'id' | 'createdAt'>) => void;
+  
+  addAttachment: (attachment: Omit<Attachment, 'id' | 'uploadedAt'>) => void;
+  deleteAttachment: (id: string) => void;
+  
+  addTimeEntry: (timeEntry: Omit<TimeEntry, 'id' | 'createdAt'>) => void;
+  deleteTimeEntry: (id: string) => void;
   
   setSelectedProject: (id: string | null) => void;
   setSelectedSprint: (id: string | null) => void;
@@ -42,11 +58,27 @@ export const useAppStore = create<AppState>()(
       users: [
         {
           id: 'user-1',
-          name: 'Product Manager',
-          email: 'pm@company.com',
+          name: 'Александр Петров',
+          email: 'alex.petrov@company.com',
+          avatar: undefined,
+        },
+        {
+          id: 'user-2',
+          name: 'Мария Иванова',
+          email: 'maria.ivanova@company.com',
+          avatar: undefined,
+        },
+        {
+          id: 'user-3',
+          name: 'Сергей Смирнов',
+          email: 'sergey.smirnov@company.com',
           avatar: undefined,
         },
       ],
+      comments: [],
+      activities: [],
+      attachments: [],
+      timeEntries: [],
       selectedProjectId: null,
       selectedSprintId: null,
       
@@ -89,10 +121,25 @@ export const useAppStore = create<AppState>()(
         const task: Task = {
           ...taskData,
           id: generateId(),
+          watchers: [],
+          attachments: [],
+          linkedTasks: [],
           createdAt: new Date(),
           updatedAt: new Date(),
         };
         state.tasks.push(task);
+        
+        // Add creation activity
+        const activity: Activity = {
+          id: generateId(),
+          type: 'created',
+          description: 'создал задачу',
+          taskId: task.id,
+          projectId: task.projectId,
+          userId: task.reporterId || 'user-1',
+          createdAt: new Date(),
+        };
+        state.activities.push(activity);
       }),
       
       updateTask: (id, updates) => set((state) => {
@@ -146,6 +193,110 @@ export const useAppStore = create<AppState>()(
         if (state.selectedSprintId === id) {
           state.selectedSprintId = null;
         }
+      }),
+      
+      // Comment actions
+      addComment: (commentData) => set((state) => {
+        const comment: Comment = {
+          ...commentData,
+          id: generateId(),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+        state.comments.push(comment);
+        
+        // Add comment activity
+        const activity: Activity = {
+          id: generateId(),
+          type: 'commented',
+          description: 'добавил комментарий',
+          taskId: comment.taskId,
+          userId: comment.authorId,
+          createdAt: new Date(),
+        };
+        state.activities.push(activity);
+      }),
+      
+      updateComment: (id, updates) => set((state) => {
+        const index = state.comments.findIndex(c => c.id === id);
+        if (index !== -1) {
+          state.comments[index] = {
+            ...state.comments[index],
+            ...updates,
+            updatedAt: new Date(),
+          };
+        }
+      }),
+      
+      deleteComment: (id) => set((state) => {
+        state.comments = state.comments.filter(c => c.id !== id);
+      }),
+      
+      // Activity actions
+      addActivity: (activityData) => set((state) => {
+        const activity: Activity = {
+          ...activityData,
+          id: generateId(),
+          createdAt: new Date(),
+        };
+        state.activities.push(activity);
+      }),
+      
+      // Attachment actions
+      addAttachment: (attachmentData) => set((state) => {
+        const attachment: Attachment = {
+          ...attachmentData,
+          id: generateId(),
+          uploadedAt: new Date(),
+        };
+        state.attachments.push(attachment);
+        
+        // Add attachment activity
+        const activity: Activity = {
+          id: generateId(),
+          type: 'attachment_added',
+          description: `прикрепил файл ${attachment.name}`,
+          taskId: attachment.taskId,
+          userId: attachment.uploadedBy,
+          createdAt: new Date(),
+        };
+        state.activities.push(activity);
+      }),
+      
+      deleteAttachment: (id) => set((state) => {
+        state.attachments = state.attachments.filter(a => a.id !== id);
+      }),
+      
+      // Time entry actions
+      addTimeEntry: (timeEntryData) => set((state) => {
+        const timeEntry: TimeEntry = {
+          ...timeEntryData,
+          id: generateId(),
+          createdAt: new Date(),
+        };
+        state.timeEntries.push(timeEntry);
+        
+        // Update task logged hours
+        const taskIndex = state.tasks.findIndex(t => t.id === timeEntry.taskId);
+        if (taskIndex !== -1) {
+          const currentHours = state.tasks[taskIndex].loggedHours || 0;
+          state.tasks[taskIndex].loggedHours = currentHours + timeEntry.hours;
+          state.tasks[taskIndex].updatedAt = new Date();
+        }
+      }),
+      
+      deleteTimeEntry: (id) => set((state) => {
+        const timeEntry = state.timeEntries.find(te => te.id === id);
+        if (timeEntry) {
+          // Update task logged hours
+          const taskIndex = state.tasks.findIndex(t => t.id === timeEntry.taskId);
+          if (taskIndex !== -1) {
+            const currentHours = state.tasks[taskIndex].loggedHours || 0;
+            state.tasks[taskIndex].loggedHours = Math.max(0, currentHours - timeEntry.hours);
+            state.tasks[taskIndex].updatedAt = new Date();
+          }
+        }
+        state.timeEntries = state.timeEntries.filter(te => te.id !== id);
       }),
       
       // UI actions

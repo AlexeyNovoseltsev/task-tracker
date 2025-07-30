@@ -50,9 +50,9 @@ export function AnalyticsPage() {
   if (!selectedProjectId) {
     return (
       <div className="p-6">
-        <h1 className="text-3xl font-bold mb-6">Analytics & Reports</h1>
+        <h1 className="text-3xl font-bold mb-6">Аналитика и отчеты</h1>
         <div className="text-center text-muted-foreground">
-          Please select a project to view analytics.
+          Выберите проект для просмотра аналитики.
         </div>
       </div>
     );
@@ -60,17 +60,17 @@ export function AnalyticsPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <h1 className="text-3xl font-bold">Analytics & Reports</h1>
+      <h1 className="text-3xl font-bold">Аналитика и отчеты</h1>
 
       {/* Key Metrics */}
       <div className="grid grid-cols-4 gap-6">
         <div className="bg-card p-6 rounded-lg border">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Completion Rate</p>
+              <p className="text-sm font-medium text-muted-foreground">Процент выполнения</p>
               <p className="text-3xl font-bold text-primary">{completionRate}%</p>
               <p className="text-xs text-muted-foreground mt-1">
-                {tasksByStatus.done} of {projectTasks.length} tasks
+                {tasksByStatus.done} из {projectTasks.length} задач
               </p>
             </div>
             <Target className="h-8 w-8 text-muted-foreground" />
@@ -83,7 +83,7 @@ export function AnalyticsPage() {
               <p className="text-sm font-medium text-muted-foreground">Story Points</p>
               <p className="text-3xl font-bold text-primary">{completedStoryPoints}/{totalStoryPoints}</p>
               <p className="text-xs text-muted-foreground mt-1">
-                {totalStoryPoints > 0 ? Math.round((completedStoryPoints / totalStoryPoints) * 100) : 0}% completed
+                {totalStoryPoints > 0 ? Math.round((completedStoryPoints / totalStoryPoints) * 100) : 0}% выполнено
               </p>
             </div>
             <TrendingUp className="h-8 w-8 text-muted-foreground" />
@@ -93,10 +93,10 @@ export function AnalyticsPage() {
         <div className="bg-card p-6 rounded-lg border">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Team Velocity</p>
+              <p className="text-sm font-medium text-muted-foreground">Скорость команды</p>
               <p className="text-3xl font-bold text-primary">{velocity}</p>
               <p className="text-xs text-muted-foreground mt-1">
-                pts/sprint average
+                оч./спринт в среднем
               </p>
             </div>
             <Users className="h-8 w-8 text-muted-foreground" />
@@ -106,10 +106,10 @@ export function AnalyticsPage() {
         <div className="bg-card p-6 rounded-lg border">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Active Sprints</p>
+              <p className="text-sm font-medium text-muted-foreground">Активные спринты</p>
               <p className="text-3xl font-bold text-primary">{activeSprints.length}</p>
               <p className="text-xs text-muted-foreground mt-1">
-                {projectSprints.length} total sprints
+                {projectSprints.length} всего спринтов
               </p>
             </div>
             <Clock className="h-8 w-8 text-muted-foreground" />
@@ -120,7 +120,7 @@ export function AnalyticsPage() {
       {/* Task Status Distribution */}
       <div className="grid grid-cols-2 gap-6">
         <div className="bg-card p-6 rounded-lg border">
-          <h3 className="text-lg font-semibold mb-4">Task Status Distribution</h3>
+          <h3 className="text-lg font-semibold mb-4">Распределение задач по статусам</h3>
           <div className="space-y-3">
             {Object.entries(tasksByStatus).map(([status, count]) => {
               const percentage = projectTasks.length > 0 ? (count / projectTasks.length) * 100 : 0;
@@ -135,8 +135,11 @@ export function AnalyticsPage() {
                 <div key={status} className="flex items-center space-x-3">
                   <div className="flex items-center space-x-2 min-w-[100px]">
                     <div className={cn("w-3 h-3 rounded-full", colors[status as keyof typeof colors])}></div>
-                    <span className="text-sm font-medium capitalize">
-                      {status === "inProgress" ? "In Progress" : status === "inReview" ? "In Review" : status}
+                    <span className="text-sm font-medium">
+                      {status === "todo" ? "К выполнению" : 
+                       status === "inProgress" ? "В работе" : 
+                       status === "inReview" ? "На проверке" : 
+                       status === "done" ? "Готово" : status}
                     </span>
                   </div>
                   <div className="flex-1">
@@ -160,7 +163,7 @@ export function AnalyticsPage() {
 
         {/* Priority Distribution */}
         <div className="bg-card p-6 rounded-lg border">
-          <h3 className="text-lg font-semibold mb-4">Priority Distribution</h3>
+          <h3 className="text-lg font-semibold mb-4">Распределение по приоритетам</h3>
           <div className="space-y-3">
             {Object.entries(tasksByPriority).map(([priority, count]) => {
               const percentage = projectTasks.length > 0 ? (count / projectTasks.length) * 100 : 0;
@@ -174,7 +177,11 @@ export function AnalyticsPage() {
                 <div key={priority} className="flex items-center space-x-3">
                   <div className="flex items-center space-x-2 min-w-[100px]">
                     <div className={cn("w-3 h-3 rounded-full", colors[priority as keyof typeof colors])}></div>
-                    <span className="text-sm font-medium capitalize">{priority}</span>
+                    <span className="text-sm font-medium">
+                      {priority === "high" ? "Высокий" : 
+                       priority === "medium" ? "Средний" : 
+                       priority === "low" ? "Низкий" : priority}
+                    </span>
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
@@ -198,56 +205,56 @@ export function AnalyticsPage() {
 
       {/* Sprint Overview */}
       <div className="bg-card p-6 rounded-lg border">
-        <h3 className="text-lg font-semibold mb-4">Sprint Overview</h3>
+        <h3 className="text-lg font-semibold mb-4">Обзор спринтов</h3>
         <div className="grid grid-cols-3 gap-6">
           <div className="text-center">
             <div className="text-2xl font-bold text-blue-500 mb-1">
               {projectSprints.filter(s => s.status === "planned").length}
             </div>
-            <div className="text-sm text-muted-foreground">Planned Sprints</div>
+            <div className="text-sm text-muted-foreground">Запланированные</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-green-500 mb-1">
               {activeSprints.length}
             </div>
-            <div className="text-sm text-muted-foreground">Active Sprints</div>
+            <div className="text-sm text-muted-foreground">Активные</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-gray-500 mb-1">
               {completedSprints.length}
             </div>
-            <div className="text-sm text-muted-foreground">Completed Sprints</div>
+            <div className="text-sm text-muted-foreground">Завершенные</div>
           </div>
         </div>
       </div>
 
       {/* Project Insights */}
       <div className="bg-card p-6 rounded-lg border">
-        <h3 className="text-lg font-semibold mb-4">Project Insights</h3>
+        <h3 className="text-lg font-semibold mb-4">Аналитические выводы</h3>
         <div className="grid grid-cols-2 gap-6">
           <div>
-            <h4 className="font-medium mb-2">📊 Progress Summary</h4>
+            <h4 className="font-medium mb-2">📊 Сводка по прогрессу</h4>
             <ul className="text-sm text-muted-foreground space-y-1">
-              <li>• {completionRate}% of tasks completed</li>
-              <li>• {tasksByPriority.high} high-priority items remaining</li>
-              <li>• Average velocity: {velocity} story points per sprint</li>
-              <li>• {activeSprints.length} sprint(s) currently active</li>
+              <li>• {completionRate}% задач завершено</li>
+              <li>• {tasksByPriority.high} задач высокого приоритета осталось</li>
+              <li>• Средняя скорость: {velocity} очков за спринт</li>
+              <li>• {activeSprints.length} спринт(ов) сейчас активно</li>
             </ul>
           </div>
           <div>
-            <h4 className="font-medium mb-2">🎯 Recommendations</h4>
+            <h4 className="font-medium mb-2">🎯 Рекомендации</h4>
             <ul className="text-sm text-muted-foreground space-y-1">
               {tasksByPriority.high > 5 && (
-                <li>• Consider prioritizing high-priority tasks</li>
+                <li>• Рассмотрите приоритизацию задач высокого приоритета</li>
               )}
               {completionRate < 50 && (
-                <li>• Focus on completing in-progress tasks</li>
+                <li>• Сосредоточьтесь на завершении задач в работе</li>
               )}
               {activeSprints.length === 0 && projectSprints.length > 0 && (
-                <li>• Start a new sprint to maintain momentum</li>
+                <li>• Запустите новый спринт для поддержания темпа</li>
               )}
               {velocity === 0 && (
-                <li>• Complete a sprint to establish velocity baseline</li>
+                <li>• Завершите спринт для определения базовой скорости</li>
               )}
             </ul>
           </div>

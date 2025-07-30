@@ -108,7 +108,7 @@ export function ProjectModal({ isOpen, onClose, projectId }: ProjectModalProps) 
 
       if (projectId) {
         updateProject(projectId, projectData);
-        success("✅ Project updated successfully!");
+        success("✅ Проект успешно обновлен!");
       } else {
         addProject(projectData);
         // Auto-select the new project
@@ -118,12 +118,12 @@ export function ProjectModal({ isOpen, onClose, projectId }: ProjectModalProps) 
             setSelectedProject(newProject.id);
           }
         }, 100);
-        success("🎉 Project created successfully!");
+        success("🎉 Проект успешно создан!");
       }
       
       onClose();
     } catch (err) {
-      error("Failed to save project. Please try again.");
+      error("Не удалось сохранить проект. Попробуйте еще раз.");
     }
   };
 
@@ -153,7 +153,7 @@ export function ProjectModal({ isOpen, onClose, projectId }: ProjectModalProps) 
               <Folder className="h-3 w-3 text-white" />
             </div>
             <h2 className="text-xl font-semibold">
-              {projectId ? "Edit Project" : "Create New Project"}
+              {projectId ? "Редактировать проект" : "Создать новый проект"}
             </h2>
           </div>
           <Button variant="ghost" size="sm" onClick={onClose}>
@@ -289,18 +289,18 @@ export function ProjectModal({ isOpen, onClose, projectId }: ProjectModalProps) 
           {/* Actions */}
           <div className="flex justify-between pt-4">
             <div className="text-xs text-muted-foreground">
-              💡 Tip: Use Ctrl+Enter to save quickly
+              💡 Совет: используйте Ctrl+Enter для быстрого сохранения
             </div>
             <div className="flex space-x-2">
               <Button type="button" variant="outline" onClick={onClose}>
-                Cancel
+                Отмена
               </Button>
               <Button 
                 type="submit" 
                 disabled={isSubmitting}
                 className="min-w-[120px]"
               >
-                {isSubmitting ? "Saving..." : (projectId ? "Update Project" : "Create Project")}
+                {isSubmitting ? "Сохранение..." : (projectId ? "Обновить проект" : "Создать проект")}
               </Button>
             </div>
           </div>

@@ -146,4 +146,40 @@
 /* Custom focus styles */
 .focus-ring {
   @apply focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
+}
+
+/* Russian localization support */
+html {
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  -ms-hyphens: auto;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Improved text handling for Cyrillic */
+body {
+  font-feature-settings: "kern" 1, "liga" 1;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Better word breaking for long Russian words */
+.break-words-russian {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  -ms-hyphens: auto;
+  /* Avoid breaking words aggressively */
+  word-break: normal;
+}
+
+/* For text that should never break awkwardly */
+.no-break {
+  word-break: keep-all;
+  hyphens: none;
+  -webkit-hyphens: none;
+  -ms-hyphens: none;
 } 

@@ -45,6 +45,11 @@ export interface Task {
   sprintId?: string;
   labels: string[];
   dueDate?: Date;
+  estimatedHours?: number;
+  loggedHours?: number;
+  watchers: string[]; // user IDs
+  attachments: Attachment[];
+  linkedTasks: TaskLink[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -73,9 +78,41 @@ export interface Comment {
 
 export interface Activity {
   id: string;
-  type: 'created' | 'updated' | 'commented' | 'assigned' | 'status_changed';
+  type: 'created' | 'updated' | 'commented' | 'assigned' | 'status_changed' | 'priority_changed' | 'due_date_changed' | 'attachment_added' | 'link_added' | 'watcher_added';
   description: string;
   taskId?: string;
+  projectId?: string;
   userId: string;
+  metadata?: Record<string, any>; // for storing additional context
+  createdAt: Date;
+}
+
+export interface Attachment {
+  id: string;
+  name: string;
+  size: number;
+  type: string; // MIME type
+  url: string;
+  taskId: string;
+  uploadedBy: string;
+  uploadedAt: Date;
+}
+
+export interface TaskLink {
+  id: string;
+  sourceTaskId: string;
+  targetTaskId: string;
+  relationship: 'blocks' | 'blocked_by' | 'relates_to' | 'duplicates' | 'subtask_of';
+  createdBy: string;
+  createdAt: Date;
+}
+
+export interface TimeEntry {
+  id: string;
+  taskId: string;
+  userId: string;
+  description?: string;
+  hours: number;
+  date: Date;
   createdAt: Date;
 } 

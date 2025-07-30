@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { useAppStore } from "@/store";
+import { Task } from "@/types";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Plus, Edit } from "lucide-react";
 import { TaskModal } from "@/components/task/TaskModal";
+import { TaskDetailModal } from "@/components/task/TaskDetailModal";
+import { TaskCard } from "@/components/task/TaskCard";
 
 type Status = "todo" | "in-progress" | "in-review" | "done";
 
@@ -20,6 +23,8 @@ export function KanbanPage() {
   const [draggedOverColumn, setDraggedOverColumn] = useState<Status | null>(null);
   const [taskModalOpen, setTaskModalOpen] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<string | undefined>();
+  const [taskDetailModalOpen, setTaskDetailModalOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   const projectTasks = selectedProjectId 
     ? tasks.filter(task => task.projectId === selectedProjectId)
@@ -103,6 +108,16 @@ export function KanbanPage() {
     setEditingTaskId(undefined);
   };
 
+  const handleTaskClick = (task: Task) => {
+    setSelectedTask(task);
+    setTaskDetailModalOpen(true);
+  };
+
+  const closeTaskDetailModal = () => {
+    setTaskDetailModalOpen(false);
+    setSelectedTask(null);
+  };
+
   if (!selectedProjectId) {
     return (
       <div className="p-6">
@@ -166,65 +181,14 @@ export function KanbanPage() {
                     draggable
                     onDragStart={() => handleDragStart(task.id)}
                     onDragEnd={handleDragEnd}
-                    className={cn(
-                      "bg-white dark:bg-gray-900 p-4 rounded-lg border-l-4 shadow-sm cursor-move group hover-lift",
-                      "hover:shadow-md transition-all duration-200 animate-slideIn",
-                      getPriorityColor(task.priority),
-                      draggedTask === task.id && "opacity-50 rotate-2 scale-105 z-50"
-                    )}
                   >
-                    <div className="flex items-start justify-between mb-2">
-                      <h4 className="font-medium text-sm line-clamp-2">{task.title}</h4>
-                      <div className="flex items-center space-x-1">
-                        <span className="text-lg">{getTypeIcon(task.type)}</span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openEditModal(task.id);
-                          }}
-                          className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <Edit className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    {task.description && (
-                      <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
-                        {task.description}
-                      </p>
-                    )}
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        {task.labels && task.labels.length > 0 && (
-                          <div className="flex space-x-1">
-                            {task.labels.slice(0, 2).map((label) => (
-                              <span
-                                key={label}
-                                className="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded"
-                              >
-                                {label}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      
-                      {task.storyPoints && (
-                        <div className="text-xs font-medium bg-primary text-primary-foreground px-2 py-1 rounded">
-                          {task.storyPoints}
-                        </div>
-                      )}
-                    </div>
-
-                    {task.dueDate && (
-                      <div className="mt-2 text-xs text-muted-foreground">
-                        📅 {new Date(task.dueDate).toLocaleDateString()}
-                      </div>
-                    )}
+                    <TaskCard
+                      task={task}
+                      onClick={() => handleTaskClick(task)}
+                      onEdit={() => openEditModal(task.id)}
+                      isDragging={draggedTask === task.id}
+                      compact={true}
+                    />
                   </div>
                 ))}
 
@@ -244,6 +208,13 @@ export function KanbanPage() {
         isOpen={taskModalOpen}
         onClose={closeModal}
         taskId={editingTaskId}
+      />
+
+      {/* Task Detail Modal */}
+      <TaskDetailModal
+        task={selectedTask}
+        isOpen={taskDetailModalOpen}
+        onClose={closeTaskDetailModal}
       />
     </div>
   );

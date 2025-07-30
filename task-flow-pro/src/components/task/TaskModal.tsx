@@ -101,15 +101,15 @@ export function TaskModal({ isOpen, onClose, taskId }: TaskModalProps) {
 
       if (taskId) {
         updateTask(taskId, taskData);
-        success("✅ Task updated successfully!");
+        success("✅ Задача успешно обновлена!");
       } else {
         addTask(taskData);
-        success("🎉 Task created successfully!");
+        success("🎉 Задача успешно создана!");
       }
       
       onClose();
     } catch (err) {
-      error("Failed to save task. Please try again.");
+      error("Не удалось сохранить задачу. Попробуйте еще раз.");
     }
   };
 
@@ -148,7 +148,7 @@ export function TaskModal({ isOpen, onClose, taskId }: TaskModalProps) {
           <div className="flex items-center space-x-2">
             <span className="text-2xl">{typeIcons[watch("type") || "story"]}</span>
             <h2 className="text-xl font-semibold">
-              {taskId ? "Edit Task" : "Create New Task"}
+              {taskId ? "Редактировать задачу" : "Создать новую задачу"}
             </h2>
           </div>
           <Button variant="ghost" size="sm" onClick={onClose}>
@@ -169,16 +169,16 @@ export function TaskModal({ isOpen, onClose, taskId }: TaskModalProps) {
           {/* Title */}
           <div>
             <label className="block text-sm font-medium mb-2">
-              Title <span className="text-red-500">*</span>
+              Название <span className="text-red-500">*</span>
             </label>
             <input
               {...register("title", { 
-                required: "Title is required",
-                minLength: { value: 3, message: "Title must be at least 3 characters" },
-                maxLength: { value: 100, message: "Title must be less than 100 characters" }
+                required: "Название обязательно",
+                minLength: { value: 3, message: "Название должно содержать минимум 3 символа" },
+                maxLength: { value: 100, message: "Название не может превышать 100 символов" }
               })}
               className="w-full p-3 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="Enter task title..."
+              placeholder="Введите название задачи..."
             />
             {errors.title && (
               <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>
@@ -187,50 +187,50 @@ export function TaskModal({ isOpen, onClose, taskId }: TaskModalProps) {
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium mb-2">Description</label>
+            <label className="block text-sm font-medium mb-2">Описание</label>
             <textarea
               {...register("description")}
               className="w-full p-3 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring h-24 resize-none"
-              placeholder="Describe the task in detail..."
+              placeholder="Опишите задачу подробно..."
             />
           </div>
 
           {/* Type, Priority, Status */}
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Type</label>
+              <label className="block text-sm font-medium mb-2">Тип</label>
               <select
-                {...register("type", { required: "Type is required" })}
+                {...register("type", { required: "Тип обязателен" })}
                 className="w-full p-3 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
               >
-                <option value="story">📖 User Story</option>
-                <option value="task">✅ Task</option>
-                <option value="bug">🐛 Bug</option>
+                <option value="story">📖 Пользовательская история</option>
+                <option value="task">✅ Задача</option>
+                <option value="bug">🐛 Ошибка</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Priority</label>
+              <label className="block text-sm font-medium mb-2">Приоритет</label>
               <select
-                {...register("priority", { required: "Priority is required" })}
+                {...register("priority", { required: "Приоритет обязателен" })}
                 className="w-full p-3 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
               >
-                <option value="low">🟢 Low</option>
-                <option value="medium">🟡 Medium</option>
-                <option value="high">🔴 High</option>
+                <option value="low">🟢 Низкий</option>
+                <option value="medium">🟡 Средний</option>
+                <option value="high">🔴 Высокий</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Status</label>
+              <label className="block text-sm font-medium mb-2">Статус</label>
               <select
-                {...register("status", { required: "Status is required" })}
+                {...register("status", { required: "Статус обязателен" })}
                 className="w-full p-3 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
               >
-                <option value="todo">📝 To Do</option>
-                <option value="in-progress">⚡ In Progress</option>
-                <option value="in-review">👀 In Review</option>
-                <option value="done">✅ Done</option>
+                <option value="todo">📝 К выполнению</option>
+                <option value="in-progress">⚡ В работе</option>
+                <option value="in-review">👀 На проверке</option>
+                <option value="done">✅ Готово</option>
               </select>
             </div>
           </div>
@@ -240,29 +240,29 @@ export function TaskModal({ isOpen, onClose, taskId }: TaskModalProps) {
             <div>
               <label className="block text-sm font-medium mb-2 flex items-center space-x-1">
                 <span>Story Points</span>
-                <span className="text-xs text-muted-foreground">(Fibonacci: 1,2,3,5,8,13,21)</span>
+                <span className="text-xs text-muted-foreground">(Фибоначчи: 1,2,3,5,8,13,21)</span>
               </label>
               <select
                 {...register("storyPoints", { 
                   valueAsNumber: true,
-                  min: { value: 1, message: "Must be at least 1" }
+                  min: { value: 1, message: "Должно быть минимум 1" }
                 })}
                 className="w-full p-3 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
               >
-                <option value={1}>1 - Very Small</option>
-                <option value={2}>2 - Small</option>
-                <option value={3}>3 - Medium</option>
-                <option value={5}>5 - Large</option>
-                <option value={8}>8 - Very Large</option>
-                <option value={13}>13 - Huge</option>
-                <option value={21}>21 - Epic</option>
+                <option value={1}>1 - Очень маленькая</option>
+                <option value={2}>2 - Маленькая</option>
+                <option value={3}>3 - Средняя</option>
+                <option value={5}>5 - Большая</option>
+                <option value={8}>8 - Очень большая</option>
+                <option value={13}>13 - Огромная</option>
+                <option value={21}>21 - Эпик</option>
               </select>
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-2 flex items-center space-x-1">
                 <User className="h-4 w-4" />
-                <span>Assignee</span>
+                <span>Исполнитель</span>
               </label>
               <select
                 {...register("assigneeId")}
@@ -282,7 +282,7 @@ export function TaskModal({ isOpen, onClose, taskId }: TaskModalProps) {
             <div>
               <label className="block text-sm font-medium mb-2 flex items-center space-x-1">
                 <Calendar className="h-4 w-4" />
-                <span>Due Date</span>
+                <span>Дата выполнения</span>
               </label>
               <input
                 type="date"
@@ -295,21 +295,21 @@ export function TaskModal({ isOpen, onClose, taskId }: TaskModalProps) {
             <div>
               <label className="block text-sm font-medium mb-2 flex items-center space-x-1">
                 <Tag className="h-4 w-4" />
-                <span>Labels</span>
+                <span>Метки</span>
               </label>
               <input
                 {...register("labels")}
                 className="w-full p-3 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
-                placeholder="frontend, backend, urgent"
+                placeholder="фронтенд, бэкенд, срочно"
               />
-              <p className="text-xs text-muted-foreground mt-1">Comma-separated labels</p>
+              <p className="text-xs text-muted-foreground mt-1">Метки через запятую</p>
             </div>
           </div>
 
           {/* Preview */}
           {watch("title") && (
             <div className="p-4 bg-muted rounded-lg">
-              <h4 className="font-medium mb-2">Preview:</h4>
+              <h4 className="font-medium mb-2">Предпросмотр:</h4>
               <div className="flex items-start space-x-3">
                 <span className="text-lg">{typeIcons[watch("type") || "story"]}</span>
                 <div className="flex-1">
@@ -348,18 +348,18 @@ export function TaskModal({ isOpen, onClose, taskId }: TaskModalProps) {
           {/* Actions */}
           <div className="flex justify-between pt-4">
             <div className="text-xs text-muted-foreground">
-              💡 Tip: Use Ctrl+Enter to save quickly
+              💡 Совет: Используйте Ctrl+Enter для быстрого сохранения
             </div>
             <div className="flex space-x-2">
               <Button type="button" variant="outline" onClick={onClose}>
-                Cancel
+                Отмена
               </Button>
               <Button 
                 type="submit" 
                 disabled={isSubmitting || !selectedProjectId}
                 className="min-w-[100px]"
               >
-                {isSubmitting ? "Saving..." : (taskId ? "Update Task" : "Create Task")}
+                {isSubmitting ? "Сохранение..." : (taskId ? "Обновить задачу" : "Создать задачу")}
               </Button>
             </div>
           </div>

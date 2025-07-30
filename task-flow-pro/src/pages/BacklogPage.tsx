@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { useAppStore } from "@/store";
+import { Task } from "@/types";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Plus, Search, Filter, Edit, Trash } from "lucide-react";
 import { TaskModal } from "@/components/task/TaskModal";
+import { TaskDetailModal } from "@/components/task/TaskDetailModal";
+import { TaskCard } from "@/components/task/TaskCard";
 
 export function BacklogPage() {
   const { tasks, selectedProjectId, deleteTask } = useAppStore();
@@ -11,6 +14,8 @@ export function BacklogPage() {
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [taskModalOpen, setTaskModalOpen] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<string | undefined>();
+  const [taskDetailModalOpen, setTaskDetailModalOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   const projectTasks = selectedProjectId 
     ? tasks.filter(task => task.projectId === selectedProjectId)
@@ -60,6 +65,16 @@ export function BacklogPage() {
   const closeModal = () => {
     setTaskModalOpen(false);
     setEditingTaskId(undefined);
+  };
+
+  const handleTaskClick = (task: Task) => {
+    setSelectedTask(task);
+    setTaskDetailModalOpen(true);
+  };
+
+  const closeTaskDetailModal = () => {
+    setTaskDetailModalOpen(false);
+    setSelectedTask(null);
   };
 
   const handleDeleteTask = (taskId: string, taskTitle: string) => {
@@ -119,19 +134,19 @@ export function BacklogPage() {
 
       {/* Priority Guide */}
       <div className="mb-6 bg-card p-4 rounded-lg border">
-        <h3 className="font-semibold mb-2">Priority Guide</h3>
+                    <h3 className="font-semibold mb-2">Руководство по приоритетам</h3>
         <div className="flex space-x-4 text-sm">
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 bg-red-500 rounded"></div>
-            <span>High - Critical issues, blocking features</span>
+            <span>Высокий - критичные проблемы, блокирующие функции</span>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 bg-yellow-500 rounded"></div>
-            <span>Medium - Important features, planned work</span>
+            <span>Средний - важные функции, запланированная работа</span>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 bg-green-500 rounded"></div>
-            <span>Low - Nice to have, future enhancements</span>
+            <span>Низкий - желательные функции, будущие улучшения</span>
           </div>
         </div>
       </div>
@@ -144,92 +159,18 @@ export function BacklogPage() {
               ? "Нет задач в бэклоге. Создайте первую задачу!" 
               : "Нет задач, соответствующих фильтрам."}
           </div>
-                 ) : (
-           filteredTasks.map((task, index) => (
-             <div
-               key={task.id}
-               className="bg-card p-4 rounded-lg border hover:shadow-md transition-all duration-200 group hover-lift animate-slideIn"
-             >
-               <div className="flex items-start justify-between">
-                 <div className="flex-1">
-                   <div className="flex items-center space-x-3 mb-2">
-                     <span className="text-sm font-mono text-muted-foreground">
-                       #{index + 1}
-                     </span>
-                     <span className="text-lg">{getTypeIcon(task.type)}</span>
-                     <h3 className="font-semibold">{task.title}</h3>
-                   </div>
-                   
-                   {task.description && (
-                     <p className="text-muted-foreground mb-3 text-sm">
-                       {task.description}
-                     </p>
-                   )}
-
-                   <div className="flex items-center space-x-4">
-                     <span className={cn(
-                       "px-2 py-1 rounded-full text-xs font-medium uppercase",
-                       getPriorityColor(task.priority)
-                     )}>
-                       {task.priority}
-                     </span>
-
-                     <span className="text-xs text-muted-foreground uppercase">
-                       {task.type}
-                     </span>
-
-                     {task.labels && task.labels.length > 0 && (
-                       <div className="flex space-x-1">
-                         {task.labels.map((label) => (
-                           <span
-                             key={label}
-                             className="text-xs bg-secondary px-2 py-1 rounded"
-                           >
-                             {label}
-                           </span>
-                         ))}
-                       </div>
-                     )}
-                   </div>
-                 </div>
-
-                 <div className="flex items-center space-x-3">
-                   {task.storyPoints && (
-                     <div className="text-sm font-medium bg-primary text-primary-foreground px-3 py-1 rounded">
-                       {task.storyPoints} pts
-                     </div>
-                   )}
-                   
-                   {task.dueDate && (
-                     <div className="text-xs text-muted-foreground">
-                       📅 {new Date(task.dueDate).toLocaleDateString()}
-                     </div>
-                   )}
-
-                   {/* Action Buttons */}
-                   <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                     <Button
-                       variant="ghost"
-                       size="sm"
-                       onClick={() => openEditModal(task.id)}
-                       className="h-8 w-8 p-0"
-                     >
-                       <Edit className="h-3 w-3" />
-                     </Button>
-                     <Button
-                       variant="ghost"
-                       size="sm"
-                       onClick={() => handleDeleteTask(task.id, task.title)}
-                       className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
-                     >
-                       <Trash className="h-3 w-3" />
-                     </Button>
-                   </div>
-                 </div>
-               </div>
-             </div>
-           ))
-         )}
+        ) : (
+          filteredTasks.map((task) => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              onClick={() => handleTaskClick(task)}
+              onEdit={() => openEditModal(task.id)}
+              onDelete={() => handleDeleteTask(task.id, task.title)}
+              showProject={!selectedProjectId}
+            />
+          ))
+        )}
       </div>
 
       {/* Statistics */}
@@ -263,6 +204,13 @@ export function BacklogPage() {
         isOpen={taskModalOpen}
         onClose={closeModal}
         taskId={editingTaskId}
+      />
+
+      {/* Task Detail Modal */}
+      <TaskDetailModal
+        task={selectedTask}
+        isOpen={taskDetailModalOpen}
+        onClose={closeTaskDetailModal}
       />
     </div>
   );
