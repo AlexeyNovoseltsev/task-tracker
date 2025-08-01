@@ -1,6 +1,13 @@
 import { Task } from '@/types';
 import { cn } from '@/lib/utils';
 import { useAppStore, useShowStoryPoints } from '@/store';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
+import { api } from '@/lib/api';
+import { useToast } from '@/hooks/useToast';
+import { useState, useEffect } from 'react';
 import { 
   Calendar, 
   Clock, 
@@ -13,7 +20,12 @@ import {
   CheckSquare,
   AlertCircle,
   Eye,
-  Tag
+  Tag,
+  ArrowUpRight,
+  CalendarDays,
+  UserCheck,
+  Zap,
+  Star
 } from 'lucide-react';
 
 interface TaskCardProps {
@@ -39,17 +51,66 @@ export function TaskCard({
 }: TaskCardProps) {
   const { users, projects } = useAppStore();
   const showStoryPoints = useShowStoryPoints();
+  const { success, error } = useToast();
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [favoriteId, setFavoriteId] = useState<string | null>(null);
+  const [isLoadingFavorite, setIsLoadingFavorite] = useState(false);
   
   const assignee = users.find(u => u.id === task.assigneeId);
   const project = projects.find(p => p.id === task.projectId);
 
+  // Check if task is favorited on mount
+  useEffect(() => {
+    checkFavoriteStatus();
+  }, [task.id]);
+
+  const checkFavoriteStatus = async () => {
+    try {
+      const response = await api.checkIfFavorited('task', task.id);
+      if (response.success) {
+        setIsFavorited(response.data.is_favorited);
+        setFavoriteId(response.data.favorite?.id || null);
+      }
+    } catch (err) {
+      // Silent fail for favorite check
+    }
+  };
+
+  const handleToggleFavorite = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsLoadingFavorite(true);
+    
+    try {
+      if (isFavorited && favoriteId) {
+        await api.removeFromFavorites(favoriteId);
+        setIsFavorited(false);
+        setFavoriteId(null);
+        success('Удалено из избранного', 'Задача удалена из избранного');
+      } else {
+        const response = await api.addToFavorites({
+          itemType: 'task',
+          itemId: task.id
+        });
+        if (response.success) {
+          setIsFavorited(true);
+          setFavoriteId(response.data.id);
+          success('Добавлено в избранное', 'Задача добавлена в избранное');
+        }
+      }
+    } catch (err) {
+      error('Ошибка', 'Не удалось обновить избранное');
+    } finally {
+      setIsLoadingFavorite(false);
+    }
+  };
+
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'urgent': return 'border-red-500 bg-red-50 dark:bg-red-900/10';
-      case 'high': return 'border-orange-500 bg-orange-50 dark:bg-orange-900/10';
-      case 'medium': return 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/10';
-      case 'low': return 'border-green-500 bg-green-50 dark:bg-green-900/10';
-      default: return 'border-gray-300 bg-gray-50 dark:bg-gray-800';
+      case 'urgent': return 'border-red-500/20 bg-red-50/50 dark:bg-red-900/10';
+      case 'high': return 'border-orange-500/20 bg-orange-50/50 dark:bg-orange-900/10';
+      case 'medium': return 'border-yellow-500/20 bg-yellow-50/50 dark:bg-yellow-900/10';
+      case 'low': return 'border-green-500/20 bg-green-50/50 dark:bg-green-900/10';
+      default: return 'border-border bg-muted/30';
     }
   };
 
@@ -59,7 +120,7 @@ export function TaskCard({
       case 'high': return <Flag className="h-3 w-3 text-orange-500" />;
       case 'medium': return <Flag className="h-3 w-3 text-yellow-500" />;
       case 'low': return <Flag className="h-3 w-3 text-green-500" />;
-      default: return <Flag className="h-3 w-3 text-gray-400" />;
+      default: return <Flag className="h-3 w-3 text-muted-foreground" />;
     }
   };
 
@@ -68,7 +129,17 @@ export function TaskCard({
       case 'bug': return <AlertCircle className="h-3 w-3 text-red-500" />;
       case 'story': return <CheckSquare className="h-3 w-3 text-blue-500" />;
       case 'epic': return <Flag className="h-3 w-3 text-purple-500" />;
-      default: return <CheckSquare className="h-3 w-3 text-gray-500" />;
+      default: return <CheckSquare className="h-3 w-3 text-muted-foreground" />;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'done': return 'bg-green-500';
+      case 'in-progress': return 'bg-blue-500';
+      case 'in-review': return 'bg-yellow-500';
+      case 'todo': return 'bg-gray-400';
+      default: return 'bg-gray-400';
     }
   };
 
@@ -101,7 +172,7 @@ export function TaskCard({
   return (
     <div
       className={cn(
-        "bg-white dark:bg-gray-900 rounded-lg border shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group relative",
+        "bg-card rounded-modern border shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group relative overflow-hidden",
         "border-l-4",
         getPriorityColor(task.priority),
         isDragging && "opacity-50 rotate-2 scale-105",
@@ -110,6 +181,12 @@ export function TaskCard({
       )}
       onClick={onClick}
     >
+      {/* Status indicator */}
+      <div className={cn(
+        "absolute top-3 right-3 w-2 h-2 rounded-full",
+        getStatusColor(task.status)
+      )} />
+
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center space-x-2 flex-1 min-w-0">
@@ -131,12 +208,24 @@ export function TaskCard({
         </div>
         
         <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleToggleFavorite}
+            disabled={isLoadingFavorite}
+            className="p-1 h-6 w-6"
+          >
+            <Star className={cn(
+              "h-3 w-3",
+              isFavorited ? "fill-yellow-400 text-yellow-500" : "text-muted-foreground"
+            )} />
+          </Button>
           <button
             onClick={(e) => {
               e.stopPropagation();
               onEdit?.();
             }}
-            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+            className="p-1 hover:bg-muted rounded-modern transition-colors"
           >
             <MoreVertical className="h-4 w-4" />
           </button>
@@ -145,7 +234,7 @@ export function TaskCard({
 
       {/* Title */}
       <h3 className={cn(
-        "font-medium text-gray-900 dark:text-white group-hover:text-primary transition-colors line-clamp-2 mb-2 break-words hyphens-auto",
+        "font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2 mb-2 break-words",
         compact ? "text-sm" : "text-base"
       )}>
         {task.title}
@@ -153,7 +242,7 @@ export function TaskCard({
 
       {/* Description */}
       {task.description && !compact && (
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2 break-words hyphens-auto">
+        <p className="text-sm text-muted-foreground mb-3 line-clamp-2 break-words">
           {task.description}
         </p>
       )}
@@ -162,17 +251,14 @@ export function TaskCard({
       {task.labels.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-3">
           {task.labels.slice(0, 3).map((label, index) => (
-            <span
-              key={index}
-              className="px-2 py-1 bg-primary/10 text-primary rounded text-xs"
-            >
+            <Badge key={index} variant="subtle" size="sm">
               {label}
-            </span>
+            </Badge>
           ))}
           {task.labels.length > 3 && (
-            <span className="text-xs text-muted-foreground">
+            <Badge variant="outline" size="sm">
               +{task.labels.length - 3}
-            </span>
+            </Badge>
           )}
         </div>
       )}
@@ -186,19 +272,17 @@ export function TaskCard({
               {task.loggedHours || 0}ч / {task.estimatedHours || 0}ч
             </span>
           </div>
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
-            <div 
-              className="bg-primary h-1.5 rounded-full transition-all duration-300"
-              style={{ 
-                width: `${Math.min(100, ((task.loggedHours || 0) / (task.estimatedHours || 1)) * 100)}%` 
-              }}
-            />
-          </div>
+          <Progress 
+            value={Math.min(100, ((task.loggedHours || 0) / (task.estimatedHours || 1)) * 100)}
+            variant="default"
+            size="sm"
+            className="h-1.5"
+          />
         </div>
       )}
 
       {/* Footer */}
-      <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
         <div className="flex items-center space-x-3">
           {/* Due Date */}
           {task.dueDate && (
@@ -207,7 +291,7 @@ export function TaskCard({
               isOverdue && "text-red-500",
               isDueSoon && !isOverdue && "text-orange-500"
             )}>
-              <Calendar className="h-3 w-3" />
+              <CalendarDays className="h-3 w-3" />
               <span>{formatDate(task.dueDate)}</span>
             </div>
           )}
@@ -215,9 +299,9 @@ export function TaskCard({
           {/* Story Points */}
           {showStoryPoints && task.storyPoints && (
             <div className="flex items-center space-x-1">
-              <div className="w-4 h-4 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-bold">
-                {task.storyPoints}
-              </div>
+              <Badge variant="outline" size="sm">
+                {task.storyPoints} pts
+              </Badge>
             </div>
           )}
 
@@ -252,25 +336,23 @@ export function TaskCard({
 
           {/* Assignee */}
           {assignee ? (
-            <div className="w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-medium">
-              {assignee.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-            </div>
+            <Avatar className="w-6 h-6">
+              <AvatarFallback className="text-xs font-medium bg-primary/10 text-primary">
+                {assignee.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+              </AvatarFallback>
+            </Avatar>
           ) : (
-            <div className="w-6 h-6 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
-              <User className="h-3 w-3 text-gray-400" />
-            </div>
+            <Avatar className="w-6 h-6">
+              <AvatarFallback className="text-xs">
+                <User className="h-3 w-3" />
+              </AvatarFallback>
+            </Avatar>
           )}
         </div>
       </div>
 
-      {/* Status indicator */}
-      <div className={cn(
-        "absolute top-2 right-2 w-2 h-2 rounded-full",
-        task.status === 'done' && "bg-green-500",
-        task.status === 'in-progress' && "bg-blue-500",
-        task.status === 'in-review' && "bg-yellow-500",
-        task.status === 'todo' && "bg-gray-400"
-      )} />
+      {/* Hover effect */}
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
     </div>
   );
 }

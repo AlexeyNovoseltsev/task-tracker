@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { useSelectedProject, useAppStore } from "@/store";
 import { useTheme } from "@/hooks/useTheme";
 import { useToast } from "@/hooks/useToast";
-import { Sun, Moon, Computer, ChevronDown, Folder, Check } from "lucide-react";
+import { Sun, Moon, Computer, ChevronDown, Folder, Check, Search, Bell, User } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 
 export function Header() {
@@ -48,43 +48,48 @@ export function Header() {
   const ThemeIcon = getThemeIcon();
 
   return (
-    <header className="h-14 border-b border-border/60 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex h-full items-center justify-between px-4 md:px-6 max-w-7xl mx-auto">
+    <header className="h-20 border-b border-border/60 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="flex h-full items-center justify-between px-8 max-w-7xl mx-auto">
         <div className="flex items-center space-x-4">
-          {/* Project Selector */}
-          <div className="relative" ref={dropdownRef}>
+                     {/* Project Selector */}
+           <div className="relative" ref={dropdownRef} style={{ position: 'relative', zIndex: 999999 }}>
             <button
               onClick={() => setShowProjectDropdown(!showProjectDropdown)}
-              className="flex items-center space-x-2 px-2 md:px-3 py-1.5 rounded-lg border bg-card hover:bg-accent transition-colors text-sm"
+              className="flex items-center space-x-4 px-6 py-3 rounded-modern border bg-card hover:bg-accent transition-all duration-200 text-base font-medium shadow-sm hover:shadow-md"
             >
               {project ? (
                 <>
                   <div 
-                    className="w-4 h-4 rounded-sm" 
+                    className="w-5 h-5 rounded-sm" 
                     style={{ backgroundColor: project.color }}
                   />
-                  <span className="font-medium">{project.name}</span>
-                  <span className="text-muted-foreground text-sm">({project.key})</span>
+                  <div className="flex flex-col items-start">
+                    <span className="font-semibold text-base">{project.name}</span>
+                    <span className="text-sm text-muted-foreground">{project.key}</span>
+                  </div>
                 </>
               ) : (
                 <>
-                  <Folder className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Выберите проект</span>
+                  <Folder className="w-5 h-5 text-muted-foreground" />
+                  <div className="flex flex-col items-start">
+                    <span className="font-medium text-base">Выберите проект</span>
+                    <span className="text-sm text-muted-foreground">Начните работу</span>
+                  </div>
                 </>
               )}
-              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+              <ChevronDown className="w-5 h-5 text-muted-foreground transition-transform duration-200" />
             </button>
 
             {/* Dropdown */}
             {showProjectDropdown && (
-              <div className="absolute top-full left-0 mt-2 w-80 bg-card border rounded-xl shadow-lg z-50 animate-fadeIn">
-                <div className="p-3 border-b">
-                  <h3 className="font-medium text-sm">Проекты</h3>
+              <div className="absolute top-full left-0 mt-2 w-80 bg-card border rounded-modern shadow-lg animate-fadeIn backdrop-blur-sm" style={{ position: 'absolute', zIndex: 999999 }}>
+                <div className="p-4 border-b border-border/30">
+                  <h3 className="font-semibold text-sm mb-1">Проекты</h3>
                   <p className="text-xs text-muted-foreground">Выберите проект для работы</p>
                 </div>
                 <div className="max-h-60 overflow-y-auto">
                   <div 
-                    className={`flex items-center space-x-3 px-3 py-2 hover:bg-accent cursor-pointer transition-colors ${
+                    className={`flex items-center space-x-3 px-4 py-3 hover:bg-accent cursor-pointer transition-colors ${
                       !project ? 'bg-accent' : ''
                     }`}
                     onClick={() => {
@@ -103,7 +108,7 @@ export function Header() {
                   {projects.map((proj) => (
                     <div
                       key={proj.id}
-                      className={`flex items-center space-x-3 px-3 py-2 hover:bg-accent cursor-pointer transition-colors ${
+                      className={`flex items-center space-x-3 px-4 py-3 hover:bg-accent cursor-pointer transition-colors ${
                         project?.id === proj.id ? 'bg-accent' : ''
                       }`}
                       onClick={() => {
@@ -132,20 +137,38 @@ export function Header() {
         </div>
         
         <div className="flex items-center space-x-4">
+          {/* Search */}
+          <Button variant="ghost" size="icon" className="relative">
+            <Search className="h-5 w-5" />
+            <span className="absolute -top-1 -right-1 text-xs bg-muted px-1 rounded text-muted-foreground">
+              ⌘K
+            </span>
+          </Button>
+
+          {/* Notifications */}
+          <Button variant="ghost" size="icon">
+            <Bell className="h-5 w-5" />
+          </Button>
+
+          {/* Theme Toggle */}
           <Button
             variant="ghost"
             size="icon"
             onClick={toggleTheme}
             title={`Switch to ${currentTheme === 'light' ? 'dark' : currentTheme === 'dark' ? 'system' : 'light'} theme`}
           >
-            <ThemeIcon className="h-4 w-4" />
+            <ThemeIcon className="h-5 w-5" />
           </Button>
           
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
-              PM
+          {/* User Profile */}
+          <div className="flex items-center space-x-4 pl-4 border-l border-border/30">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground flex items-center justify-center text-base font-semibold">
+              <User className="h-5 w-5" />
             </div>
-            <span className="text-sm font-medium">Продакт-менеджер</span>
+            <div className="hidden sm:block">
+              <div className="text-base font-medium">Продакт-менеджер</div>
+              <div className="text-sm text-muted-foreground">admin@taskflow.pro</div>
+            </div>
           </div>
         </div>
       </div>

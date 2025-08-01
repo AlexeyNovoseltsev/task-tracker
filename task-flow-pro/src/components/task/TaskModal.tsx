@@ -97,6 +97,9 @@ export function TaskModal({ isOpen, onClose, taskId }: TaskModalProps) {
         reporterId: "user-1",
         labels: data.labels.split(",").map(l => l.trim()).filter(Boolean),
         dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
+        watchers: [],
+        attachments: [],
+        linkedTasks: [],
       };
 
       if (taskId) {

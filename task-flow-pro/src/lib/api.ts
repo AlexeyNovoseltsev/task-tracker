@@ -119,4 +119,20 @@ export const api = {
   
   // Тест базы данных (без авторизации)
   testDatabase: () => apiRequest('/health/database'),
+
+  // Избранное
+  getFavorites: () => apiRequest('/favorites'),
+  addToFavorites: (data: any) => apiRequest('/favorites', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  updateFavorite: (id: string, data: any) => apiRequest(`/favorites/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  }),
+  removeFromFavorites: (id: string) => apiRequest(`/favorites/${id}`, {
+    method: 'DELETE',
+  }),
+  checkIfFavorited: (itemType: string, itemId: string) => 
+    apiRequest(`/favorites/check/${itemType}/${itemId}`),
 };

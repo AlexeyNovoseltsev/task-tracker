@@ -1,10 +1,11 @@
-import React from 'react';
+
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { X, Filter, CheckSquare, Clock, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { X, Filter, CheckSquare, Clock, AlertCircle, CheckCircle2, Activity } from 'lucide-react';
 import { useToast } from '@/hooks/useToast';
 import { useShowStoryPoints } from '@/store';
 import type { Task } from '@/types';
+import { CustomTaskIcon } from '@/components/icons/CustomTaskIcon';
 
 interface TaskListModalProps {
   isOpen: boolean;
@@ -33,6 +34,7 @@ const priorityColors = {
   'low': 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
   'medium': 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300',
   'high': 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300',
+  'urgent': 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300',
 };
 
 export function TaskListModal({ 
@@ -64,10 +66,10 @@ export function TaskListModal({
       <div className="bg-card rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden animate-modalIn">
         {/* Header */}
         <div className="sticky top-0 bg-card/95 backdrop-blur-md border-b px-8 py-6 flex items-center justify-between rounded-t-2xl">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
-              <CheckSquare className="w-6 h-6 text-primary" />
-            </div>
+                     <div className="flex items-center gap-4">
+             <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+               <CustomTaskIcon className="w-6 h-6" />
+             </div>
             <div>
               <h2 className="text-2xl font-bold">{title}</h2>
               {projectName && (
@@ -104,9 +106,9 @@ export function TaskListModal({
 
           {/* Task List */}
           {filteredTasks.length === 0 ? (
-            <div className="text-center py-12">
-              <CheckSquare className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
-              <h3 className="text-lg font-semibold mb-2">Задачи не найдены</h3>
+                         <div className="text-center py-12">
+               <CustomTaskIcon className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+               <h3 className="text-lg font-semibold mb-2">Задачи не найдены</h3>
               <p className="text-muted-foreground">
                 В данном фильтре нет задач для отображения
               </p>
@@ -163,7 +165,7 @@ export function TaskListModal({
                             <div className="text-xs">ОИ</div>
                           </div>
                         )}
-                        <ExternalLink className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <X className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
                       </div>
                     </div>
                   </div>

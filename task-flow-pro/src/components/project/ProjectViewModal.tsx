@@ -39,7 +39,7 @@ export function ProjectViewModal({
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const { success } = useToast();
+  const { success, info } = useToast();
   const { tasks } = useAppStore();
 
   if (!isOpen || !project) return null;

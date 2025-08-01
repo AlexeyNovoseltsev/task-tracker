@@ -115,4 +115,31 @@ export interface TimeEntry {
   hours: number;
   date: Date;
   createdAt: Date;
+}
+
+// Favorites types
+export interface Favorite {
+  id: string;
+  userId: string;
+  itemType: 'project' | 'task' | 'sprint';
+  itemId: string;
+  notes?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface FavoriteWithDetails extends Favorite {
+  project?: Project;
+  task?: Task;
+  sprint?: Sprint;
+}
+
+export interface CreateFavoriteRequest {
+  itemType: 'project' | 'task' | 'sprint';
+  itemId: string;
+  notes?: string;
+}
+
+export interface UpdateFavoriteRequest {
+  notes?: string;
 } 

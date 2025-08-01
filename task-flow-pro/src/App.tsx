@@ -12,6 +12,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 
 // Pages
 import { DashboardPage } from "@/pages/DashboardPage";
+import FavoritesPage from "@/pages/FavoritesPage";
 import { ProjectsPage } from "@/pages/ProjectsPage";
 import { TasksPage } from "@/pages/TasksPage";
 import { BacklogPage } from "@/pages/BacklogPage";
@@ -89,6 +90,7 @@ function App() {
       <Routes>
         <Route path="/" element={<AppLayout />}>
           <Route index element={<DashboardPage />} />
+          <Route path="favorites" element={<FavoritesPage />} />
           <Route path="projects" element={<ProjectsPage />} />
           <Route path="tasks" element={<TasksPage />} />
           <Route path="backlog" element={<BacklogPage />} />

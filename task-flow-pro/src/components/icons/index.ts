@@ -1,0 +1,9 @@
+export { CustomFolderIcon } from './CustomFolderIcon';
+export { CustomTaskIcon } from './CustomTaskIcon';
+export { SprintIcon } from './SprintIcon';
+export { InProgressIcon } from './InProgressIcon';
+export { LogoIcon } from './LogoIcon';
+export { Icon3dFolder } from './Icon3dFolder';
+export { Icon3dClipboard } from './Icon3dClipboard';
+export { Icon3dCalendar } from './Icon3dCalendar';
+export { Icon3dWorkstation } from './Icon3dWorkstation'; 

@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAppStore } from "@/store";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/useToast";
+import { api } from "@/lib/api";
 import { 
   Plus, 
   Search, 
@@ -40,6 +41,39 @@ export function ProjectsPage() {
   const [editingProject, setEditingProject] = useState<string | undefined>();
   const [showViewModal, setShowViewModal] = useState(false);
   const [viewingProject, setViewingProject] = useState<string | undefined>();
+  const [favoritedProjects, setFavoritedProjects] = useState<Set<string>>(new Set());
+
+  // Load favorite status for all projects
+  useEffect(() => {
+    const loadFavoriteStatus = async () => {
+      try {
+        const promises = projects.map(async (project) => {
+          try {
+            const response = await api.checkIfFavorited('project', project.id);
+            return {
+              projectId: project.id,
+              isFavorited: response.success && response.data.is_favorited
+            };
+          } catch (err) {
+            return { projectId: project.id, isFavorited: false };
+          }
+        });
+
+        const results = await Promise.all(promises);
+        const favoritedIds = results
+          .filter(result => result.isFavorited)
+          .map(result => result.projectId);
+        
+        setFavoritedProjects(new Set(favoritedIds));
+      } catch (err) {
+        // Silent fail for favorite loading
+      }
+    };
+
+    if (projects.length > 0) {
+      loadFavoriteStatus();
+    }
+  }, [projects]);
 
   // Filter and sort projects
   const filteredProjects = projects
@@ -87,14 +121,36 @@ export function ProjectsPage() {
     }
   };
 
-  const handleFavoriteToggle = (projectId: string) => {
+  const handleFavoriteToggle = async (projectId: string) => {
     const project = projects.find(p => p.id === projectId);
-    if (project) {
-      updateProject(projectId, { 
-        // Добавим поле favorite в интерфейс, если его нет
-        favorite: !(project as any).favorite 
-      });
-      success((project as any).favorite ? "Удалено из избранного" : "Добавлено в избранное");
+    if (!project) return;
+
+    try {
+      // Проверяем текущий статус избранного
+      const response = await api.checkIfFavorited('project', projectId);
+      const isCurrentlyFavorited = response.success && response.data.is_favorited;
+      const currentFavoriteId = response.data.favorite?.id;
+
+      if (isCurrentlyFavorited && currentFavoriteId) {
+        // Удаляем из избранного
+        await api.removeFromFavorites(currentFavoriteId);
+        setFavoritedProjects(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(projectId);
+          return newSet;
+        });
+        success('Удалено из избранного', 'Проект удален из избранного');
+      } else {
+        // Добавляем в избранное
+        await api.addToFavorites({
+          itemType: 'project',
+          itemId: projectId
+        });
+        setFavoritedProjects(prev => new Set([...prev, projectId]));
+        success('Добавлено в избранное', 'Проект добавлен в избранное');
+      }
+    } catch (err) {
+      error('Ошибка', 'Не удалось обновить избранное');
     }
   };
 
@@ -134,7 +190,7 @@ export function ProjectsPage() {
             Управление проектами и командной работой
           </p>
         </div>
-        <Button onClick={openCreateModal} className="gap-2 ml-4 flex-shrink-0" size="sm">
+        <Button onClick={openCreateModal} className="gap-2 ml-4 flex-shrink-0 bg-[#2c5545] text-white hover:bg-[#2c5545]/90" size="sm">
           <Plus className="h-4 w-4" />
           <span className="hidden sm:inline">Создать проект</span>
           <span className="sm:hidden">Создать</span>
@@ -268,7 +324,7 @@ export function ProjectsPage() {
           {filteredProjects.map((project) => {
             const stats = getProjectStats(project.id);
             const isSelected = selectedProjectId === project.id;
-            const isFavorite = (project as any).favorite;
+            const isFavorite = favoritedProjects.has(project.id);
 
             return (
               <div

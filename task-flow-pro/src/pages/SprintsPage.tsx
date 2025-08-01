@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAppStore } from "@/store";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Plus, Calendar, Target, Users, TrendingUp, Edit, CheckCircle, Clock, AlertCircle, PlayCircle } from "lucide-react";
+import { useToast } from "@/hooks/useToast";
+import { api } from "@/lib/api";
+import { Plus, Calendar, Target, Users, TrendingUp, Edit, CheckCircle, Clock, AlertCircle, PlayCircle, Star } from "lucide-react";
 import { SprintModal } from "@/components/sprint/SprintModal";
 import { SprintStatusDialog } from "@/components/sprint/SprintStatusDialog";
 import { useShowStoryPoints } from "@/store";
@@ -10,6 +12,7 @@ import { useShowStoryPoints } from "@/store";
 export function SprintsPage() {
   const { sprints, tasks, selectedProjectId, updateSprint, initializeWithDemoData } = useAppStore();
   const showStoryPoints = useShowStoryPoints();
+  const { success, error } = useToast();
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sprintModalOpen, setSprintModalOpen] = useState(false);
   const [editingSprintId, setEditingSprintId] = useState<string | undefined>();
@@ -17,6 +20,69 @@ export function SprintsPage() {
   const [statusDialogAction, setStatusDialogAction] = useState<'start' | 'complete'>('start');
   const [statusDialogSprintId, setStatusDialogSprintId] = useState<string>('');
   const [statusDialogLoading, setStatusDialogLoading] = useState(false);
+  const [favoritedSprints, setFavoritedSprints] = useState<Set<string>>(new Set());
+
+  // Load favorite status for all sprints
+  useEffect(() => {
+    const loadFavoriteStatus = async () => {
+      try {
+        const promises = sprints.map(async (sprint) => {
+          try {
+            const response = await api.checkIfFavorited('sprint', sprint.id);
+            return {
+              sprintId: sprint.id,
+              isFavorited: response.success && response.data.is_favorited
+            };
+          } catch (err) {
+            return { sprintId: sprint.id, isFavorited: false };
+          }
+        });
+
+        const results = await Promise.all(promises);
+        const favoritedIds = results
+          .filter(result => result.isFavorited)
+          .map(result => result.sprintId);
+        
+        setFavoritedSprints(new Set(favoritedIds));
+      } catch (err) {
+        // Silent fail for favorite loading
+      }
+    };
+
+    if (sprints.length > 0) {
+      loadFavoriteStatus();
+    }
+  }, [sprints]);
+
+  const handleFavoriteToggle = async (sprintId: string) => {
+    try {
+      // Проверяем текущий статус избранного
+      const response = await api.checkIfFavorited('sprint', sprintId);
+      const isCurrentlyFavorited = response.success && response.data.is_favorited;
+      const currentFavoriteId = response.data.favorite?.id;
+
+      if (isCurrentlyFavorited && currentFavoriteId) {
+        // Удаляем из избранного
+        await api.removeFromFavorites(currentFavoriteId);
+        setFavoritedSprints(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(sprintId);
+          return newSet;
+        });
+        success('Удалено из избранного', 'Спринт удален из избранного');
+      } else {
+        // Добавляем в избранное
+        await api.addToFavorites({
+          itemType: 'sprint',
+          itemId: sprintId
+        });
+        setFavoritedSprints(prev => new Set([...prev, sprintId]));
+        success('Добавлено в избранное', 'Спринт добавлен в избранное');
+      }
+    } catch (err) {
+      error('Ошибка', 'Не удалось обновить избранное');
+    }
+  };
 
   const projectSprints = selectedProjectId 
     ? sprints.filter(sprint => sprint.projectId === selectedProjectId)
@@ -178,6 +244,11 @@ export function SprintsPage() {
         <div className="text-center text-muted-foreground">
           Выберите проект для просмотра спринтов.
         </div>
+        <div className="mt-4 text-center">
+          <Button onClick={initializeWithDemoData} className="bg-[#2c5545] text-white hover:bg-[#2c5545]/90">
+            Загрузить демо-данные
+          </Button>
+        </div>
       </div>
     );
   }
@@ -185,14 +256,19 @@ export function SprintsPage() {
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">Управление спринтами</h1>
+        <div>
+          <h1 className="text-3xl font-bold">Управление спринтами</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Выбранный проект: {selectedProjectId || 'Нет'}
+          </p>
+        </div>
         <div className="flex items-center space-x-2">
           {projectSprints.length === 0 && (
             <Button variant="outline" onClick={initializeWithDemoData}>
               Загрузить демо-данные
             </Button>
           )}
-          <Button onClick={openCreateModal}>
+          <Button onClick={openCreateModal} className="bg-[#2c5545] text-white hover:bg-[#2c5545]/90">
             <Plus className="h-4 w-4 mr-2" />
             Создать спринт
           </Button>
@@ -238,27 +314,38 @@ export function SprintsPage() {
                       <p className="text-muted-foreground text-sm mt-1">{sprint.goal}</p>
                     </div>
                     <div className="flex items-center space-x-2">
-                                             <span className={cn("px-2 py-1 rounded-full text-xs font-medium", getSprintStatusColor(sprint.status))}>
-                         {sprint.status === "active" ? "АКТИВНЫЙ" : 
-                          sprint.status === "planned" ? "ЗАПЛАНИРОВАННЫЙ" : 
-                          sprint.status === "completed" ? "ЗАВЕРШЕННЫЙ" : sprint.status}
-                       </span>
-                       <Button 
-                         variant="ghost" 
-                         size="sm"
-                         onClick={() => openEditModal(sprint.id)}
-                       >
-                         <Edit className="h-4 w-4" />
-                       </Button>
-                       <Button 
-                         variant="outline" 
-                         size="sm"
-                         onClick={() => openStatusDialog(sprint.id, 'complete')}
-                       >
-                         Завершить спринт
-                       </Button>
-                     </div>
-                   </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleFavoriteToggle(sprint.id)}
+                        className="p-1 h-6 w-6"
+                      >
+                        <Star className={cn(
+                          "h-3 w-3",
+                          favoritedSprints.has(sprint.id) ? "fill-yellow-400 text-yellow-500" : "text-muted-foreground"
+                        )} />
+                      </Button>
+                      <span className={cn("px-2 py-1 rounded-full text-xs font-medium", getSprintStatusColor(sprint.status))}>
+                        {sprint.status === "active" ? "АКТИВНЫЙ" : 
+                         sprint.status === "planned" ? "ЗАПЛАНИРОВАННЫЙ" : 
+                         sprint.status === "completed" ? "ЗАВЕРШЕННЫЙ" : sprint.status}
+                      </span>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => openEditModal(sprint.id)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => openStatusDialog(sprint.id, 'complete')}
+                      >
+                        Завершить спринт
+                      </Button>
+                    </div>
+                  </div>
 
                    <div className="grid grid-cols-4 gap-4 mb-4">
                     <div className="flex items-center space-x-2">
