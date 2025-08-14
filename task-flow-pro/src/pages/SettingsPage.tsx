@@ -40,7 +40,7 @@ import { useAppStore } from "@/store";
 
 export function SettingsPage() {
   const { theme, toggleTheme } = useTheme();
-  const { success, error } = useToast();
+  const { success, error, info } = useToast();
   const { settings, updateSettings, resetSettings } = useAppStore();
   
   // UI state
@@ -90,14 +90,19 @@ export function SettingsPage() {
       reader.onload = (e) => {
         try {
           const importedSettings = JSON.parse(e.target?.result as string);
-          setSettings(importedSettings);
-          success("Настройки импортированы");
+          // TODO: Add validation for imported settings object
+          updateSettings(importedSettings);
+          success("Настройки успешно импортированы");
         } catch (err) {
-          error("Ошибка при импорте настроек");
+          error("Ошибка импорта", "Неверный формат файла или поврежденные данные.");
         }
       };
       reader.readAsText(file);
     }
+  };
+
+  const showNotImplemented = () => {
+    info("Функционал в разработке", "Эта функция будет добавлена в будущих обновлениях.", 3000);
   };
 
 
@@ -279,17 +284,17 @@ export function SettingsPage() {
         </h3>
         
         <div className="space-y-4">
-          <Button variant="outline" className="w-full justify-start">
+          <Button onClick={showNotImplemented} variant="outline" className="w-full justify-start">
             <Key className="h-4 w-4 mr-2" />
             Изменить пароль
           </Button>
           
-          <Button variant="outline" className="w-full justify-start">
+          <Button onClick={showNotImplemented} variant="outline" className="w-full justify-start">
             <Shield className="h-4 w-4 mr-2" />
             Настроить двухфакторную аутентификацию
           </Button>
           
-          <Button variant="outline" className="w-full justify-start">
+          <Button onClick={showNotImplemented} variant="outline" className="w-full justify-start">
             <FileText className="h-4 w-4 mr-2" />
             Журнал активности
           </Button>
@@ -491,7 +496,7 @@ export function SettingsPage() {
         </h3>
         
         <div className="space-y-4">
-          <Button variant="outline" className="w-full justify-start border-red-200 text-red-700 hover:bg-red-50">
+          <Button onClick={showNotImplemented} variant="outline" className="w-full justify-start border-red-200 text-red-700 hover:bg-red-50">
             <Trash2 className="h-4 w-4 mr-2" />
             Очистить кэш
           </Button>
@@ -505,7 +510,7 @@ export function SettingsPage() {
             Сбросить настройки
           </Button>
           
-          <Button variant="outline" className="w-full justify-start border-red-200 text-red-700 hover:bg-red-50">
+          <Button onClick={showNotImplemented} variant="outline" className="w-full justify-start border-red-200 text-red-700 hover:bg-red-50">
             <LogOut className="h-4 w-4 mr-2" />
             Удалить аккаунт
           </Button>
@@ -523,7 +528,7 @@ export function SettingsPage() {
         </h3>
         
         <div className="space-y-4">
-          <Button variant="outline" className="w-full justify-between">
+          <Button onClick={showNotImplemented} variant="outline" className="w-full justify-between">
             <span className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
               Руководство пользователя
@@ -531,7 +536,7 @@ export function SettingsPage() {
             <ChevronRight className="h-4 w-4" />
           </Button>
           
-          <Button variant="outline" className="w-full justify-between">
+          <Button onClick={showNotImplemented} variant="outline" className="w-full justify-between">
             <span className="flex items-center gap-2">
               <HelpCircle className="h-4 w-4" />
               Часто задаваемые вопросы
@@ -539,7 +544,7 @@ export function SettingsPage() {
             <ChevronRight className="h-4 w-4" />
           </Button>
           
-          <Button variant="outline" className="w-full justify-between">
+          <Button onClick={showNotImplemented} variant="outline" className="w-full justify-between">
             <span className="flex items-center gap-2">
               <Bell className="h-4 w-4" />
               Связаться с поддержкой
@@ -547,7 +552,7 @@ export function SettingsPage() {
             <ChevronRight className="h-4 w-4" />
           </Button>
           
-          <Button variant="outline" className="w-full justify-between">
+          <Button onClick={showNotImplemented} variant="outline" className="w-full justify-between">
             <span className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
               Диагностика системы

@@ -28,6 +28,7 @@ import { useState, useMemo } from 'react';
 import { CustomTaskIcon, InProgressIcon } from '@/components/icons';
 import { TaskCard } from '@/components/task/TaskCard';
 import { TaskDetailModal } from '@/components/task/TaskDetailModal';
+import { TaskModal } from '@/components/task/TaskModal';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -71,7 +72,18 @@ export function TasksPage() {
   const [sortField, setSortField] = useState<SortField>('createdAt');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [showFilters, setShowFilters] = useState(false);
+  const [isTaskModalOpen, setTaskModalOpen] = useState(false);
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
 
+  const openCreateTaskModal = () => {
+    setEditingTaskId(null);
+    setTaskModalOpen(true);
+  };
+
+  const closeTaskModal = () => {
+    setTaskModalOpen(false);
+    setEditingTaskId(null);
+  };
   // Filtered and sorted tasks
   const filteredTasks = useMemo(() => {
     const filtered = tasks.filter(task => {
@@ -205,7 +217,10 @@ export function TasksPage() {
             Управление задачами по всем проектам
           </p>
         </div>
-        <Button className="gap-2 ml-4 flex-shrink-0 bg-[#2c5545] text-white hover:bg-[#2c5545]/90">
+        <Button
+          onClick={openCreateTaskModal}
+          className="gap-2 ml-4 flex-shrink-0 bg-[#2c5545] text-white hover:bg-[#2c5545]/90"
+        >
           <Plus className="h-4 w-4" />
           Создать задачу
         </Button>
@@ -386,10 +401,7 @@ export function TasksPage() {
                 }
               : {
                   label: 'Создать задачу',
-                  onClick: () => {
-                    // TODO: Open create task modal
-                    success("Создание", "Открываем форму создания задачи", 2000);
-                  }
+                  onClick: openCreateTaskModal,
                 }
           }
         />
@@ -412,6 +424,12 @@ export function TasksPage() {
         isOpen={!!selectedTask}
         onClose={() => setSelectedTask(null)}
         task={selectedTask}
+      />
+
+      <TaskModal
+        isOpen={isTaskModalOpen}
+        onClose={closeTaskModal}
+        taskId={editingTaskId ?? undefined}
       />
     </div>
   );

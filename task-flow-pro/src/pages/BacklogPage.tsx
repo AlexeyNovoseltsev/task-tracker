@@ -26,7 +26,7 @@ import { cn } from "@/lib/utils";
 import { useAppStore } from "@/store";
 import { Task } from "@/types";
 
-function SortableTaskCard({ task, onEdit, onDelete }: { task: Task, onEdit: () => void, onDelete: () => void }) {
+function SortableTaskCard({ task, onClick, onEdit, onDelete }: { task: Task, onClick: () => void, onEdit: () => void, onDelete: () => void }) {
   const {
     attributes,
     listeners,
@@ -52,6 +52,7 @@ function SortableTaskCard({ task, onEdit, onDelete }: { task: Task, onEdit: () =
       {...listeners}
       task={task}
       isDragging={isDragging}
+      onClick={onClick}
       onEdit={onEdit}
       onDelete={onDelete}
     />
@@ -240,6 +241,7 @@ export function BacklogPage() {
                 <SortableTaskCard
                   key={task.id}
                   task={task}
+                  onClick={() => handleTaskClick(task)}
                   onEdit={() => openEditModal(task.id)}
                   onDelete={() => handleDeleteRequest(task)}
                 />
