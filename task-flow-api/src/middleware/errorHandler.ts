@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { ApiResponse } from '@/types';
+
 import config from '@/config';
+import { ApiResponse } from '@/types';
 
 // Custom error class
 export class AppError extends Error {
@@ -94,24 +95,6 @@ export const errorHandler = (
     userAgent: req.get('User-Agent'),
     timestamp: new Date().toISOString(),
   });
-
-  // Mongoose bad ObjectId
-  if (err.name === 'CastError') {
-    const message = 'Resource not found';
-    error = new NotFoundError(message);
-  }
-
-  // Mongoose duplicate key
-  if (err.code === 11000) {
-    const message = 'Duplicate field value entered';
-    error = new ConflictError(message);
-  }
-
-  // Mongoose validation error
-  if (err.name === 'ValidationError') {
-    const message = Object.values(err.errors || {}).map((val: any) => val.message).join(', ');
-    error = new ValidationError(message);
-  }
 
   // JWT errors
   if (err.name === 'JsonWebTokenError') {

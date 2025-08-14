@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { body, param, query, validationResult, ValidationChain } from 'express-validator';
+
 import { ValidationError } from './errorHandler';
 
 // Validation error handler middleware
@@ -398,6 +399,26 @@ export const validateCreateTimeEntry = (): ValidationChain[] => {
     body('task_id')
       .isUUID()
       .withMessage('Task ID must be a valid UUID'),
+  ];
+};
+
+// Project member validation
+export const validateAddProjectMember = (): ValidationChain[] => {
+  return [
+    body('user_id')
+      .isUUID()
+      .withMessage('User ID must be a valid UUID'),
+    body('role')
+      .isIn(['admin', 'member', 'viewer'])
+      .withMessage('Role must be one of: admin, member, viewer'),
+  ];
+};
+
+export const validateUpdateProjectMemberRole = (): ValidationChain[] => {
+  return [
+    body('role')
+      .isIn(['admin', 'member', 'viewer'])
+      .withMessage('Role must be one of: admin, member, viewer'),
   ];
 };
 

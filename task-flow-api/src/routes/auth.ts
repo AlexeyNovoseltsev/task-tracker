@@ -1,6 +1,13 @@
-import { Router, Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
+import { Router, Request, Response, NextFunction } from 'express';
+import { body } from 'express-validator';
+
 import { supabaseAdmin } from '@/config/supabase';
+import {
+  generateToken,
+  generateRefreshToken,
+  optionalAuthMiddleware
+} from '@/middleware/auth';
 import { 
   successResponse, 
   AuthenticationError, 
@@ -8,18 +15,13 @@ import {
   ConflictError,
   asyncHandler 
 } from '@/middleware/errorHandler';
-import { 
-  generateToken, 
-  generateRefreshToken,
-  optionalAuthMiddleware 
-} from '@/middleware/auth';
+import { securityLogger } from '@/middleware/logger';
 import { 
   validateCreateUser,
   validationErrorHandler 
 } from '@/middleware/validation';
-import { securityLogger } from '@/middleware/logger';
 import { AuthUser } from '@/types';
-import { body } from 'express-validator';
+
 
 const router = Router();
 
@@ -176,7 +178,7 @@ router.post('/refresh',
     try {
       // Verify refresh token (implement your refresh token logic)
       // For now, we'll use the same JWT verification
-      const decoded = require('jsonwebtoken').verify(refreshToken, require('@/config').default.jwt.secret) as any;
+      const decoded = require('jsonwebtoken').verify(refreshToken, require('@/config').default.jwt.secret);
       
       if (decoded.type !== 'refresh') {
         throw new AuthenticationError('Invalid refresh token');

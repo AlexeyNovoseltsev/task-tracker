@@ -1,7 +1,8 @@
-import { Server as SocketIOServer, Socket } from 'socket.io';
 import jwt from 'jsonwebtoken';
-import { supabaseAdmin } from '@/config/supabase';
+import { Server as SocketIOServer, Socket } from 'socket.io';
+
 import config from '@/config';
+import { supabaseAdmin } from '@/config/supabase';
 import { wsLogger } from '@/middleware/logger';
 import {
   SocketEvent,
