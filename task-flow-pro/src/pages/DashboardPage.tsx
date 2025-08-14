@@ -68,134 +68,126 @@ export function DashboardPage() {
 
   const handleCreateSampleProject = () => {
     // Create project
-    const projectId = `project-${Date.now()}`;
-    const newProject = {
+    const newProjectData = {
       name: "TaskFlow Pro Sample",
       description: "A sample project showcasing all TaskFlow Pro features",
       key: "TFP",
       color: "#3b82f6",
     };
     
-    // Add project first
-    addProject(newProject);
+    // Add project and get its ID
+    const actualProjectId = addProject(newProjectData);
     
-    // Get the actually created project ID from store 
+    // Select the newly created project
+    setSelectedProject(actualProjectId);
+
+    // Create demo tasks with the correct project ID
+    const demoTasks = [
+      {
+        title: "User Authentication System",
+        description: "Implement secure user login and registration",
+        type: "story" as const,
+        status: "in-progress" as const,
+        priority: "high" as const,
+        projectId: actualProjectId,
+        assigneeId: "user-1",
+        storyPoints: 8,
+        labels: ["backend", "security"],
+        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      },
+      {
+        title: "Dashboard Analytics",
+        description: "Create comprehensive analytics dashboard",
+        type: "story" as const,
+        status: "todo" as const,
+        priority: "medium" as const,
+        projectId: actualProjectId,
+        assigneeId: "user-1",
+        storyPoints: 5,
+        labels: ["frontend", "analytics"],
+        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+      },
+      {
+        title: "Fix button styling",
+        description: "Update button styles for better accessibility",
+        type: "bug" as const,
+        status: "in-review" as const,
+        priority: "low" as const,
+        projectId: actualProjectId,
+        assigneeId: "user-1",
+        storyPoints: 2,
+        labels: ["frontend", "ui"],
+      },
+      {
+        title: "Database Migration",
+        description: "Migrate user data to new schema",
+        type: "task" as const,
+        status: "done" as const,
+        priority: "high" as const,
+        projectId: actualProjectId,
+        assigneeId: "user-1",
+        storyPoints: 3,
+        labels: ["backend", "database"],
+      },
+      {
+        title: "Mobile Responsive Design",
+        description: "Ensure application works on mobile devices",
+        type: "story" as const,
+        status: "todo" as const,
+        priority: "medium" as const,
+        projectId: actualProjectId,
+        assigneeId: "user-1",
+        storyPoints: 13,
+        labels: ["frontend", "mobile"],
+      }
+    ];
+
+    // Add all demo tasks
+    demoTasks.forEach(taskData => {
+      addTask(taskData);
+    });
+
+    // Create demo sprints
+    const currentDate = new Date();
+    const sprintStartDate = new Date(currentDate);
+    const sprintEndDate = new Date(currentDate);
+    sprintEndDate.setDate(sprintEndDate.getDate() + 14);
+
+    addSprint({
+      name: "Sprint 1: Foundation",
+      goal: "Establish core authentication and user management features",
+      startDate: sprintStartDate,
+      endDate: sprintEndDate,
+      capacity: 40,
+      status: "active" as const,
+      projectId: actualProjectId,
+    });
+
+    const nextSprintStart = new Date(sprintEndDate);
+    nextSprintStart.setDate(nextSprintStart.getDate() + 1);
+    const nextSprintEnd = new Date(nextSprintStart);
+    nextSprintEnd.setDate(nextSprintEnd.getDate() + 14);
+
+    addSprint({
+      name: "Sprint 2: Enhancement",
+      goal: "Improve user experience and add analytics features",
+      startDate: nextSprintStart,
+      endDate: nextSprintEnd,
+      capacity: 45,
+      status: "planned" as const,
+      projectId: actualProjectId,
+    });
+
+    // Show success notifications
+    success("🎉 Демо проект успешно создан!");
+
     setTimeout(() => {
-      const createdProject = projects.find(p => p.name === newProject.name);
-      const actualProjectId = createdProject?.id || projectId;
-      
-      // Select the newly created project
-      setSelectedProject(actualProjectId);
+      success("✅ 5 демо задач добавлено в бэклог");
+    }, 500);
 
-      // Create demo tasks with the correct project ID
-      const demoTasks = [
-        {
-          title: "User Authentication System",
-          description: "Implement secure user login and registration",
-          type: "story" as const,
-          status: "in-progress" as const,
-          priority: "high" as const,
-          projectId: actualProjectId,
-          assigneeId: "user-1",
-          storyPoints: 8,
-          labels: ["backend", "security"],
-          dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-        },
-        {
-          title: "Dashboard Analytics",
-          description: "Create comprehensive analytics dashboard",
-          type: "story" as const,
-          status: "todo" as const,
-          priority: "medium" as const,
-          projectId: actualProjectId,
-          assigneeId: "user-1",
-          storyPoints: 5,
-          labels: ["frontend", "analytics"],
-          dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-        },
-        {
-          title: "Fix button styling",
-          description: "Update button styles for better accessibility",
-          type: "bug" as const,
-          status: "in-review" as const,
-          priority: "low" as const,
-          projectId: actualProjectId,
-          assigneeId: "user-1",
-          storyPoints: 2,
-          labels: ["frontend", "ui"],
-        },
-        {
-          title: "Database Migration",
-          description: "Migrate user data to new schema",
-          type: "task" as const,
-          status: "done" as const,
-          priority: "high" as const,
-          projectId: actualProjectId,
-          assigneeId: "user-1",
-          storyPoints: 3,
-          labels: ["backend", "database"],
-        },
-        {
-          title: "Mobile Responsive Design",
-          description: "Ensure application works on mobile devices",
-          type: "story" as const,
-          status: "todo" as const,
-          priority: "medium" as const,
-          projectId: actualProjectId,
-          assigneeId: "user-1",
-          storyPoints: 13,
-          labels: ["frontend", "mobile"],
-        }
-      ];
-
-      // Add all demo tasks
-      demoTasks.forEach(taskData => {
-        addTask(taskData);
-      });
-
-      // Create demo sprints
-      const currentDate = new Date();
-      const sprintStartDate = new Date(currentDate);
-      const sprintEndDate = new Date(currentDate);
-      sprintEndDate.setDate(sprintEndDate.getDate() + 14);
-
-      addSprint({
-        name: "Sprint 1: Foundation",
-        goal: "Establish core authentication and user management features",
-        startDate: sprintStartDate,
-        endDate: sprintEndDate,
-        capacity: 40,
-        status: "active" as const,
-        projectId: actualProjectId,
-      });
-
-      const nextSprintStart = new Date(sprintEndDate);
-      nextSprintStart.setDate(nextSprintStart.getDate() + 1);
-      const nextSprintEnd = new Date(nextSprintStart);
-      nextSprintEnd.setDate(nextSprintEnd.getDate() + 14);
-
-      addSprint({
-        name: "Sprint 2: Enhancement",
-        goal: "Improve user experience and add analytics features",
-        startDate: nextSprintStart,
-        endDate: nextSprintEnd,
-        capacity: 45,
-        status: "planned" as const,
-        projectId: actualProjectId,
-      });
-
-      // Show success notifications
-      success("🎉 Демо проект успешно создан!");
-      
-      setTimeout(() => {
-        success("✅ 5 демо задач добавлено в бэклог");
-      }, 1000);
-      
-      setTimeout(() => {
-        success("🏃‍♂️ 2 спринта созданы и готовы к планированию");
-      }, 2000);
-       
-    }, 100); // End of setTimeout
+    setTimeout(() => {
+      success("🏃‍♂️ 2 спринта созданы и готовы к планированию");
+    }, 1000);
   };
 
   const stats = [

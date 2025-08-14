@@ -55,7 +55,7 @@ interface AppState {
   settings: SettingsState;
   
   // Actions
-  addProject: (project: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  addProject: (project: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>) => string;
   updateProject: (id: string, updates: Partial<Project>) => void;
   deleteProject: (id: string) => void;
   
@@ -93,7 +93,7 @@ interface AppState {
 
 export const useAppStore = create<AppState>()(
   persist(
-    immer((set) => ({
+    immer((set, get) => ({
       // Initial state
       projects: [],
       tasks: [],
@@ -153,18 +153,22 @@ export const useAppStore = create<AppState>()(
       },
       
       // Project actions
-      addProject: (projectData) => set((state) => {
-        const project: Project = {
-          ...projectData,
-          id: generateId(),
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-        state.projects.push(project);
-        if (!state.selectedProjectId) {
-          state.selectedProjectId = project.id;
-        }
-      }),
+      addProject: (projectData) => {
+        const newId = generateId();
+        set((state) => {
+          const project: Project = {
+            ...projectData,
+            id: newId,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
+          state.projects.push(project);
+          if (!state.selectedProjectId) {
+            state.selectedProjectId = newId;
+          }
+        });
+        return newId;
+      },
       
       updateProject: (id, updates) => set((state) => {
         const index = state.projects.findIndex(p => p.id === id);

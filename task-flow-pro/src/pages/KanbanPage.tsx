@@ -210,8 +210,14 @@ export function KanbanPage() {
       <div className="p-6 h-full flex flex-col">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold">Канбан-доска</h1>
-          <div className="text-sm text-muted-foreground">
-            Всего задач: {projectTasks.length}
+          <div className="flex items-center space-x-4">
+            <div className="text-sm text-muted-foreground">
+              Всего задач: {projectTasks.length}
+            </div>
+            <Button onClick={openCreateModal} className="bg-[#2c5545] text-white hover:bg-[#2c5545]/90">
+              <Plus className="h-4 w-4 mr-2" />
+              Создать задачу
+            </Button>
           </div>
         </div>
 
