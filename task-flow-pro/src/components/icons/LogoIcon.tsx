@@ -3,13 +3,11 @@ import React from 'react';
 interface LogoIconProps {
   className?: string;
   size?: number;
-  showText?: boolean;
 }
 
 export const LogoIcon: React.FC<LogoIconProps> = ({ 
   className = "", 
-  size = 24,
-  showText = false
+  size = 24
 }) => {
   return (
     <div className={`${className}`}>

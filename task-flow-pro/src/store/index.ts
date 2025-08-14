@@ -1,9 +1,40 @@
 import { create } from 'zustand';
-import { immer } from 'zustand/middleware/immer';
 import { persist } from 'zustand/middleware';
-import type { Project, Task, Sprint, User, Comment, Activity, Attachment, TimeEntry } from '@/types';
-import { generateId } from '@/lib/utils';
+import { immer } from 'zustand/middleware/immer';
+
 import { initialProjects, initialSprints, initialTasks } from './initialData';
+
+import { generateId } from '@/lib/utils';
+import type { Project, Task, Sprint, User, Comment, Activity, Attachment, TimeEntry } from '@/types';
+
+
+export interface SettingsState {
+  language: string;
+  timezone: string;
+  dateFormat: string;
+  timeFormat: string;
+  pushNotifications: boolean;
+  emailNotifications: boolean;
+  soundEnabled: boolean;
+  taskReminders: boolean;
+  projectUpdates: boolean;
+  mentionNotifications: boolean;
+  profileVisibility: 'public' | 'team' | 'private';
+  activityTracking: boolean;
+  dataCollection: boolean;
+  theme: 'light' | 'dark' | 'system';
+  compactMode: boolean;
+  showAvatars: boolean;
+  animationsEnabled: boolean;
+  showStoryPoints: boolean;
+  autoSave: boolean;
+  autoBackup: boolean;
+  cacheSize: string;
+  syncInterval: string;
+  autoExportBackups: boolean;
+  exportFormat: 'json' | 'csv' | 'xlsx';
+  includeAttachments: boolean;
+}
 
 interface AppState {
   // Data
@@ -21,7 +52,7 @@ interface AppState {
   selectedSprintId: string | null;
   
   // Settings
-  showStoryPoints: boolean;
+  settings: SettingsState;
   
   // Actions
   addProject: (project: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>) => void;
@@ -31,6 +62,7 @@ interface AppState {
   addTask: (task: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'watchers' | 'attachments' | 'linkedTasks'>) => void;
   updateTask: (id: string, updates: Partial<Task>) => void;
   deleteTask: (id: string) => void;
+  reorderTasks: (activeId: string, overId: string) => void;
   
   addSprint: (sprint: Omit<Sprint, 'id' | 'createdAt' | 'updatedAt'>) => void;
   updateSprint: (id: string, updates: Partial<Sprint>) => void;
@@ -52,7 +84,8 @@ interface AppState {
   setSelectedSprint: (id: string | null) => void;
   
   // Settings actions
-  toggleStoryPoints: () => void;
+  updateSettings: (newSettings: Partial<SettingsState>) => void;
+  resetSettings: () => void;
   
   // Initialization
   initializeWithDemoData: () => void;
@@ -91,7 +124,33 @@ export const useAppStore = create<AppState>()(
       timeEntries: [],
       selectedProjectId: null,
       selectedSprintId: null,
-      showStoryPoints: true,
+      settings: {
+        language: "ru",
+        timezone: "Europe/Moscow",
+        dateFormat: "DD.MM.YYYY",
+        timeFormat: "24h",
+        pushNotifications: true,
+        emailNotifications: true,
+        soundEnabled: true,
+        taskReminders: true,
+        projectUpdates: true,
+        mentionNotifications: true,
+        profileVisibility: "team",
+        activityTracking: true,
+        dataCollection: false,
+        theme: "system",
+        compactMode: false,
+        showAvatars: true,
+        animationsEnabled: true,
+        showStoryPoints: true,
+        autoSave: true,
+        autoBackup: true,
+        cacheSize: "100MB",
+        syncInterval: "5min",
+        autoExportBackups: false,
+        exportFormat: "json",
+        includeAttachments: true,
+      },
       
       // Project actions
       addProject: (projectData) => set((state) => {
@@ -166,6 +225,21 @@ export const useAppStore = create<AppState>()(
       
       deleteTask: (id) => set((state) => {
         state.tasks = state.tasks.filter(t => t.id !== id);
+      }),
+
+      reorderTasks: (activeId, overId) => set((state) => {
+        const activeIndex = state.tasks.findIndex((t) => t.id === activeId);
+        const overIndex = state.tasks.findIndex((t) => t.id === overId);
+
+        if (activeIndex !== -1 && overIndex !== -1) {
+          const [removed] = state.tasks.splice(activeIndex, 1);
+          state.tasks.splice(overIndex, 0, removed);
+
+          // Update positions for all tasks
+          state.tasks.forEach((task, index) => {
+            task.position = index;
+          });
+        }
       }),
       
       // Sprint actions
@@ -320,8 +394,37 @@ export const useAppStore = create<AppState>()(
       }),
       
       // Settings actions
-      toggleStoryPoints: () => set((state) => {
-        state.showStoryPoints = !state.showStoryPoints;
+      updateSettings: (newSettings) => set((state) => {
+        state.settings = { ...state.settings, ...newSettings };
+      }),
+      resetSettings: () => set((state) => {
+        state.settings = {
+          language: "ru",
+          timezone: "Europe/Moscow",
+          dateFormat: "DD.MM.YYYY",
+          timeFormat: "24h",
+          pushNotifications: true,
+          emailNotifications: true,
+          soundEnabled: true,
+          taskReminders: true,
+          projectUpdates: true,
+          mentionNotifications: true,
+          profileVisibility: "team",
+          activityTracking: true,
+          dataCollection: false,
+          theme: "system",
+          compactMode: false,
+          showAvatars: true,
+          animationsEnabled: true,
+          showStoryPoints: true,
+          autoSave: true,
+          autoBackup: true,
+          cacheSize: "100MB",
+          syncInterval: "5min",
+          autoExportBackups: false,
+          exportFormat: "json",
+          includeAttachments: true,
+        };
       }),
       
       // Initialization
@@ -400,4 +503,4 @@ export const useSelectedSprint = () => {
   return sprints.find(s => s.id === selectedSprintId);
 };
 
-export const useShowStoryPoints = () => useAppStore(state => state.showStoryPoints); 
+export const useSettings = () => useAppStore(state => state.settings);

@@ -1,8 +1,3 @@
-import { useState } from "react";
-import { useTheme } from "@/hooks/useTheme";
-import { useToast } from "@/hooks/useToast";
-import { useAppStore, useShowStoryPoints } from "@/store";
-import { Button } from "@/components/ui/button";
 import {
   Settings,
   User,
@@ -33,54 +28,25 @@ import {
   Trash2,
   LogOut
 } from "lucide-react";
+import { useState } from "react";
+
+import { ConfirmationDialog } from "@/components/common/ConfirmationDialog";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
+import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
+import { useTheme } from "@/hooks/useTheme";
+import { useToast } from "@/hooks/useToast";
+import { useAppStore } from "@/store";
 
 export function SettingsPage() {
   const { theme, toggleTheme } = useTheme();
   const { success, error } = useToast();
-  const { toggleStoryPoints } = useAppStore();
-  const showStoryPoints = useShowStoryPoints();
+  const { settings, updateSettings, resetSettings } = useAppStore();
   
-  // Settings state
+  // UI state
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("general");
-  const [settings, setSettings] = useState({
-    // Общие настройки
-    language: "ru",
-    timezone: "Europe/Moscow",
-    dateFormat: "DD.MM.YYYY",
-    timeFormat: "24h",
-    
-    // Уведомления
-    pushNotifications: true,
-    emailNotifications: true,
-    soundEnabled: true,
-    taskReminders: true,
-    projectUpdates: true,
-    mentionNotifications: true,
-    
-    // Конфиденциальность
-    profileVisibility: "team",
-    activityTracking: true,
-    dataCollection: false,
-    
-    // Внешний вид
-    theme: "system",
-    compactMode: false,
-    showAvatars: true,
-    animationsEnabled: true,
-    showStoryPoints: true,
-    
-    // Производительность
-    autoSave: true,
-    autoBackup: true,
-    cacheSize: "100MB",
-    syncInterval: "5min",
-    
-    // Импорт/Экспорт
-    autoExportBackups: false,
-    exportFormat: "json",
-    includeAttachments: true
-  });
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
 
   // Categories for navigation
   const categories = [
@@ -94,41 +60,20 @@ export function SettingsPage() {
     { id: "help", name: "Справка", icon: HelpCircle }
   ];
 
-  const updateSetting = (key: string, value: any) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
+  const handleUpdateSetting = (key: keyof typeof settings, value: any) => {
+    updateSettings({ [key]: value });
     success("Настройка обновлена");
   };
 
-  const resetToDefaults = () => {
-    if (window.confirm("Сбросить все настройки к значениям по умолчанию?")) {
-      setSettings({
-        language: "ru",
-        timezone: "Europe/Moscow",
-        dateFormat: "DD.MM.YYYY",
-        timeFormat: "24h",
-        pushNotifications: true,
-        emailNotifications: true,
-        soundEnabled: true,
-        taskReminders: true,
-        projectUpdates: true,
-        mentionNotifications: true,
-        profileVisibility: "team",
-        activityTracking: true,
-        dataCollection: false,
-        theme: "system",
-        compactMode: false,
-        showAvatars: true,
-        animationsEnabled: true,
-        autoSave: true,
-        autoBackup: true,
-        cacheSize: "100MB",
-        syncInterval: "5min",
-        autoExportBackups: false,
-        exportFormat: "json",
-        includeAttachments: true
-      });
-      success("Настройки сброшены к значениям по умолчанию");
-    }
+  const handleUpdateSetting = (key: keyof typeof settings, value: any) => {
+    updateSettings({ [key]: value });
+    success("Настройка обновлена");
+  };
+
+  const handleResetSettings = () => {
+    resetSettings();
+    success("Настройки сброшены к значениям по умолчанию");
+    setIsResetConfirmOpen(false);
   };
 
   const exportSettings = () => {
@@ -160,33 +105,6 @@ export function SettingsPage() {
     }
   };
 
-  const ToggleSwitch = ({ checked, onChange, label, description }: {
-    checked: boolean;
-    onChange: (checked: boolean) => void;
-    label: string;
-    description?: string;
-  }) => (
-    <div className="flex items-start justify-between py-3">
-      <div className="flex-1">
-        <div className="font-medium">{label}</div>
-        {description && (
-          <div className="text-sm text-muted-foreground mt-1">{description}</div>
-        )}
-      </div>
-      <button
-        onClick={() => onChange(!checked)}
-        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-          checked ? 'bg-primary' : 'bg-gray-200 dark:bg-gray-700'
-        }`}
-      >
-        <span
-          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-            checked ? 'translate-x-6' : 'translate-x-1'
-          }`}
-        />
-      </button>
-    </div>
-  );
 
   const renderGeneralSettings = () => (
     <div className="space-y-6">
@@ -199,56 +117,58 @@ export function SettingsPage() {
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-2">Язык интерфейса</label>
-            <select
-              value={settings.language}
-              onChange={(e) => updateSetting('language', e.target.value)}
-              className="w-full p-2 border border-input rounded-md focus:ring-2 focus:ring-ring"
-            >
-              <option value="ru">Русский</option>
-              <option value="en">English</option>
-              <option value="es">Español</option>
-              <option value="fr">Français</option>
-            </select>
+            <Select value={settings.language} onValueChange={(value) => handleUpdateSetting('language', value)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ru">Русский</SelectItem>
+                <SelectItem value="en">English</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           
           <div>
             <label className="block text-sm font-medium mb-2">Часовой пояс</label>
-            <select
-              value={settings.timezone}
-              onChange={(e) => updateSetting('timezone', e.target.value)}
-              className="w-full p-2 border border-input rounded-md focus:ring-2 focus:ring-ring"
-            >
-              <option value="Europe/Moscow">Москва (GMT+3)</option>
-              <option value="Europe/London">Лондон (GMT+0)</option>
-              <option value="America/New_York">Нью-Йорк (GMT-5)</option>
-              <option value="Asia/Tokyo">Токио (GMT+9)</option>
-            </select>
+            <Select value={settings.timezone} onValueChange={(value) => handleUpdateSetting('timezone', value)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Europe/Moscow">Москва (GMT+3)</SelectItem>
+                <SelectItem value="Europe/London">Лондон (GMT+0)</SelectItem>
+                <SelectItem value="America/New_York">Нью-Йорк (GMT-5)</SelectItem>
+                <SelectItem value="Asia/Tokyo">Токио (GMT+9)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-2">Формат даты</label>
-              <select
-                value={settings.dateFormat}
-                onChange={(e) => updateSetting('dateFormat', e.target.value)}
-                className="w-full p-2 border border-input rounded-md focus:ring-2 focus:ring-ring"
-              >
-                <option value="DD.MM.YYYY">ДД.ММ.ГГГГ</option>
-                <option value="MM/DD/YYYY">ММ/ДД/ГГГГ</option>
-                <option value="YYYY-MM-DD">ГГГГ-ММ-ДД</option>
-              </select>
+              <Select value={settings.dateFormat} onValueChange={(value) => handleUpdateSetting('dateFormat', value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="DD.MM.YYYY">ДД.ММ.ГГГГ</SelectItem>
+                  <SelectItem value="MM/DD/YYYY">ММ/ДД/ГГГГ</SelectItem>
+                  <SelectItem value="YYYY-MM-DD">ГГГГ-ММ-ДД</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             
             <div>
               <label className="block text-sm font-medium mb-2">Формат времени</label>
-              <select
-                value={settings.timeFormat}
-                onChange={(e) => updateSetting('timeFormat', e.target.value)}
-                className="w-full p-2 border border-input rounded-md focus:ring-2 focus:ring-ring"
-              >
-                <option value="24h">24-часовой</option>
-                <option value="12h">12-часовой</option>
-              </select>
+              <Select value={settings.timeFormat} onValueChange={(value) => handleUpdateSetting('timeFormat', value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="24h">24-часовой</SelectItem>
+                  <SelectItem value="12h">12-часовой</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>
@@ -265,23 +185,23 @@ export function SettingsPage() {
         </h3>
         
         <div className="space-y-4">
-          <ToggleSwitch
+          <SettingsToggle
             checked={settings.pushNotifications}
-            onChange={(checked) => updateSetting('pushNotifications', checked)}
+            onChange={(checked) => handleUpdateSetting('pushNotifications', checked)}
             label="Push-уведомления"
             description="Получать уведомления на рабочем столе"
           />
           
-          <ToggleSwitch
+          <SettingsToggle
             checked={settings.emailNotifications}
-            onChange={(checked) => updateSetting('emailNotifications', checked)}
+            onChange={(checked) => handleUpdateSetting('emailNotifications', checked)}
             label="Email-уведомления"
             description="Получать уведомления на электронную почту"
           />
           
-          <ToggleSwitch
+          <SettingsToggle
             checked={settings.soundEnabled}
-            onChange={(checked) => updateSetting('soundEnabled', checked)}
+            onChange={(checked) => handleUpdateSetting('soundEnabled', checked)}
             label="Звуковые уведомления"
             description="Воспроизводить звуки при получении уведомлений"
           />
@@ -290,23 +210,23 @@ export function SettingsPage() {
           
           <h4 className="font-medium">Типы уведомлений</h4>
           
-          <ToggleSwitch
+          <SettingsToggle
             checked={settings.taskReminders}
-            onChange={(checked) => updateSetting('taskReminders', checked)}
+            onChange={(checked) => handleUpdateSetting('taskReminders', checked)}
             label="Напоминания о задачах"
             description="Уведомления о приближающихся дедлайнах"
           />
           
-          <ToggleSwitch
+          <SettingsToggle
             checked={settings.projectUpdates}
-            onChange={(checked) => updateSetting('projectUpdates', checked)}
+            onChange={(checked) => handleUpdateSetting('projectUpdates', checked)}
             label="Обновления проектов"
             description="Уведомления об изменениях в проектах"
           />
           
-          <ToggleSwitch
+          <SettingsToggle
             checked={settings.mentionNotifications}
-            onChange={(checked) => updateSetting('mentionNotifications', checked)}
+            onChange={(checked) => handleUpdateSetting('mentionNotifications', checked)}
             label="Упоминания"
             description="Уведомления когда вас упоминают в комментариях"
           />
@@ -326,30 +246,31 @@ export function SettingsPage() {
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-2">Видимость профиля</label>
-            <select
-              value={settings.profileVisibility}
-              onChange={(e) => updateSetting('profileVisibility', e.target.value)}
-              className="w-full p-2 border border-input rounded-md focus:ring-2 focus:ring-ring"
-            >
-              <option value="public">Публичный</option>
-              <option value="team">Только команда</option>
-              <option value="private">Приватный</option>
-            </select>
+            <Select value={settings.profileVisibility} onValueChange={(value) => handleUpdateSetting('profileVisibility', value)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="public">Публичный</SelectItem>
+                <SelectItem value="team">Только команда</SelectItem>
+                <SelectItem value="private">Приватный</SelectItem>
+              </SelectContent>
+            </Select>
             <p className="text-sm text-muted-foreground mt-1">
               Кто может видеть информацию вашего профиля
             </p>
           </div>
           
-          <ToggleSwitch
+          <SettingsToggle
             checked={settings.activityTracking}
-            onChange={(checked) => updateSetting('activityTracking', checked)}
+            onChange={(checked) => handleUpdateSetting('activityTracking', checked)}
             label="Отслеживание активности"
             description="Позволить отслеживать время работы для аналитики"
           />
           
-          <ToggleSwitch
+          <SettingsToggle
             checked={settings.dataCollection}
-            onChange={(checked) => updateSetting('dataCollection', checked)}
+            onChange={(checked) => handleUpdateSetting('dataCollection', checked)}
             label="Сбор данных для улучшения продукта"
             description="Отправлять анонимные данные использования"
           />
@@ -401,7 +322,7 @@ export function SettingsPage() {
               ].map(({ value, label, icon: Icon }) => (
                 <button
                   key={value}
-                  onClick={() => updateSetting('theme', value)}
+                  onClick={() => handleUpdateSetting('theme', value)}
                   className={`p-3 border rounded-md flex flex-col items-center gap-2 transition-colors ${
                     settings.theme === value 
                       ? 'border-primary bg-primary/10' 
@@ -415,33 +336,30 @@ export function SettingsPage() {
             </div>
           </div>
           
-          <ToggleSwitch
-            checked={showStoryPoints}
-            onChange={() => {
-              toggleStoryPoints();
-              success("Story Points", showStoryPoints ? "Story Points отключены" : "Story Points включены");
-            }}
+          <SettingsToggle
+            checked={settings.showStoryPoints}
+            onChange={(checked) => handleUpdateSetting('showStoryPoints', checked)}
             label="Показывать Story Points"
             description="Отображать story points в задачах и аналитике"
           />
           
-          <ToggleSwitch
+          <SettingsToggle
             checked={settings.compactMode}
-            onChange={(checked) => updateSetting('compactMode', checked)}
+            onChange={(checked) => handleUpdateSetting('compactMode', checked)}
             label="Компактный режим"
             description="Уменьшить отступы и размеры элементов"
           />
           
-          <ToggleSwitch
+          <SettingsToggle
             checked={settings.showAvatars}
-            onChange={(checked) => updateSetting('showAvatars', checked)}
+            onChange={(checked) => handleUpdateSetting('showAvatars', checked)}
             label="Показывать аватары"
             description="Отображать фотографии пользователей"
           />
           
-          <ToggleSwitch
+          <SettingsToggle
             checked={settings.animationsEnabled}
-            onChange={(checked) => updateSetting('animationsEnabled', checked)}
+            onChange={(checked) => handleUpdateSetting('animationsEnabled', checked)}
             label="Анимации"
             description="Включить анимации переходов и эффектов"
           />
@@ -459,46 +377,48 @@ export function SettingsPage() {
         </h3>
         
         <div className="space-y-4">
-          <ToggleSwitch
+          <SettingsToggle
             checked={settings.autoSave}
-            onChange={(checked) => updateSetting('autoSave', checked)}
+            onChange={(checked) => handleUpdateSetting('autoSave', checked)}
             label="Автосохранение"
             description="Автоматически сохранять изменения"
           />
           
-          <ToggleSwitch
+          <SettingsToggle
             checked={settings.autoBackup}
-            onChange={(checked) => updateSetting('autoBackup', checked)}
+            onChange={(checked) => handleUpdateSetting('autoBackup', checked)}
             label="Автоматическое резервное копирование"
             description="Создавать резервные копии данных"
           />
           
           <div>
             <label className="block text-sm font-medium mb-2">Размер кэша</label>
-            <select
-              value={settings.cacheSize}
-              onChange={(e) => updateSetting('cacheSize', e.target.value)}
-              className="w-full p-2 border border-input rounded-md focus:ring-2 focus:ring-ring"
-            >
-              <option value="50MB">50 МБ</option>
-              <option value="100MB">100 МБ</option>
-              <option value="200MB">200 МБ</option>
-              <option value="500MB">500 МБ</option>
-            </select>
+            <Select value={settings.cacheSize} onValueChange={(value) => handleUpdateSetting('cacheSize', value)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="50MB">50 МБ</SelectItem>
+                <SelectItem value="100MB">100 МБ</SelectItem>
+                <SelectItem value="200MB">200 МБ</SelectItem>
+                <SelectItem value="500MB">500 МБ</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           
           <div>
             <label className="block text-sm font-medium mb-2">Интервал синхронизации</label>
-            <select
-              value={settings.syncInterval}
-              onChange={(e) => updateSetting('syncInterval', e.target.value)}
-              className="w-full p-2 border border-input rounded-md focus:ring-2 focus:ring-ring"
-            >
-              <option value="1min">1 минута</option>
-              <option value="5min">5 минут</option>
-              <option value="15min">15 минут</option>
-              <option value="30min">30 минут</option>
-            </select>
+            <Select value={settings.syncInterval} onValueChange={(value) => handleUpdateSetting('syncInterval', value)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1min">1 минута</SelectItem>
+                <SelectItem value="5min">5 минут</SelectItem>
+                <SelectItem value="15min">15 минут</SelectItem>
+                <SelectItem value="30min">30 минут</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>
@@ -539,29 +459,30 @@ export function SettingsPage() {
             </div>
           </div>
           
-          <ToggleSwitch
+          <SettingsToggle
             checked={settings.autoExportBackups}
-            onChange={(checked) => updateSetting('autoExportBackups', checked)}
+            onChange={(checked) => handleUpdateSetting('autoExportBackups', checked)}
             label="Автоматический экспорт резервных копий"
             description="Еженедельно создавать резервные копии"
           />
           
           <div>
             <label className="block text-sm font-medium mb-2">Формат экспорта</label>
-            <select
-              value={settings.exportFormat}
-              onChange={(e) => updateSetting('exportFormat', e.target.value)}
-              className="w-full p-2 border border-input rounded-md focus:ring-2 focus:ring-ring"
-            >
-              <option value="json">JSON</option>
-              <option value="csv">CSV</option>
-              <option value="xlsx">Excel</option>
-            </select>
+            <Select value={settings.exportFormat} onValueChange={(value) => handleUpdateSetting('exportFormat', value)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="json">JSON</SelectItem>
+                <SelectItem value="csv">CSV</SelectItem>
+                <SelectItem value="xlsx">Excel</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           
-          <ToggleSwitch
+          <SettingsToggle
             checked={settings.includeAttachments}
-            onChange={(checked) => updateSetting('includeAttachments', checked)}
+            onChange={(checked) => handleUpdateSetting('includeAttachments', checked)}
             label="Включать вложения в экспорт"
             description="Экспортировать файлы и изображения"
           />
@@ -581,7 +502,7 @@ export function SettingsPage() {
           </Button>
           
           <Button 
-            onClick={resetToDefaults}
+            onClick={() => setIsResetConfirmOpen(true)}
             variant="outline" 
             className="w-full justify-start border-red-200 text-red-700 hover:bg-red-50"
           >
@@ -715,7 +636,7 @@ export function SettingsPage() {
         <div className="p-4 border-t">
           <div className="flex gap-2">
             <Button 
-              onClick={resetToDefaults}
+              onClick={() => setIsResetConfirmOpen(true)}
               variant="outline" 
               size="sm" 
               className="flex-1 gap-2"
@@ -742,6 +663,35 @@ export function SettingsPage() {
           {renderContent()}
         </div>
       </div>
+
+      <ConfirmationDialog
+        isOpen={isResetConfirmOpen}
+        onClose={() => setIsResetConfirmOpen(false)}
+        onConfirm={handleResetSettings}
+        title="Сбросить все настройки?"
+        description="Это действие нельзя отменить. Все ваши настройки будут сброшены к значениям по умолчанию."
+        confirmText="Да, сбросить"
+      />
     </div>
   );
-} 
+}
+
+const SettingsToggle = ({ checked, onChange, label, description }: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  label: string;
+  description?: string;
+}) => (
+  <div className="flex items-start justify-between py-3">
+    <div className="flex-1">
+      <div className="font-medium">{label}</div>
+      {description && (
+        <div className="text-sm text-muted-foreground mt-1">{description}</div>
+      )}
+    </div>
+    <ToggleSwitch
+      checked={checked}
+      onCheckedChange={onChange}
+    />
+  </div>
+);

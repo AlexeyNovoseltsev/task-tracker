@@ -1,7 +1,10 @@
-import * as React from "react"
 import { Filter, X } from "lucide-react"
-import { cn } from "@/lib/utils"
+import * as React from "react"
+
 import { Badge } from "./badge"
+
+import { cn } from "@/lib/utils"
+
 
 export interface FilterButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {

@@ -1,30 +1,36 @@
-import { useState } from "react";
-import { Routes, Route, useNavigate } from "react-router-dom";
-import { Toaster } from "@/components/ui/toaster";
-import { useTheme } from "@/hooks/useTheme";
-import { useKeyboardShortcuts, GLOBAL_SHORTCUTS } from "@/hooks/useKeyboardShortcuts";
-import { TaskModal } from "@/components/task/TaskModal";
+import { useEffect, useState } from "react";
+import { Route, Routes, useNavigate } from "react-router-dom";
+
+import { AppLayout } from "@/components/layout/AppLayout";
 import { ProjectModal } from "@/components/project/ProjectModal";
 import { SprintModal } from "@/components/sprint/SprintModal";
-
-// Layouts
-import { AppLayout } from "@/components/layout/AppLayout";
-
-// Pages
+import { TaskModal } from "@/components/task/TaskModal";
+import { Toaster } from "@/components/ui/toaster";
+import { useKeyboardShortcuts, GLOBAL_SHORTCUTS } from "@/hooks/useKeyboardShortcuts";
+import { useTheme } from "@/hooks/useTheme";
+import { AnalyticsPage } from "@/pages/AnalyticsPage";
+import ApiTestPage from "@/pages/ApiTestPage";
+import { BacklogPage } from "@/pages/BacklogPage";
 import { DashboardPage } from "@/pages/DashboardPage";
 import FavoritesPage from "@/pages/FavoritesPage";
-import { ProjectsPage } from "@/pages/ProjectsPage";
-import { TasksPage } from "@/pages/TasksPage";
-import { BacklogPage } from "@/pages/BacklogPage";
-import { SprintsPage } from "@/pages/SprintsPage";
 import { KanbanPage } from "@/pages/KanbanPage";
-import { AnalyticsPage } from "@/pages/AnalyticsPage";
+import { ProjectsPage } from "@/pages/ProjectsPage";
 import { SettingsPage } from "@/pages/SettingsPage";
-import ApiTestPage from "@/pages/ApiTestPage";
+import { SprintsPage } from "@/pages/SprintsPage";
+import { TasksPage } from "@/pages/TasksPage";
+import { useAppStore } from "@/store";
 
 function App() {
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const { initializeWithDemoData, projects } = useAppStore();
+
+  useEffect(() => {
+    // Initialize with demo data if the store is empty
+    if (projects.length === 0) {
+      initializeWithDemoData();
+    }
+  }, [initializeWithDemoData, projects.length]);
   
   // Modal states
   const [taskModalOpen, setTaskModalOpen] = useState(false);

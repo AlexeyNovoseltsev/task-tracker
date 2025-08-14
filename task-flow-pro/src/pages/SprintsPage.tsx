@@ -1,13 +1,20 @@
-import { useState, useEffect } from "react";
-import { useAppStore } from "@/store";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { useToast } from "@/hooks/useToast";
-import { api } from "@/lib/api";
 import { Plus, Calendar, Target, Users, TrendingUp, Edit, CheckCircle, Clock, AlertCircle, PlayCircle, Star } from "lucide-react";
+import { useState, useEffect } from "react";
+
 import { SprintModal } from "@/components/sprint/SprintModal";
 import { SprintStatusDialog } from "@/components/sprint/SprintStatusDialog";
-import { useShowStoryPoints } from "@/store";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/Select";
+import { useToast } from "@/hooks/useToast";
+import { api } from "@/lib/api";
+import { cn } from "@/lib/utils";
+import { useAppStore , useShowStoryPoints } from "@/store";
 
 export function SprintsPage() {
   const { sprints, tasks, selectedProjectId, updateSprint, initializeWithDemoData } = useAppStore();
@@ -192,7 +199,7 @@ export function SprintsPage() {
     // Check if there's already an active sprint
     const activeSprints = projectSprints.filter(s => s.status === 'active');
     if (activeSprints.length > 0) {
-      alert('Только один спринт может быть активным одновременно. Завершите текущий активный спринт.');
+      error('Только один спринт может быть активным одновременно', 'Завершите текущий активный спринт, чтобы начать новый.');
       closeStatusDialog();
       return;
     }
@@ -206,10 +213,11 @@ export function SprintsPage() {
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       
+      success(`Спринт "${sprint.name}" успешно запущен!`);
       closeStatusDialog();
-    } catch (error) {
-      console.error('Error starting sprint:', error);
-      alert('Ошибка при запуске спринта');
+    } catch (err) {
+      console.error('Error starting sprint:', err);
+      error('Ошибка при запуске спринта', (err as Error).message);
     } finally {
       setStatusDialogLoading(false);
     }
@@ -228,10 +236,11 @@ export function SprintsPage() {
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       
+      success(`Спринт "${sprint.name}" успешно завершен!`);
       closeStatusDialog();
-    } catch (error) {
-      console.error('Error completing sprint:', error);
-      alert('Ошибка при завершении спринта');
+    } catch (err) {
+      console.error('Error completing sprint:', err);
+      error('Ошибка при завершении спринта', (err as Error).message);
     } finally {
       setStatusDialogLoading(false);
     }
@@ -279,16 +288,17 @@ export function SprintsPage() {
       <div className="mb-6 flex items-center space-x-4">
         <div className="flex items-center space-x-2">
           <span className="text-sm font-medium">Фильтр по статусу:</span>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
-          >
-            <option value="all">Все спринты</option>
-            <option value="active">Активные</option>
-            <option value="planned">Запланированные</option>
-            <option value="completed">Завершенные</option>
-          </select>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Фильтр по статусу" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Все спринты</SelectItem>
+              <SelectItem value="active">Активные</SelectItem>
+              <SelectItem value="planned">Запланированные</SelectItem>
+              <SelectItem value="completed">Завершенные</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

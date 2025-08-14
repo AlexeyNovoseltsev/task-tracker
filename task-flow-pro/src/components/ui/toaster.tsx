@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
 import { CheckCircle, XCircle, AlertTriangle, Info, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+
 import { useToast } from "@/hooks/useToast";
 
 interface ToastProps {

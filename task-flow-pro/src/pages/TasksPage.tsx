@@ -1,13 +1,3 @@
-import { useState, useMemo } from 'react';
-import { Button } from '@/components/ui/button';
-
-import { SearchInput } from '@/components/ui/search-input';
-import { FilterButton } from '@/components/ui/filter-button';
-import { EmptyState } from '@/components/ui/empty-state';
-import { StatCard } from '@/components/ui/stat-card';
-import { Card, CardContent } from '@/components/ui/card';
-import { useAppStore, useShowStoryPoints } from '@/store';
-import { useToast } from '@/hooks/useToast';
 import { 
   Search, 
   Filter, 
@@ -33,10 +23,20 @@ import {
   Zap,
   Clock
 } from 'lucide-react';
-import type { Task } from '@/types';
-import { TaskDetailModal } from '@/components/task/TaskDetailModal';
-import { TaskCard } from '@/components/task/TaskCard';
+import { useState, useMemo } from 'react';
+
 import { CustomTaskIcon, InProgressIcon } from '@/components/icons';
+import { TaskCard } from '@/components/task/TaskCard';
+import { TaskDetailModal } from '@/components/task/TaskDetailModal';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { FilterButton } from '@/components/ui/filter-button';
+import { SearchInput } from '@/components/ui/search-input';
+import { StatCard } from '@/components/ui/stat-card';
+import { useToast } from '@/hooks/useToast';
+import { useAppStore, useShowStoryPoints } from '@/store';
+import type { Task } from '@/types';
 
 type ViewMode = 'list' | 'grid';
 type SortField = 'title' | 'status' | 'priority' | 'createdAt' | 'dueDate' | 'storyPoints';
@@ -74,7 +74,7 @@ export function TasksPage() {
 
   // Filtered and sorted tasks
   const filteredTasks = useMemo(() => {
-    let filtered = tasks.filter(task => {
+    const filtered = tasks.filter(task => {
       const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            task.description?.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesStatus = statusFilter === 'all' || task.status === statusFilter;

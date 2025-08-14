@@ -1,7 +1,9 @@
-import * as React from "react"
-import { cn } from "@/lib/utils"
-import { Card, CardContent } from "./card"
 import { LucideIcon, TrendingUp, TrendingDown } from "lucide-react"
+import * as React from "react"
+
+import { Card, CardContent } from "./card"
+
+import { cn } from "@/lib/utils"
 
 export interface StatCardProps {
   title: string;

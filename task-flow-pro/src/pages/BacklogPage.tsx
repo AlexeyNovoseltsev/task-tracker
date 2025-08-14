@@ -1,21 +1,73 @@
-import { useState } from "react";
+import { DndContext, closestCenter, DragEndEvent } from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { Plus, Search, Filter, Edit, Trash } from "lucide-react";
+import { useState, useMemo } from "react";
+
+import { ConfirmationDialog } from "@/components/common/ConfirmationDialog";
+import { TaskCard } from "@/components/task/TaskCard";
+import { TaskDetailModal } from "@/components/task/TaskDetailModal";
+import { TaskModal } from "@/components/task/TaskModal";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/Select";
+import { cn } from "@/lib/utils";
 import { useAppStore } from "@/store";
 import { Task } from "@/types";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { Plus, Search, Filter, Edit, Trash } from "lucide-react";
-import { TaskModal } from "@/components/task/TaskModal";
-import { TaskDetailModal } from "@/components/task/TaskDetailModal";
-import { TaskCard } from "@/components/task/TaskCard";
+
+function SortableTaskCard({ task, onEdit, onDelete }: { task: Task, onEdit: () => void, onDelete: () => void }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 10 : undefined,
+  };
+
+  // For now, we will not implement the modals inside the sortable card
+  // to keep it simple.
+  return (
+    <TaskCard
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      task={task}
+      isDragging={isDragging}
+      onEdit={onEdit}
+      onDelete={onDelete}
+    />
+  );
+}
 
 export function BacklogPage() {
-  const { tasks, selectedProjectId, deleteTask } = useAppStore();
+  const { tasks, selectedProjectId, deleteTask, reorderTasks } = useAppStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [taskModalOpen, setTaskModalOpen] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<string | undefined>();
   const [taskDetailModalOpen, setTaskDetailModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
 
   const projectTasks = selectedProjectId 
     ? tasks.filter(task => task.projectId === selectedProjectId)
@@ -27,12 +79,14 @@ export function BacklogPage() {
   );
 
   // Apply search and priority filters
-  const filteredTasks = backlogTasks.filter(task => {
-    const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         task.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesPriority = priorityFilter === "all" || task.priority === priorityFilter;
-    return matchesSearch && matchesPriority;
-  });
+  const filteredTasks = backlogTasks
+    .filter(task => {
+      const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           (task.description || '').toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesPriority = priorityFilter === "all" || task.priority === priorityFilter;
+      return matchesSearch && matchesPriority;
+    })
+    .sort((a, b) => (a.position || 0) - (b.position || 0));
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -77,11 +131,27 @@ export function BacklogPage() {
     setSelectedTask(null);
   };
 
-  const handleDeleteTask = (taskId: string, taskTitle: string) => {
-    if (confirm(`Вы уверены, что хотите удалить "${taskTitle}"?`)) {
-      deleteTask(taskId);
+  const handleDeleteRequest = (task: Task) => {
+    setTaskToDelete(task);
+    setIsConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (taskToDelete) {
+      deleteTask(taskToDelete.id);
+      setTaskToDelete(null);
+      setIsConfirmOpen(false);
     }
   };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      reorderTasks(active.id as string, over.id as string);
+    }
+  };
+
+  const taskIds = useMemo(() => filteredTasks.map(t => t.id), [filteredTasks]);
 
   if (!selectedProjectId) {
     return (
@@ -108,27 +178,28 @@ export function BacklogPage() {
       <div className="mb-6 flex items-center space-x-4">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          <input
+          <Input
             type="text"
             placeholder="Поиск задач..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full pl-10"
           />
         </div>
 
         <div className="flex items-center space-x-2">
           <Filter className="h-4 w-4 text-muted-foreground" />
-          <select
-            value={priorityFilter}
-            onChange={(e) => setPriorityFilter(e.target.value)}
-            className="px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
-          >
-            <option value="all">Все приоритеты</option>
-            <option value="high">Высокий</option>
-            <option value="medium">Средний</option>
-            <option value="low">Низкий</option>
-          </select>
+          <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Приоритет" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Все приоритеты</SelectItem>
+              <SelectItem value="high">Высокий</SelectItem>
+              <SelectItem value="medium">Средний</SelectItem>
+              <SelectItem value="low">Низкий</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -152,26 +223,31 @@ export function BacklogPage() {
       </div>
 
       {/* Task List */}
-      <div className="space-y-3">
-        {filteredTasks.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            {backlogTasks.length === 0 
-              ? "Нет задач в бэклоге. Создайте первую задачу!" 
-              : "Нет задач, соответствующих фильтрам."}
+      <DndContext
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
+          <div className="space-y-3">
+            {filteredTasks.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                {backlogTasks.length === 0
+                  ? "Нет задач в бэклоге. Создайте первую задачу!"
+                  : "Нет задач, соответствующих фильтрам."}
+              </div>
+            ) : (
+              filteredTasks.map((task) => (
+                <SortableTaskCard
+                  key={task.id}
+                  task={task}
+                  onEdit={() => openEditModal(task.id)}
+                  onDelete={() => handleDeleteRequest(task)}
+                />
+              ))
+            )}
           </div>
-        ) : (
-          filteredTasks.map((task) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              onClick={() => handleTaskClick(task)}
-              onEdit={() => openEditModal(task.id)}
-              onDelete={() => handleDeleteTask(task.id, task.title)}
-              showProject={!selectedProjectId}
-            />
-          ))
-        )}
-      </div>
+        </SortableContext>
+      </DndContext>
 
       {/* Statistics */}
       <div className="mt-8 grid grid-cols-4 gap-4">
@@ -211,6 +287,15 @@ export function BacklogPage() {
         task={selectedTask}
         isOpen={taskDetailModalOpen}
         onClose={closeTaskDetailModal}
+      />
+
+      <ConfirmationDialog
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title={`Удалить задачу "${taskToDelete?.title}"?`}
+        description="Это действие нельзя отменить. Задача будет удалена навсегда."
+        confirmText="Удалить"
       />
     </div>
   );

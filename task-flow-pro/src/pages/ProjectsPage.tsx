@@ -1,8 +1,3 @@
-import { useState, useEffect } from "react";
-import { useAppStore } from "@/store";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/useToast";
-import { api } from "@/lib/api";
 import { 
   Plus, 
   Search, 
@@ -19,8 +14,14 @@ import {
   StarOff,
   TrendingUp
 } from "lucide-react";
+import { useState, useEffect } from "react";
+
 import { ProjectModal } from "@/components/project/ProjectModal";
 import { ProjectViewModal } from "@/components/project/ProjectViewModal";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/useToast";
+import { api } from "@/lib/api";
+import { useAppStore } from "@/store";
 
 export function ProjectsPage() {
   const { 

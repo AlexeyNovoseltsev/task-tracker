@@ -1,9 +1,10 @@
+import { X, Calendar, Target, Users, AlertCircle, Clock } from "lucide-react";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
+
 import { Button } from "@/components/ui/button";
-import { useAppStore } from "@/store";
 import { useToast } from "@/hooks/useToast";
-import { X, Calendar, Target, Users, AlertCircle, Clock } from "lucide-react";
+import { useAppStore } from "@/store";
 import type { Sprint } from "@/types";
 
 interface SprintModalProps {
