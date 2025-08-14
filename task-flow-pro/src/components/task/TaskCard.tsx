@@ -13,7 +13,8 @@ import {
   Edit,
   Trash2
 } from 'lucide-react';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, forwardRef } from 'react';
+import type { HTMLAttributes } from 'react';
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -31,7 +32,7 @@ import { useAppStore, useSettings } from '@/store';
 import { useToast } from '@/hooks/useToast';
 import { Task } from '@/types';
 
-interface TaskCardProps extends React.HTMLAttributes<HTMLDivElement> {
+interface TaskCardProps extends HTMLAttributes<HTMLDivElement> {
   task: Task;
   onClick?: () => void;
   onEdit?: () => void;
@@ -42,7 +43,7 @@ interface TaskCardProps extends React.HTMLAttributes<HTMLDivElement> {
   compact?: boolean;
 }
 
-export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
+export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({
   task, 
   onClick, 
   onEdit, 
@@ -375,4 +376,4 @@ export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
     </div>
   );
 });
-TaskCard.displayName = 'TaskCard'
+(TaskCard as any).displayName = 'TaskCard'

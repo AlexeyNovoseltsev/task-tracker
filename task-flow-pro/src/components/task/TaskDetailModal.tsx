@@ -34,7 +34,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/useToast";
-import { useAppStore, useSettings } from "@/store";
+import { useAppStore, useShowStoryPoints } from "@/store";
 import { Task, User, Comment, Activity, Attachment, TaskLink, TimeEntry } from "@/types";
 
 interface TaskDetailModalProps {

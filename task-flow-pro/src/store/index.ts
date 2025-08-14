@@ -504,3 +504,4 @@ export const useSelectedSprint = () => {
 };
 
 export const useSettings = () => useAppStore(state => state.settings);
+export const useShowStoryPoints = () => useAppStore(state => state.settings.showStoryPoints);

@@ -65,11 +65,6 @@ export function SettingsPage() {
     success("Настройка обновлена");
   };
 
-  const handleUpdateSetting = (key: keyof typeof settings, value: any) => {
-    updateSettings({ [key]: value });
-    success("Настройка обновлена");
-  };
-
   const handleResetSettings = () => {
     resetSettings();
     success("Настройки сброшены к значениям по умолчанию");
