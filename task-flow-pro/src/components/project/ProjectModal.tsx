@@ -1,9 +1,10 @@
+import { X, Folder, Palette, Key } from "lucide-react";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
+
 import { Button } from "@/components/ui/button";
-import { useAppStore } from "@/store";
 import { useToast } from "@/hooks/useToast";
-import { X, Folder, Palette, Key } from "lucide-react";
+import { useAppStore } from "@/store";
 import type { Project } from "@/types";
 
 interface ProjectModalProps {
@@ -72,11 +73,11 @@ export function ProjectModal({ isOpen, onClose, projectId }: ProjectModalProps) 
     }
   }, [existingProject, reset, isOpen]);
 
+  const nameValue = watch("name");
   // Auto-generate project key from name
   useEffect(() => {
-    const name = watch("name");
-    if (name && !existingProject) {
-      const key = name
+    if (nameValue && !existingProject) {
+      const key = nameValue
         .toUpperCase()
         .replace(/[^A-Z0-9\s]/g, "")
         .split(" ")
@@ -85,7 +86,7 @@ export function ProjectModal({ isOpen, onClose, projectId }: ProjectModalProps) 
         .slice(0, 6);
       setValue("key", key);
     }
-  }, [watch("name"), setValue, existingProject]);
+  }, [nameValue, setValue, existingProject]);
 
   const onSubmit = async (data: ProjectFormData) => {
     try {

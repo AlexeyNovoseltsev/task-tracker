@@ -1,7 +1,3 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { 
   Users, 
   Activity, 
@@ -15,6 +11,11 @@ import {
   TrendingUp,
   Clock
 } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/useToast';
 import { useAppStore } from '@/store';
 import type { Project } from '@/types';

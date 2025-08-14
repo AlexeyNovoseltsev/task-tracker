@@ -1,9 +1,10 @@
-import { Button } from "@/components/ui/button";
-import { useSelectedProject, useAppStore } from "@/store";
-import { useTheme } from "@/hooks/useTheme";
-import { useToast } from "@/hooks/useToast";
 import { Sun, Moon, Computer, ChevronDown, Folder, Check, Search, Bell, User } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
+
+import { Button } from "@/components/ui/button";
+import { useTheme } from "@/hooks/useTheme";
+import { useToast } from "@/hooks/useToast";
+import { useSelectedProject, useAppStore } from "@/store";
 
 export function Header() {
   const project = useSelectedProject();

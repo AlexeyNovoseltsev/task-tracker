@@ -1,15 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { EmptyState } from '@/components/ui/empty-state';
-import { ProjectModal } from '@/components/project/ProjectModal';
-import { TaskDetailModal } from '@/components/task/TaskDetailModal';
-import { SprintModal } from '@/components/sprint/SprintModal';
 import { Star, FolderOpen, Target, Calendar, Clock, User, Tag } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+
+import { ProjectModal } from '@/components/project/ProjectModal';
+import { SprintModal } from '@/components/sprint/SprintModal';
+import { TaskDetailModal } from '@/components/task/TaskDetailModal';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { useToast } from '@/hooks/useToast';
 import { api } from '@/lib/api';
 import { FavoriteWithDetails, Project, Task, Sprint } from '@/types';
-import { useToast } from '@/hooks/useToast';
 
 export default function FavoritesPage() {
   const [favorites, setFavorites] = useState<FavoriteWithDetails[]>([]);

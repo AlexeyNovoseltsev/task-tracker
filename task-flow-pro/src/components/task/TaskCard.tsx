@@ -1,34 +1,37 @@
-import { Task } from '@/types';
-import { cn } from '@/lib/utils';
-import { useAppStore, useShowStoryPoints } from '@/store';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Progress } from '@/components/ui/progress';
-import { Button } from '@/components/ui/button';
-import { api } from '@/lib/api';
-import { useToast } from '@/hooks/useToast';
-import { useState, useEffect } from 'react';
 import { 
-  Calendar, 
-  Clock, 
   User, 
   Flag, 
   MoreVertical, 
   MessageSquare,
   Paperclip,
-  Timer,
   CheckSquare,
   AlertCircle,
   Eye,
-  Tag,
-  ArrowUpRight,
   CalendarDays,
-  UserCheck,
-  Zap,
-  Star
+  Star,
+  GripVertical,
+  Edit,
+  Trash2
 } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
 
-interface TaskCardProps {
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/DropdownMenu";
+import { Progress } from '@/components/ui/progress';
+import { api } from '@/lib/api';
+import { cn } from '@/lib/utils';
+import { useAppStore, useSettings } from '@/store';
+import { useToast } from '@/hooks/useToast';
+import { Task } from '@/types';
+
+interface TaskCardProps extends React.HTMLAttributes<HTMLDivElement> {
   task: Task;
   onClick?: () => void;
   onEdit?: () => void;
@@ -39,7 +42,7 @@ interface TaskCardProps {
   compact?: boolean;
 }
 
-export function TaskCard({ 
+export const TaskCard = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   task, 
   onClick, 
   onEdit, 
@@ -47,10 +50,11 @@ export function TaskCard({
   className, 
   isDragging,
   showProject = false,
-  compact = false
-}: TaskCardProps) {
+  compact = false,
+  ...props
+}, ref) => {
   const { users, projects } = useAppStore();
-  const showStoryPoints = useShowStoryPoints();
+  const { showStoryPoints } = useSettings();
   const { success, error } = useToast();
   const [isFavorited, setIsFavorited] = useState(false);
   const [favoriteId, setFavoriteId] = useState<string | null>(null);
@@ -59,12 +63,7 @@ export function TaskCard({
   const assignee = users.find(u => u.id === task.assigneeId);
   const project = projects.find(p => p.id === task.projectId);
 
-  // Check if task is favorited on mount
-  useEffect(() => {
-    checkFavoriteStatus();
-  }, [task.id]);
-
-  const checkFavoriteStatus = async () => {
+  const checkFavoriteStatus = useCallback(async () => {
     try {
       const response = await api.checkIfFavorited('task', task.id);
       if (response.success) {
@@ -74,7 +73,12 @@ export function TaskCard({
     } catch (err) {
       // Silent fail for favorite check
     }
-  };
+  }, [task.id]);
+
+  // Check if task is favorited on mount
+  useEffect(() => {
+    checkFavoriteStatus();
+  }, [checkFavoriteStatus]);
 
   const handleToggleFavorite = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -171,6 +175,8 @@ export function TaskCard({
 
   return (
     <div
+      ref={ref}
+      {...props}
       className={cn(
         "bg-card rounded-modern border shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group relative overflow-hidden",
         "border-l-4",
@@ -181,6 +187,11 @@ export function TaskCard({
       )}
       onClick={onClick}
     >
+      {/* Drag Handle */}
+      <div className="absolute left-1 top-1/2 -translate-y-1/2 p-1 text-muted-foreground/30 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab">
+        <GripVertical className="h-5 w-5" />
+      </div>
+
       {/* Status indicator */}
       <div className={cn(
         "absolute top-3 right-3 w-2 h-2 rounded-full",
@@ -189,7 +200,7 @@ export function TaskCard({
 
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center space-x-2 flex-1 min-w-0">
+        <div className="flex items-center space-x-2 flex-1 min-w-0 pl-4">
           {getTypeIcon(task.type)}
           <span className="text-xs text-muted-foreground font-mono">
             {project?.key}-{task.id.slice(-4).toUpperCase()}
@@ -220,15 +231,23 @@ export function TaskCard({
               isFavorited ? "fill-yellow-400 text-yellow-500" : "text-muted-foreground"
             )} />
           </Button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit?.();
-            }}
-            className="p-1 hover:bg-muted rounded-modern transition-colors"
-          >
-            <MoreVertical className="h-4 w-4" />
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="p-1 h-6 w-6" onClick={(e) => e.stopPropagation()}>
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
+              <DropdownMenuItem onClick={onEdit}>
+                <Edit className="mr-2 h-4 w-4" />
+                <span>Edit</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onDelete} className="text-red-500">
+                <Trash2 className="mr-2 h-4 w-4" />
+                <span>Delete</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -355,4 +374,5 @@ export function TaskCard({
       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
     </div>
   );
-}
+});
+TaskCard.displayName = 'TaskCard'

@@ -1,11 +1,12 @@
 
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { X, Filter, CheckSquare, Clock, AlertCircle, CheckCircle2, Activity } from 'lucide-react';
+
+import { CustomTaskIcon } from '@/components/icons/CustomTaskIcon';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/useToast';
 import { useShowStoryPoints } from '@/store';
 import type { Task } from '@/types';
-import { CustomTaskIcon } from '@/components/icons/CustomTaskIcon';
 
 interface TaskListModalProps {
   isOpen: boolean;

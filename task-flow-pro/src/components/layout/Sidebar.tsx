@@ -1,24 +1,18 @@
-import { NavLink } from "react-router-dom";
-import { cn } from "@/lib/utils";
-import { SprintIcon, LogoIcon } from "@/components/icons";
 import { 
   LayoutDashboard, 
   FolderKanban, 
   ListTodo, 
   CheckSquare,
-  Zap,
   Kanban,
-  BarChart3,
   Settings,
   Wifi,
-  Sparkles,
-  Target,
-  Calendar,
-  Users,
   PieChart,
-  Command,
   Star
 } from "lucide-react";
+import { NavLink } from "react-router-dom";
+
+import { SprintIcon, LogoIcon } from "@/components/icons";
+import { cn } from "@/lib/utils";
 
 const navigation = [
   { name: "Дашборд", href: "/", icon: LayoutDashboard, description: "Обзор проектов" },

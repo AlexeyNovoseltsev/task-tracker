@@ -1,8 +1,3 @@
-import { useState } from "react";
-import { Task, User, Comment, Activity, Attachment, TaskLink, TimeEntry } from "@/types";
-import { Button } from "@/components/ui/button";
-import { useAppStore, useShowStoryPoints } from "@/store";
-import { useToast } from "@/hooks/useToast";
 import {
   X,
   Edit,
@@ -35,6 +30,12 @@ import {
   File,
   ExternalLink
 } from "lucide-react";
+import { useState } from "react";
+
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/useToast";
+import { useAppStore, useSettings } from "@/store";
+import { Task, User, Comment, Activity, Attachment, TaskLink, TimeEntry } from "@/types";
 
 interface TaskDetailModalProps {
   task: Task | null;

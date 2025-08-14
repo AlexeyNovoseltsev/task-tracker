@@ -1,9 +1,3 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAppStore, useShowStoryPoints } from "@/store";
-import { useToast } from "@/hooks/useToast";
 import { 
   FolderPlus, 
   ExternalLink, 
@@ -18,19 +12,26 @@ import {
   ArrowUpRight,
   X
 } from "lucide-react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+import { Icon3dCalendar } from "@/components/icons/Icon3dCalendar";
+import { Icon3dClipboard } from "@/components/icons/Icon3dClipboard";
+import { Icon3dFolder } from "@/components/icons/Icon3dFolder";
+import { Icon3dWorkstation } from "@/components/icons/Icon3dWorkstation";
 import { ProjectModal } from "@/components/project/ProjectModal";
 import { ProjectViewModal } from "@/components/project/ProjectViewModal";
 import { TaskDetailModal } from "@/components/task/TaskDetailModal";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/useToast";
+import { useAppStore, useSettings } from "@/store";
 // --- Новые импорты 3D иконок ---
-import { Icon3dFolder } from "@/components/icons/Icon3dFolder";
-import { Icon3dClipboard } from "@/components/icons/Icon3dClipboard";
-import { Icon3dCalendar } from "@/components/icons/Icon3dCalendar";
-import { Icon3dWorkstation } from "@/components/icons/Icon3dWorkstation";
 import type { Task } from "@/types";
 
 export function DashboardPage() {
   const { projects, tasks, sprints, addProject, addTask, addSprint, setSelectedProject } = useAppStore();
-  const showStoryPoints = useShowStoryPoints();
+  const { showStoryPoints } = useSettings();
   const { success } = useToast();
   const navigate = useNavigate();
   const [projectModalOpen, setProjectModalOpen] = useState(false);

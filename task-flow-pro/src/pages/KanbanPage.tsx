@@ -1,14 +1,24 @@
-import { useState } from "react";
-import { useAppStore } from "@/store";
-import { Task } from "@/types";
+import {
+  DndContext,
+  closestCorners,
+  DragEndEvent,
+  DragStartEvent,
+  DragOverEvent,
+  UniqueIdentifier,
+} from "@dnd-kit/core";
+import { SortableContext, useSortable, arrayMove } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { Plus, Edit } from "lucide-react";
+import { useState, useMemo } from "react";
+
+import { TaskCard } from "@/components/task/TaskCard";
+import { TaskDetailModal } from "@/components/task/TaskDetailModal";
+import { TaskModal } from "@/components/task/TaskModal";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Plus, Edit } from "lucide-react";
-import { TaskModal } from "@/components/task/TaskModal";
-import { TaskDetailModal } from "@/components/task/TaskDetailModal";
-import { TaskCard } from "@/components/task/TaskCard";
+import { useAppStore } from "@/store";
+import { Task, Status } from "@/types";
 
-type Status = "todo" | "in-progress" | "in-review" | "done";
 
 const statusColumns: { id: Status; title: string; bgColor: string }[] = [
   { id: "todo", title: "К выполнению", bgColor: "bg-slate-100 dark:bg-slate-800" },
@@ -17,79 +27,140 @@ const statusColumns: { id: Status; title: string; bgColor: string }[] = [
   { id: "done", title: "Готово", bgColor: "bg-green-100 dark:bg-green-900/30" },
 ];
 
+function KanbanColumn({
+  id,
+  title,
+  tasks,
+  bgColor,
+  onTaskClick,
+}: {
+  id: Status;
+  title: string;
+  tasks: Task[];
+  bgColor: string;
+  onTaskClick: (task: Task) => void;
+}) {
+  const taskIds = useMemo(() => tasks.map((t) => t.id), [tasks]);
+
+  return (
+    <div className={cn("rounded-lg p-4 flex flex-col", bgColor)}>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-semibold text-lg">{title}</h3>
+        <span className="text-sm text-muted-foreground">{tasks.length}</span>
+      </div>
+      <SortableContext items={taskIds} id={id}>
+        <div className="space-y-3 flex-1 overflow-y-auto">
+          {tasks.map((task) => (
+            <SortableTaskItem key={task.id} task={task} onClick={() => onTaskClick(task)} />
+          ))}
+          {tasks.length === 0 && (
+            <div className="text-center text-muted-foreground text-sm py-8">
+              Перетащите задачи сюда
+            </div>
+          )}
+        </div>
+      </SortableContext>
+    </div>
+  );
+}
+
+function SortableTaskItem({ task, onClick }: { task: Task; onClick: () => void }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task.id, data: { ...task } });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      <TaskCard task={task} onClick={onClick} isDragging={isDragging} compact />
+    </div>
+  );
+}
+
 export function KanbanPage() {
-  const { tasks, updateTask, selectedProjectId } = useAppStore();
-  const [draggedTask, setDraggedTask] = useState<string | null>(null);
-  const [draggedOverColumn, setDraggedOverColumn] = useState<Status | null>(null);
+  const { tasks, updateTask, reorderTasks, selectedProjectId } = useAppStore();
   const [taskModalOpen, setTaskModalOpen] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<string | undefined>();
   const [taskDetailModalOpen, setTaskDetailModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [activeTask, setActiveTask] = useState<Task | null>(null);
 
-  const projectTasks = selectedProjectId 
+  const projectTasks = useMemo(() => selectedProjectId
     ? tasks.filter(task => task.projectId === selectedProjectId)
-    : tasks;
+    : tasks, [tasks, selectedProjectId]);
 
-  const handleDragStart = (taskId: string) => {
-    setDraggedTask(taskId);
-  };
+  const tasksByStatus = useMemo(() => {
+    return statusColumns.reduce((acc, column) => {
+      acc[column.id] = projectTasks
+        .filter((task) => task.status === column.id)
+        .sort((a, b) => (a.position || 0) - (b.position || 0));
+      return acc;
+    }, {} as Record<Status, Task[]>);
+  }, [projectTasks]);
 
-  const handleDragEnd = () => {
-    setDraggedTask(null);
-    setDraggedOverColumn(null);
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
-
-  const handleDragEnter = (status: Status) => {
-    setDraggedOverColumn(status);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    // Only clear if leaving the column area completely
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const { clientX, clientY } = e;
-    
-    if (
-      clientX < rect.left ||
-      clientX > rect.right ||
-      clientY < rect.top ||
-      clientY > rect.bottom
-    ) {
-      setDraggedOverColumn(null);
-    }
-  };
-
-  const handleDrop = (e: React.DragEvent, status: Status) => {
-    e.preventDefault();
-    if (draggedTask) {
-      const task = tasks.find(t => t.id === draggedTask);
-      if (task && task.status !== status) {
-        updateTask(draggedTask, { status });
-        // Можно добавить тост-уведомление
+  const findContainer = (id: UniqueIdentifier) => {
+    for (const status of Object.keys(tasksByStatus) as Status[]) {
+      if (tasksByStatus[status].some(task => task.id === id)) {
+        return status;
       }
-      setDraggedTask(null);
-      setDraggedOverColumn(null);
+    }
+    return null;
+  };
+
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    const task = projectTasks.find(t => t.id === active.id);
+    if (task) {
+      setActiveTask(task);
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "high": return "border-l-red-500";
-      case "medium": return "border-l-yellow-500";
-      case "low": return "border-l-green-500";
-      default: return "border-l-gray-500";
+  const handleDragOver = (event: DragOverEvent) => {
+    const { active, over } = event;
+    if (!over) return;
+
+    const activeContainer = findContainer(active.id);
+    const overContainer = findContainer(over.id);
+
+    if (!activeContainer || !overContainer || activeContainer === overContainer) {
+      return;
     }
+
+    // This logic handles moving items between columns visually before drop
+    // It's complex, so we'll simplify and only update on drop for now.
   };
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case "bug": return "🐛";
-      case "story": return "📖";
-      case "task": return "✅";
-      default: return "📝";
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveTask(null);
+
+    if (!over) return;
+
+    const activeContainer = findContainer(active.id);
+    const overContainerId = over.data.current?.sortable?.containerId || findContainer(over.id);
+
+    if (!activeContainer || !overContainerId) return;
+
+    if (activeContainer !== overContainerId) {
+      // Task moved to a new column
+      updateTask(active.id as string, { status: overContainerId as Status });
+    }
+
+    // Handle reordering within the same or new column
+    const activeIndex = tasksByStatus[activeContainer].findIndex(t => t.id === active.id);
+    const overIndex = tasksByStatus[overContainerId].findIndex(t => t.id === over.id);
+
+    if (activeIndex !== overIndex) {
+      reorderTasks(active.id as string, over.id as string);
     }
   };
 
@@ -130,92 +201,48 @@ export function KanbanPage() {
   }
 
   return (
-    <div className="p-6 h-full">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">Канбан-доска</h1>
-        <div className="text-sm text-muted-foreground">
-          Всего задач: {projectTasks.length}
+    <DndContext
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDragEnd={handleDragEnd}
+      collisionDetection={closestCorners}
+    >
+      <div className="p-6 h-full flex flex-col">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold">Канбан-доска</h1>
+          <div className="text-sm text-muted-foreground">
+            Всего задач: {projectTasks.length}
+          </div>
         </div>
-      </div>
 
-      <div className="grid grid-cols-4 gap-6 h-[calc(100vh-200px)]">
-        {statusColumns.map((column) => {
-          const columnTasks = projectTasks.filter(task => task.status === column.id);
-          
-          return (
-            <div
+        <div className="grid grid-cols-4 gap-6 flex-1">
+          {statusColumns.map((column) => (
+            <KanbanColumn
               key={column.id}
-              className={cn(
-                "rounded-lg p-4 flex flex-col transition-all duration-200",
-                column.bgColor,
-                draggedOverColumn === column.id && draggedTask 
-                  ? "ring-2 ring-primary bg-primary/10 scale-[1.02]" 
-                  : ""
-              )}
-              onDragOver={handleDragOver}
-              onDragEnter={() => handleDragEnter(column.id)}
-              onDragLeave={handleDragLeave}
-              onDrop={(e) => handleDrop(e, column.id)}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-lg">{column.title}</h3>
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-muted-foreground">
-                    {columnTasks.length}
-                  </span>
-                  <Button 
-                    size="sm" 
-                    variant="ghost" 
-                    className="h-6 w-6 p-0"
-                    onClick={openCreateModal}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
+              id={column.id}
+              title={column.title}
+              tasks={tasksByStatus[column.id] || []}
+              bgColor={column.bgColor}
+              onTaskClick={handleTaskClick}
+            />
+          ))}
+        </div>
 
-              <div className="space-y-3 flex-1 overflow-y-auto">
-                {columnTasks.map((task) => (
-                  <div
-                    key={task.id}
-                    draggable
-                    onDragStart={() => handleDragStart(task.id)}
-                    onDragEnd={handleDragEnd}
-                  >
-                    <TaskCard
-                      task={task}
-                      onClick={() => handleTaskClick(task)}
-                      onEdit={() => openEditModal(task.id)}
-                      isDragging={draggedTask === task.id}
-                      compact={true}
-                    />
-                  </div>
-                ))}
 
-                {columnTasks.length === 0 && (
-                  <div className="text-center text-muted-foreground text-sm py-8">
-                    Перетащите задачи сюда
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
+        {/* Task Modal */}
+        <TaskModal
+          isOpen={taskModalOpen}
+          onClose={closeModal}
+          taskId={editingTaskId}
+        />
+
+        {/* Task Detail Modal */}
+        <TaskDetailModal
+          task={selectedTask}
+          isOpen={taskDetailModalOpen}
+          onClose={closeTaskDetailModal}
+        />
       </div>
-
-      {/* Task Modal */}
-      <TaskModal
-        isOpen={taskModalOpen}
-        onClose={closeModal}
-        taskId={editingTaskId}
-      />
-
-      {/* Task Detail Modal */}
-      <TaskDetailModal
-        task={selectedTask}
-        isOpen={taskDetailModalOpen}
-        onClose={closeTaskDetailModal}
-      />
-    </div>
+    </DndContext>
   );
 } 

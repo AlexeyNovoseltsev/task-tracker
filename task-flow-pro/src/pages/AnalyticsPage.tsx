@@ -1,10 +1,16 @@
-import { useAppStore, useShowStoryPoints } from "@/store";
+import { TrendingUp, Target, Users, Clock, BarChart, AreaChart } from "lucide-react";
+import { useState, useEffect } from "react";
+
+import { BurndownChart } from "@/components/analytics/BurndownChart";
+import { VelocityChart } from "@/components/analytics/VelocityChart";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
 import { cn } from "@/lib/utils";
-import { TrendingUp, Target, Users, Clock } from "lucide-react";
+import { useAppStore, useSettings } from "@/store";
 
 export function AnalyticsPage() {
   const { tasks, sprints, selectedProjectId } = useAppStore();
-  const showStoryPoints = useShowStoryPoints();
+  const { showStoryPoints } = useSettings();
+  const [selectedSprintId, setSelectedSprintId] = useState('');
 
   const projectTasks = selectedProjectId 
     ? tasks.filter(task => task.projectId === selectedProjectId)
@@ -39,6 +45,14 @@ export function AnalyticsPage() {
 
   const activeSprints = projectSprints.filter(s => s.status === "active");
   const completedSprints = projectSprints.filter(s => s.status === "completed");
+
+  useEffect(() => {
+    if (activeSprints.length > 0) {
+      setSelectedSprintId(activeSprints[0].id);
+    } else if (completedSprints.length > 0) {
+      setSelectedSprintId(completedSprints[completedSprints.length - 1].id);
+    }
+  }, [selectedProjectId, sprints]);
 
   // Velocity calculation (average story points per completed sprint)
   const velocity = completedSprints.length > 0
@@ -122,147 +136,40 @@ export function AnalyticsPage() {
         </div>
       </div>
 
-      {/* Task Status Distribution */}
+      {/* Charts */}
       <div className="grid grid-cols-2 gap-6">
         <div className="bg-card p-6 rounded-lg border">
-          <h3 className="text-lg font-semibold mb-4">Распределение задач по статусам</h3>
-          <div className="space-y-3">
-            {Object.entries(tasksByStatus).map(([status, count]) => {
-              const percentage = projectTasks.length > 0 ? (count / projectTasks.length) * 100 : 0;
-              const colors = {
-                todo: "bg-gray-500",
-                inProgress: "bg-blue-500",
-                inReview: "bg-yellow-500",
-                done: "bg-green-500",
-              };
-              
-              return (
-                <div key={status} className="flex items-center space-x-3">
-                  <div className="flex items-center space-x-2 min-w-[100px]">
-                    <div className={cn("w-3 h-3 rounded-full", colors[status as keyof typeof colors])}></div>
-                    <span className="text-sm font-medium">
-                      {status === "todo" ? "К выполнению" : 
-                       status === "inProgress" ? "В работе" : 
-                       status === "inReview" ? "На проверке" : 
-                       status === "done" ? "Готово" : status}
-                    </span>
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className={cn("h-2 rounded-full", colors[status as keyof typeof colors])}
-                          style={{ width: `${percentage}%` }}
-                        ></div>
-                      </div>
-                      <span className="text-sm text-muted-foreground ml-2 min-w-[60px]">
-                        {count} ({Math.round(percentage)}%)
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold flex items-center">
+              <AreaChart className="h-5 w-5 mr-2" />
+              Диаграмма сгорания
+            </h3>
+            <Select value={selectedSprintId} onValueChange={setSelectedSprintId}>
+              <SelectTrigger className="w-[250px]">
+                <SelectValue placeholder="Выберите спринт" />
+              </SelectTrigger>
+              <SelectContent>
+                {projectSprints.map(sprint => (
+                  <SelectItem key={sprint.id} value={sprint.id}>{sprint.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
+          {selectedSprintId ? (
+            <BurndownChart sprintId={selectedSprintId} />
+          ) : (
+            <div className="text-center text-muted-foreground py-8">
+              Выберите спринт для отображения диаграммы сгорания.
+            </div>
+          )}
         </div>
 
-        {/* Priority Distribution */}
         <div className="bg-card p-6 rounded-lg border">
-          <h3 className="text-lg font-semibold mb-4">Распределение по приоритетам</h3>
-          <div className="space-y-3">
-            {Object.entries(tasksByPriority).map(([priority, count]) => {
-              const percentage = projectTasks.length > 0 ? (count / projectTasks.length) * 100 : 0;
-              const colors = {
-                high: "bg-red-500",
-                medium: "bg-yellow-500",
-                low: "bg-green-500",
-              };
-              
-              return (
-                <div key={priority} className="flex items-center space-x-3">
-                  <div className="flex items-center space-x-2 min-w-[100px]">
-                    <div className={cn("w-3 h-3 rounded-full", colors[priority as keyof typeof colors])}></div>
-                    <span className="text-sm font-medium">
-                      {priority === "high" ? "Высокий" : 
-                       priority === "medium" ? "Средний" : 
-                       priority === "low" ? "Низкий" : priority}
-                    </span>
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className={cn("h-2 rounded-full", colors[priority as keyof typeof colors])}
-                          style={{ width: `${percentage}%` }}
-                        ></div>
-                      </div>
-                      <span className="text-sm text-muted-foreground ml-2 min-w-[60px]">
-                        {count} ({Math.round(percentage)}%)
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Sprint Overview */}
-      <div className="bg-card p-6 rounded-lg border">
-        <h3 className="text-lg font-semibold mb-4">Обзор спринтов</h3>
-        <div className="grid grid-cols-3 gap-6">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-blue-500 mb-1">
-              {projectSprints.filter(s => s.status === "planned").length}
-            </div>
-            <div className="text-sm text-muted-foreground">Запланированные</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-green-500 mb-1">
-              {activeSprints.length}
-            </div>
-            <div className="text-sm text-muted-foreground">Активные</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-gray-500 mb-1">
-              {completedSprints.length}
-            </div>
-            <div className="text-sm text-muted-foreground">Завершенные</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Project Insights */}
-      <div className="bg-card p-6 rounded-lg border">
-        <h3 className="text-lg font-semibold mb-4">Аналитические выводы</h3>
-        <div className="grid grid-cols-2 gap-6">
-          <div>
-            <h4 className="font-medium mb-2">📊 Сводка по прогрессу</h4>
-            <ul className="text-sm text-muted-foreground space-y-1">
-              <li>• {completionRate}% задач завершено</li>
-              <li>• {tasksByPriority.high} задач высокого приоритета осталось</li>
-              <li>• Средняя скорость: {velocity} очков за спринт</li>
-              <li>• {activeSprints.length} спринт(ов) сейчас активно</li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-medium mb-2">🎯 Рекомендации</h4>
-            <ul className="text-sm text-muted-foreground space-y-1">
-              {tasksByPriority.high > 5 && (
-                <li>• Рассмотрите приоритизацию задач высокого приоритета</li>
-              )}
-              {completionRate < 50 && (
-                <li>• Сосредоточьтесь на завершении задач в работе</li>
-              )}
-              {activeSprints.length === 0 && projectSprints.length > 0 && (
-                <li>• Запустите новый спринт для поддержания темпа</li>
-              )}
-              {velocity === 0 && (
-                <li>• Завершите спринт для определения базовой скорости</li>
-              )}
-            </ul>
-          </div>
+          <h3 className="text-lg font-semibold mb-4 flex items-center">
+            <BarChart className="h-5 w-5 mr-2" />
+            Скорость команды
+          </h3>
+          <VelocityChart />
         </div>
       </div>
     </div>

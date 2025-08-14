@@ -1,11 +1,12 @@
+import { CheckCircle, XCircle, Loader2, Server, Database, Wifi } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { useApiHealth, useProjects } from '@/hooks/useApi';
-import { api } from '@/lib/api';
+
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, Loader2, Server, Database, Wifi } from 'lucide-react';
+import { useApiHealth, useProjects } from '@/hooks/useApi';
 import { useToast } from '@/hooks/useToast';
+import { api } from '@/lib/api';
 
 export default function ApiTestPage() {
   const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking');
