@@ -1,27 +1,28 @@
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
-import compression from 'compression';
 import { createServer } from 'http';
-import { Server as SocketIOServer } from 'socket.io';
+
+import compression from 'compression';
+import cors from 'cors';
+import express from 'express';
 import rateLimit from 'express-rate-limit';
+import helmet from 'helmet';
+import { Server as SocketIOServer } from 'socket.io';
 
 import config from '@/config';
+import { authMiddleware } from '@/middleware/auth';
 import { errorHandler, notFoundHandler } from '@/middleware/errorHandler';
 import { requestLogger } from '@/middleware/logger';
-import { authMiddleware } from '@/middleware/auth';
 import { validationErrorHandler } from '@/middleware/validation';
 
 // Route imports
-import authRoutes from '@/routes/auth';
-import projectRoutes from '@/routes/projects';
-import taskRoutes from '@/routes/tasks';
-import sprintRoutes from '@/routes/sprints';
-import commentRoutes from '@/routes/comments';
-import attachmentRoutes from '@/routes/attachments';
-import userRoutes from '@/routes/users';
 import analyticsRoutes from '@/routes/analytics';
+import attachmentRoutes from '@/routes/attachments';
+import authRoutes from '@/routes/auth';
+import commentRoutes from '@/routes/comments';
 import healthRoutes from '@/routes/health';
+import projectRoutes from '@/routes/projects';
+import sprintRoutes from '@/routes/sprints';
+import taskRoutes from '@/routes/tasks';
+import userRoutes from '@/routes/users';
 
 // WebSocket handler
 import { initializeWebSocket } from '@/services/websocket';

@@ -1,9 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+
+import { AuthenticationError, AuthorizationError } from './errorHandler';
+
+import config from '@/config';
 import { supabaseAdmin } from '@/config/supabase';
 import { AuthUser } from '@/types';
-import { AuthenticationError, AuthorizationError } from './errorHandler';
-import config from '@/config';
 
 // Extend Request type to include user
 declare global {

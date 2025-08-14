@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import winston from 'winston';
+
 import config from '@/config';
 
 // Create Winston logger

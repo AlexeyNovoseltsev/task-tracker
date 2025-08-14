@@ -1,8 +1,9 @@
 import { Router, Request, Response } from 'express';
+
+import config from '@/config';
 import { supabaseAdmin } from '@/config/supabase';
 import { successResponse } from '@/middleware/errorHandler';
 import { getConnectionStats } from '@/services/websocket';
-import config from '@/config';
 
 const router = Router();
 

@@ -1,5 +1,10 @@
 import { Router, Request, Response } from 'express';
+
 import { supabaseAdmin } from '@/config/supabase';
+import {
+  requireProjectMembership,
+  requireProjectAdmin
+} from '@/middleware/auth';
 import { 
   successResponse, 
   paginatedResponse,
@@ -8,18 +13,16 @@ import {
   ConflictError,
   asyncHandler 
 } from '@/middleware/errorHandler';
-import { 
-  requireProjectMembership,
-  requireProjectAdmin 
-} from '@/middleware/auth';
+import { dbLogger, securityLogger } from '@/middleware/logger';
 import { 
   validateCreateProject,
   validateUpdateProject,
   validateUUIDParam,
   validatePagination,
-  validationErrorHandler 
+  validationErrorHandler,
+  validateAddProjectMember,
+  validateUpdateProjectMemberRole
 } from '@/middleware/validation';
-import { dbLogger, securityLogger } from '@/middleware/logger';
 import { ProjectWithStats } from '@/types';
 
 const router = Router();
@@ -40,75 +43,41 @@ router.get('/',
     const order = req.query.order as string || 'desc';
 
     const startTime = Date.now();
-
     try {
-      // Get projects where user is a member
-      const { data: projects, error, count } = await supabaseAdmin
-        .from('projects')
-        .select(`
-          *,
-          owner:users!projects_owner_id_fkey(id, name, email, avatar_url),
-          project_members!inner(role)
-        `, { count: 'exact' })
-        .eq('project_members.user_id', req.user.id)
-        .eq('is_archived', false)
-        .order(sort, { ascending: order === 'asc' })
-        .range(offset, offset + limit - 1);
+      const { data: projects, error } = await supabaseAdmin
+        .rpc('get_projects_for_user_with_stats', {
+          p_user_id: req.user.id,
+          p_limit: limit,
+          p_offset: offset,
+          p_sort_by: sort,
+          p_sort_order: order,
+        });
 
       if (error) {
-        dbLogger.error('SELECT', 'projects', error, req.user.id);
+        dbLogger.error('RPC', 'get_projects_for_user_with_stats', error, req.user.id);
         throw new Error('Failed to fetch projects');
       }
 
-      // Get additional stats for each project
-      const projectsWithStats: ProjectWithStats[] = await Promise.all(
-        (projects || []).map(async (project) => {
-          // Get task counts
-          const { count: tasksCount } = await supabaseAdmin
-            .from('tasks')
-            .select('*', { count: 'exact' })
-            .eq('project_id', project.id);
+      const totalCount = projects?.[0]?.total_count || 0;
 
-          const { count: completedTasksCount } = await supabaseAdmin
-            .from('tasks')
-            .select('*', { count: 'exact' })
-            .eq('project_id', project.id)
-            .eq('status', 'done');
+      // The RPC function returns ProjectWithStats compatible objects, but we need to remove the total_count field
+      const projectsWithStats: ProjectWithStats[] = (projects || []).map(p => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { total_count, ...rest } = p;
+        return rest as ProjectWithStats;
+      });
 
-          // Get active sprints count
-          const { count: activeSprintsCount } = await supabaseAdmin
-            .from('sprints')
-            .select('*', { count: 'exact' })
-            .eq('project_id', project.id)
-            .eq('status', 'active');
-
-          // Get members count
-          const { count: membersCount } = await supabaseAdmin
-            .from('project_members')
-            .select('*', { count: 'exact' })
-            .eq('project_id', project.id);
-
-          return {
-            ...project,
-            tasks_count: tasksCount || 0,
-            completed_tasks_count: completedTasksCount || 0,
-            active_sprints_count: activeSprintsCount || 0,
-            members_count: membersCount || 0,
-          };
-        })
-      );
-
-      dbLogger.query('SELECT', 'projects', req.user.id, Date.now() - startTime);
+      dbLogger.query('RPC', 'get_projects_for_user_with_stats', req.user.id, Date.now() - startTime);
       securityLogger.dataAccess(req.user.id, 'projects', 'list');
 
       return paginatedResponse(res, projectsWithStats, {
         page,
         limit,
-        total: count || 0,
+        total: totalCount,
       }, 'Projects retrieved successfully');
 
     } catch (error) {
-      dbLogger.error('SELECT', 'projects', error, req.user.id);
+      dbLogger.error('RPC', 'get_projects_for_user_with_stats', error, req.user?.id);
       throw error;
     }
   })
@@ -394,14 +363,7 @@ router.get('/:id/members',
 // Add project member
 router.post('/:id/members',
   validateUUIDParam('id'),
-  [
-    require('express-validator').body('user_id')
-      .isUUID()
-      .withMessage('User ID must be a valid UUID'),
-    require('express-validator').body('role')
-      .isIn(['admin', 'member', 'viewer'])
-      .withMessage('Role must be one of: admin, member, viewer'),
-  ],
+  validateAddProjectMember(),
   validationErrorHandler,
   requireProjectAdmin,
   asyncHandler(async (req: Request, res: Response) => {
@@ -471,11 +433,7 @@ router.post('/:id/members',
 router.patch('/:id/members/:memberId',
   validateUUIDParam('id'),
   validateUUIDParam('memberId'),
-  [
-    require('express-validator').body('role')
-      .isIn(['admin', 'member', 'viewer'])
-      .withMessage('Role must be one of: admin, member, viewer'),
-  ],
+  validateUpdateProjectMemberRole(),
   validationErrorHandler,
   requireProjectAdmin,
   asyncHandler(async (req: Request, res: Response) => {
