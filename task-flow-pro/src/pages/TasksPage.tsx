@@ -228,7 +228,7 @@ export function TasksPage() {
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex items-start justify-between">
-                <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1">
           <h1 className="text-3xl font-bold tracking-tight mb-2">
             {selectedProjectId ? 'Задачи проекта' : 'Все задачи'}
           </h1>
