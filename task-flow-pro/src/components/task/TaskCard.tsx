@@ -13,7 +13,7 @@ import {
   Edit,
   Trash2
 } from 'lucide-react';
-import { useState, useEffect, useCallback, forwardRef } from 'react';
+import { useState, useEffect, useCallback, forwardRef, useMemo } from 'react';
 import type { HTMLAttributes } from 'react';
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -41,9 +41,10 @@ interface TaskCardProps extends HTMLAttributes<HTMLDivElement> {
   isDragging?: boolean;
   showProject?: boolean;
   compact?: boolean;
+  dragHandleProps?: any;
 }
 
-export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({
+export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({ 
   task, 
   onClick, 
   onEdit, 
@@ -52,6 +53,7 @@ export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({
   isDragging,
   showProject = false,
   compact = false,
+  dragHandleProps,
   ...props
 }, ref) => {
   const { users, projects } = useAppStore();
@@ -61,8 +63,8 @@ export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({
   const [favoriteId, setFavoriteId] = useState<string | null>(null);
   const [isLoadingFavorite, setIsLoadingFavorite] = useState(false);
   
-  const assignee = users.find(u => u.id === task.assigneeId);
-  const project = projects.find(p => p.id === task.projectId);
+  const assignee = useMemo(() => users.find(u => u.id === task.assigneeId), [users, task.assigneeId]);
+  const project = useMemo(() => projects.find(p => p.id === task.projectId), [projects, task.projectId]);
 
   const checkFavoriteStatus = useCallback(async () => {
     try {
@@ -119,22 +121,24 @@ export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({
     }
   };
 
-  const getPriorityIcon = (priority: string) => {
+  const getPriorityIcon = (priority: string, compact: boolean = false) => {
+    const size = compact ? "h-3 w-3" : "h-4 w-4";
     switch (priority) {
-      case 'urgent': return <AlertCircle className="h-3 w-3 text-red-500" />;
-      case 'high': return <Flag className="h-3 w-3 text-orange-500" />;
-      case 'medium': return <Flag className="h-3 w-3 text-yellow-500" />;
-      case 'low': return <Flag className="h-3 w-3 text-green-500" />;
-      default: return <Flag className="h-3 w-3 text-muted-foreground" />;
+      case 'urgent': return <AlertCircle className={`${size} text-red-500`} />;
+      case 'high': return <Flag className={`${size} text-orange-500`} />;
+      case 'medium': return <Flag className={`${size} text-yellow-500`} />;
+      case 'low': return <Flag className={`${size} text-green-500`} />;
+      default: return <Flag className={`${size} text-muted-foreground`} />;
     }
   };
 
-  const getTypeIcon = (type: string) => {
+  const getTypeIcon = (type: string, compact: boolean = false) => {
+    const size = compact ? "h-3 w-3" : "h-4 w-4";
     switch (type) {
-      case 'bug': return <AlertCircle className="h-3 w-3 text-red-500" />;
-      case 'story': return <CheckSquare className="h-3 w-3 text-blue-500" />;
-      case 'epic': return <Flag className="h-3 w-3 text-purple-500" />;
-      default: return <CheckSquare className="h-3 w-3 text-muted-foreground" />;
+      case 'bug': return <AlertCircle className={`${size} text-red-500`} />;
+      case 'story': return <CheckSquare className={`${size} text-blue-500`} />;
+      case 'epic': return <Flag className={`${size} text-purple-500`} />;
+      default: return <CheckSquare className={`${size} text-muted-foreground`} />;
     }
   };
 
@@ -170,52 +174,68 @@ export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({
   const isDueSoon = task.dueDate && new Date(task.dueDate).getTime() - new Date().getTime() < 2 * 24 * 60 * 60 * 1000;
 
   // Mock data for demonstration
-  const mockCommentCount = Math.floor(Math.random() * 5);
-  const mockAttachmentCount = Math.floor(Math.random() * 3);
-  const mockWatcherCount = task.watchers?.length || Math.floor(Math.random() * 4);
+  // Use stable values based on task ID to prevent flickering during drag
+  const mockCommentCount = useMemo(() => task.id.charCodeAt(0) % 5, [task.id]);
+  const mockAttachmentCount = useMemo(() => task.id.charCodeAt(1) % 3, [task.id]);
+  const mockWatcherCount = useMemo(() => task.watchers?.length || (task.id.charCodeAt(2) % 4), [task.id, task.watchers]);
 
   return (
     <div
+      data-testid="task-card"
+      data-task-id={task.id}
       ref={ref}
       {...props}
       className={cn(
-        "bg-card rounded-modern border shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group relative overflow-hidden",
-        "border-l-4",
-        getPriorityColor(task.priority),
-        isDragging && "opacity-50 rotate-2 scale-105",
+        "bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group relative overflow-hidden",
+        "hover:border-gray-300 dark:hover:border-gray-600",
+        isDragging && "opacity-50 rotate-1 scale-105 shadow-xl",
         compact ? "p-3" : "p-4",
         className
       )}
       onClick={onClick}
     >
+      {/* Priority indicator - left border */}
+      <div className={cn(
+        "absolute left-0 top-0 bottom-0 w-1",
+        task.priority === 'urgent' && "bg-red-500",
+        task.priority === 'high' && "bg-orange-500", 
+        task.priority === 'medium' && "bg-yellow-500",
+        task.priority === 'low' && "bg-green-500"
+      )} />
+
       {/* Drag Handle */}
-      <div className="absolute left-1 top-1/2 -translate-y-1/2 p-1 text-muted-foreground/30 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab">
-        <GripVertical className="h-5 w-5" />
-      </div>
+      {dragHandleProps && (
+        <div 
+          className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab hover:text-gray-600"
+          {...dragHandleProps}
+        >
+          <GripVertical className="h-4 w-4" />
+        </div>
+      )}
 
       {/* Status indicator */}
       <div className={cn(
-        "absolute top-3 right-3 w-2 h-2 rounded-full",
+        "absolute top-4 right-4 w-3 h-3 rounded-full border-2 border-white dark:border-gray-800 shadow-sm",
         getStatusColor(task.status)
       )} />
 
-      {/* Header */}
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center space-x-2 flex-1 min-w-0 pl-4">
-          {getTypeIcon(task.type)}
-          <span className="text-xs text-muted-foreground font-mono">
+      {/* Header - Compact Layout */}
+      <div className={cn("flex items-center justify-between", compact ? "mb-2" : "mb-3")}>
+        <div className="flex items-center space-x-2 flex-1 min-w-0">
+          {getTypeIcon(task.type, compact)}
+          <span className={cn("font-medium text-gray-600 dark:text-gray-400 font-mono", compact ? "text-xs" : "text-sm")}>
             {project?.key}-{task.id.slice(-4).toUpperCase()}
           </span>
           {showProject && project && (
-            <div className="flex items-center space-x-1">
+            <>
               <div 
-                className="w-2 h-2 rounded-full"
+                className={cn("rounded-full", compact ? "w-2 h-2" : "w-3 h-3")}
                 style={{ backgroundColor: project.color }}
               />
-              <span className="text-xs text-muted-foreground truncate">
+              <span className={cn("text-gray-600 dark:text-gray-400 font-medium truncate", compact ? "text-xs" : "text-sm")}>
                 {project.name}
               </span>
-            </div>
+            </>
           )}
         </div>
         
@@ -225,27 +245,27 @@ export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({
             size="sm"
             onClick={handleToggleFavorite}
             disabled={isLoadingFavorite}
-            className="p-1 h-6 w-6"
+            className={cn("hover:bg-gray-100 dark:hover:bg-gray-800", compact ? "p-1 h-6 w-6" : "p-2 h-8 w-8")}
           >
             <Star className={cn(
-              "h-3 w-3",
-              isFavorited ? "fill-yellow-400 text-yellow-500" : "text-muted-foreground"
+              compact ? "h-3 w-3" : "h-4 w-4",
+              isFavorited ? "fill-yellow-400 text-yellow-500" : "text-gray-400 hover:text-yellow-500"
             )} />
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="p-1 h-6 w-6" onClick={(e) => e.stopPropagation()}>
-                <MoreVertical className="h-4 w-4" />
+              <Button variant="ghost" size="sm" className={cn("hover:bg-gray-100 dark:hover:bg-gray-800", compact ? "p-1 h-6 w-6" : "p-2 h-8 w-8")} onClick={(e) => e.stopPropagation()}>
+                <MoreVertical className={cn(compact ? "h-3 w-3" : "h-4 w-4")} />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
               <DropdownMenuItem onClick={onEdit}>
                 <Edit className="mr-2 h-4 w-4" />
-                <span>Edit</span>
+                <span>Редактировать</span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={onDelete} className="text-red-500">
                 <Trash2 className="mr-2 h-4 w-4" />
-                <span>Delete</span>
+                <span>Удалить</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -254,41 +274,41 @@ export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({
 
       {/* Title */}
       <h3 className={cn(
-        "font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2 mb-2 break-words",
-        compact ? "text-sm" : "text-base"
+        "font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2 break-words leading-tight",
+        compact ? "text-sm mb-2" : "text-base mb-3"
       )}>
         {task.title}
       </h3>
 
-      {/* Description */}
+      {/* Description - Only show in non-compact mode */}
       {task.description && !compact && (
-        <p className="text-sm text-muted-foreground mb-3 line-clamp-2 break-words">
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2 break-words leading-relaxed">
           {task.description}
         </p>
       )}
 
-      {/* Labels */}
+      {/* Labels - Compact Layout */}
       {task.labels.length > 0 && (
-        <div className="flex flex-wrap gap-1 mb-3">
-          {task.labels.slice(0, 3).map((label, index) => (
-            <Badge key={index} variant="subtle" size="sm">
+        <div className={cn("flex flex-wrap gap-1", compact ? "mb-2" : "mb-3")}>
+          {task.labels.slice(0, compact ? 2 : 3).map((label, index) => (
+            <Badge key={index} variant="secondary" className={cn("bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-0", compact ? "text-xs px-1.5 py-0.5" : "text-xs px-2 py-1")}>
               {label}
             </Badge>
           ))}
-          {task.labels.length > 3 && (
-            <Badge variant="outline" size="sm">
-              +{task.labels.length - 3}
+          {task.labels.length > (compact ? 2 : 3) && (
+            <Badge variant="outline" className={cn("border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400", compact ? "text-xs px-1.5 py-0.5" : "text-xs px-2 py-1")}>
+              +{task.labels.length - (compact ? 2 : 3)}
             </Badge>
           )}
         </div>
       )}
 
-      {/* Progress & Time */}
+      {/* Progress & Time - Compact Layout */}
       {(task.estimatedHours || task.loggedHours) && (
-        <div className="mb-3">
-          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-            <span>Прогресс</span>
-            <span>
+        <div className={cn(compact ? "mb-2" : "mb-3")}>
+          <div className={cn("flex items-center justify-between text-gray-600 dark:text-gray-400", compact ? "text-xs mb-1" : "text-sm mb-2")}>
+            <span className="font-medium">Прогресс</span>
+            <span className="font-mono">
               {task.loggedHours || 0}ч / {task.estimatedHours || 0}ч
             </span>
           </div>
@@ -296,75 +316,82 @@ export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({
             value={Math.min(100, ((task.loggedHours || 0) / (task.estimatedHours || 1)) * 100)}
             variant="default"
             size="sm"
-            className="h-1.5"
+            className={cn("bg-gray-200 dark:bg-gray-700", compact ? "h-1.5" : "h-2")}
           />
         </div>
       )}
 
-      {/* Footer */}
-      <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <div className="flex items-center space-x-3">
+      {/* Footer - Compact Layout */}
+      <div className={cn("flex items-center justify-between", compact ? "text-xs" : "text-sm", "text-gray-600 dark:text-gray-400")}>
+        <div className={cn("flex items-center", compact ? "space-x-1.5" : "space-x-3")}>
           {/* Due Date */}
           {task.dueDate && (
             <div className={cn(
-              "flex items-center space-x-1",
+              "flex items-center font-medium",
+              compact ? "space-x-1" : "space-x-1.5",
               isOverdue && "text-red-500",
               isDueSoon && !isOverdue && "text-orange-500"
             )}>
-              <CalendarDays className="h-3 w-3" />
-              <span>{formatDate(task.dueDate)}</span>
+              <CalendarDays className={cn(compact ? "h-3 w-3" : "h-4 w-4")} />
+              <span className={cn(compact ? "text-xs" : "text-sm")}>{formatDate(task.dueDate)}</span>
             </div>
           )}
           
           {/* Story Points */}
           {showStoryPoints && task.storyPoints && (
             <div className="flex items-center space-x-1">
-              <Badge variant="outline" size="sm">
+              <Badge variant="outline" className={cn("border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300", compact ? "text-xs px-1.5 py-0.5" : "text-xs px-2 py-1")}>
                 {task.storyPoints} pts
               </Badge>
             </div>
           )}
 
           {/* Priority */}
-          <div className="flex items-center space-x-1">
-            {getPriorityIcon(task.priority)}
+          <div className={cn("flex items-center", compact ? "space-x-1" : "space-x-1")}>
+            {getPriorityIcon(task.priority, compact)}
+            <span className={cn("font-medium capitalize", compact ? "text-xs" : "text-xs")}>
+              {task.priority === 'urgent' && 'Срочно'}
+              {task.priority === 'high' && 'Высокий'}
+              {task.priority === 'medium' && 'Средний'}
+              {task.priority === 'low' && 'Низкий'}
+            </span>
           </div>
         </div>
         
-        <div className="flex items-center space-x-3">
+        <div className={cn("flex items-center", compact ? "space-x-1.5" : "space-x-2")}>
           {/* Activity indicators */}
           {mockCommentCount > 0 && (
-            <div className="flex items-center space-x-1">
-              <MessageSquare className="h-3 w-3" />
-              <span>{mockCommentCount}</span>
+            <div className={cn("flex items-center", compact ? "space-x-1" : "space-x-1.5")}>
+              <MessageSquare className={cn(compact ? "h-3 w-3" : "h-4 w-4")} />
+              <span className={cn("font-medium", compact ? "text-xs" : "text-sm")}>{mockCommentCount}</span>
             </div>
           )}
           
           {mockAttachmentCount > 0 && (
-            <div className="flex items-center space-x-1">
-              <Paperclip className="h-3 w-3" />
-              <span>{mockAttachmentCount}</span>
+            <div className={cn("flex items-center", compact ? "space-x-1" : "space-x-1.5")}>
+              <Paperclip className={cn(compact ? "h-3 w-3" : "h-4 w-4")} />
+              <span className={cn("font-medium", compact ? "text-xs" : "text-sm")}>{mockAttachmentCount}</span>
             </div>
           )}
 
           {mockWatcherCount > 0 && (
-            <div className="flex items-center space-x-1">
-              <Eye className="h-3 w-3" />
-              <span>{mockWatcherCount}</span>
+            <div className={cn("flex items-center", compact ? "space-x-1" : "space-x-1.5")}>
+              <Eye className={cn(compact ? "h-3 w-3" : "h-4 w-4")} />
+              <span className={cn("font-medium", compact ? "text-xs" : "text-sm")}>{mockWatcherCount}</span>
             </div>
           )}
 
           {/* Assignee */}
           {assignee ? (
-            <Avatar className="w-6 h-6">
-              <AvatarFallback className="text-xs font-medium bg-primary/10 text-primary">
-                {assignee.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+            <Avatar className={cn("border-2 border-white dark:border-gray-800 shadow-sm", compact ? "w-6 h-6" : "w-8 h-8")}>
+              <AvatarFallback className={cn("font-semibold bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300", compact ? "text-xs" : "text-sm")}>
+                {assignee.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
           ) : (
-            <Avatar className="w-6 h-6">
-              <AvatarFallback className="text-xs">
-                <User className="h-3 w-3" />
+            <Avatar className={cn("border-2 border-white dark:border-gray-800 shadow-sm", compact ? "w-6 h-6" : "w-8 h-8")}>
+              <AvatarFallback className={cn("bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400", compact ? "text-xs" : "text-sm")}>
+                <User className={cn(compact ? "h-3 w-3" : "h-4 w-4")} />
               </AvatarFallback>
             </Avatar>
           )}
@@ -372,7 +399,7 @@ export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({
       </div>
 
       {/* Hover effect */}
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
     </div>
   );
 });

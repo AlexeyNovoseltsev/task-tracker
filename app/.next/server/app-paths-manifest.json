@@ -1,0 +1,9 @@
+{
+  "/api/workspaces/route": "app/api/workspaces/route.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/[locale]/workspaces/page": "app/[locale]/workspaces/page.js",
+  "/[locale]/tasks/page": "app/[locale]/tasks/page.js",
+  "/[locale]/workspace/[id]/page": "app/[locale]/workspace/[id]/page.js",
+  "/[locale]/projects/page": "app/[locale]/projects/page.js",
+  "/[locale]/dashboard/page": "app/[locale]/dashboard/page.js"
+}

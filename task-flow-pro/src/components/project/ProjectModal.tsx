@@ -300,6 +300,7 @@ export function ProjectModal({ isOpen, onClose, projectId }: ProjectModalProps) 
                 type="submit" 
                 disabled={isSubmitting}
                 className="min-w-[120px]"
+                data-testid="project-submit"
               >
                 {isSubmitting ? "Сохранение..." : (projectId ? "Обновить проект" : "Создать проект")}
               </Button>

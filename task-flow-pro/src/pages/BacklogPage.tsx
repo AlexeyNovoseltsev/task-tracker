@@ -26,7 +26,7 @@ import { cn } from "@/lib/utils";
 import { useAppStore } from "@/store";
 import { Task } from "@/types";
 
-function SortableTaskCard({ task, onClick, onEdit, onDelete }: { task: Task, onClick: () => void, onEdit: () => void, onDelete: () => void }) {
+function SortableTaskCard({ task, onEdit, onDelete, onClick }: { task: Task, onEdit: () => void, onDelete: () => void, onClick: () => void }) {
   const {
     attributes,
     listeners,
@@ -45,17 +45,16 @@ function SortableTaskCard({ task, onClick, onEdit, onDelete }: { task: Task, onC
   // For now, we will not implement the modals inside the sortable card
   // to keep it simple.
   return (
-    <TaskCard
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...listeners}
-      task={task}
-      isDragging={isDragging}
-      onClick={onClick}
-      onEdit={onEdit}
-      onDelete={onDelete}
-    />
+    <div ref={setNodeRef} style={style} {...attributes}>
+      <TaskCard
+        task={task}
+        isDragging={isDragging}
+        onClick={onClick}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        dragHandleProps={listeners}
+      />
+    </div>
   );
 }
 
@@ -206,7 +205,7 @@ export function BacklogPage() {
 
       {/* Priority Guide */}
       <div className="mb-6 bg-card p-4 rounded-lg border">
-                    <h3 className="font-semibold mb-2">Руководство по приоритетам</h3>
+        <h3 className="font-semibold mb-2">Руководство по приоритетам</h3>
         <div className="flex space-x-4 text-sm">
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 bg-red-500 rounded"></div>

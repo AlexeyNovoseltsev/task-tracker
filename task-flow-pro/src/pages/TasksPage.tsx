@@ -59,7 +59,7 @@ const priorityConfig = {
 };
 
 export function TasksPage() {
-  const { tasks, projects } = useAppStore();
+  const { tasks, projects, selectedProjectId } = useAppStore();
   const { success, info } = useToast();
   const showStoryPoints = useShowStoryPoints();
 
@@ -91,7 +91,16 @@ export function TasksPage() {
                            task.description?.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesStatus = statusFilter === 'all' || task.status === statusFilter;
       const matchesPriority = priorityFilter === 'all' || task.priority === priorityFilter;
-      const matchesProject = projectFilter === 'all' || task.projectId === projectFilter;
+      
+      // Project filtering logic
+      let matchesProject = true;
+      if (selectedProjectId) {
+        // If a project is selected, filter by selected project
+        matchesProject = task.projectId === selectedProjectId;
+      } else if (projectFilter !== 'all') {
+        // If manual project filter is set, use it
+        matchesProject = task.projectId === projectFilter;
+      }
       
       return matchesSearch && matchesStatus && matchesPriority && matchesProject;
     });
@@ -167,14 +176,22 @@ export function TasksPage() {
     setProjectFilter('all');
     setSortField('createdAt');
     setSortOrder('desc');
+
     success("Фильтры", "Все фильтры сброшены", 2000);
   };
 
-  // Stats
-  const totalTasks = tasks.length;
-  const completedTasks = tasks.filter(t => t.status === 'done').length;
-  const inProgressTasks = tasks.filter(t => t.status === 'in-progress').length;
-  const overdueTasks = tasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== 'done').length;
+  // Stats - calculate based on current filter
+  const currentTasks = useMemo(() => {
+    if (selectedProjectId) {
+      return tasks.filter(task => task.projectId === selectedProjectId);
+    }
+    return tasks;
+  }, [tasks, selectedProjectId]);
+
+  const totalTasks = currentTasks.length;
+  const completedTasks = currentTasks.filter(t => t.status === 'done').length;
+  const inProgressTasks = currentTasks.filter(t => t.status === 'in-progress').length;
+  const overdueTasks = currentTasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== 'done').length;
 
   const stats = [
     {
@@ -211,13 +228,18 @@ export function TasksPage() {
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex items-start justify-between">
-        <div className="min-w-0 flex-1">
-          <h1 className="text-3xl font-bold tracking-tight mb-2">Все задачи</h1>
+                <div className="min-w-0 flex-1">
+          <h1 className="text-3xl font-bold tracking-tight mb-2">
+            {selectedProjectId ? 'Задачи проекта' : 'Все задачи'}
+          </h1>
           <p className="text-muted-foreground">
-            Управление задачами по всем проектам
+            {selectedProjectId 
+              ? `Проект "${projects.find(p => p.id === selectedProjectId)?.name || 'Неизвестный проект'}"`
+              : 'Управление задачами по всем проектам'
+            }
           </p>
         </div>
-        <Button
+        <Button 
           onClick={openCreateTaskModal}
           className="gap-2 ml-4 flex-shrink-0 bg-[#2c5545] text-white hover:bg-[#2c5545]/90"
         >

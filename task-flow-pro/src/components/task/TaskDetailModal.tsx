@@ -211,7 +211,7 @@ export function TaskDetailModal({ task, isOpen, onClose }: TaskDetailModalProps)
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" data-testid="task-detail-modal">
       <div className="bg-white dark:bg-gray-900 rounded-lg max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
@@ -231,7 +231,7 @@ export function TaskDetailModal({ task, isOpen, onClose }: TaskDetailModalProps)
               {project?.key}-{task.id.slice(-4).toUpperCase()}
             </span>
           </div>
-          <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2">
             <Button
               variant="ghost"
               size="sm"
@@ -255,6 +255,7 @@ export function TaskDetailModal({ task, isOpen, onClose }: TaskDetailModalProps)
               variant="ghost"
               size="sm"
               onClick={onClose}
+              data-testid="task-detail-close"
             >
               <X className="h-4 w-4" />
             </Button>
