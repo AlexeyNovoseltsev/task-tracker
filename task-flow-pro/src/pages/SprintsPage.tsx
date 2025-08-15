@@ -277,7 +277,7 @@ export function SprintsPage() {
               Загрузить демо-данные
             </Button>
           )}
-          <Button onClick={openCreateModal} className="bg-[#2c5545] text-white hover:bg-[#2c5545]/90">
+          <Button onClick={openCreateModal} className="bg-[#2c5545] text-white hover:bg-[#2c5545]/90" data-testid="open-sprint-modal">
             <Plus className="h-4 w-4 mr-2" />
             Создать спринт
           </Button>

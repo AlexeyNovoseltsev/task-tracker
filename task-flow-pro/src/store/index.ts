@@ -228,17 +228,30 @@ export const useAppStore = create<AppState>()(
       }),
 
       reorderTasks: (activeId, overId) => set((state) => {
-        const activeIndex = state.tasks.findIndex((t) => t.id === activeId);
-        const overIndex = state.tasks.findIndex((t) => t.id === overId);
+        const activeTask = state.tasks.find((t) => t.id === activeId);
+        const overTask = state.tasks.find((t) => t.id === overId);
 
-        if (activeIndex !== -1 && overIndex !== -1) {
-          const [removed] = state.tasks.splice(activeIndex, 1);
-          state.tasks.splice(overIndex, 0, removed);
+        if (!activeTask || !overTask) return;
 
-          // Update positions for all tasks
-          state.tasks.forEach((task, index) => {
-            task.position = index;
-          });
+        // Only reorder tasks within the same status
+        if (activeTask.status === overTask.status) {
+          const tasksInStatus = state.tasks.filter(t => t.status === activeTask.status);
+          const activeIndex = tasksInStatus.findIndex((t) => t.id === activeId);
+          const overIndex = tasksInStatus.findIndex((t) => t.id === overId);
+
+          if (activeIndex !== -1 && overIndex !== -1) {
+            // Reorder within the same status
+            const [removed] = tasksInStatus.splice(activeIndex, 1);
+            tasksInStatus.splice(overIndex, 0, removed);
+
+            // Update positions only for tasks in this status
+            tasksInStatus.forEach((task, index) => {
+              const taskIndex = state.tasks.findIndex(t => t.id === task.id);
+              if (taskIndex !== -1) {
+                state.tasks[taskIndex].position = index;
+              }
+            });
+          }
         }
       }),
       

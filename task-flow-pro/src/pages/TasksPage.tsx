@@ -28,6 +28,7 @@ import { useState, useMemo } from 'react';
 import { CustomTaskIcon, InProgressIcon } from '@/components/icons';
 import { TaskCard } from '@/components/task/TaskCard';
 import { TaskDetailModal } from '@/components/task/TaskDetailModal';
+import { TaskModal } from '@/components/task/TaskModal';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -58,7 +59,7 @@ const priorityConfig = {
 };
 
 export function TasksPage() {
-  const { tasks, projects } = useAppStore();
+  const { tasks, projects, selectedProjectId } = useAppStore();
   const { success, info } = useToast();
   const showStoryPoints = useShowStoryPoints();
 
@@ -71,6 +72,8 @@ export function TasksPage() {
   const [sortField, setSortField] = useState<SortField>('createdAt');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [showFilters, setShowFilters] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
 
   // Filtered and sorted tasks
   const filteredTasks = useMemo(() => {
@@ -79,7 +82,16 @@ export function TasksPage() {
                            task.description?.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesStatus = statusFilter === 'all' || task.status === statusFilter;
       const matchesPriority = priorityFilter === 'all' || task.priority === priorityFilter;
-      const matchesProject = projectFilter === 'all' || task.projectId === projectFilter;
+      
+      // Project filtering logic
+      let matchesProject = true;
+      if (selectedProjectId) {
+        // If a project is selected, filter by selected project
+        matchesProject = task.projectId === selectedProjectId;
+      } else if (projectFilter !== 'all') {
+        // If manual project filter is set, use it
+        matchesProject = task.projectId === projectFilter;
+      }
       
       return matchesSearch && matchesStatus && matchesPriority && matchesProject;
     });
@@ -155,14 +167,22 @@ export function TasksPage() {
     setProjectFilter('all');
     setSortField('createdAt');
     setSortOrder('desc');
+
     success("Фильтры", "Все фильтры сброшены", 2000);
   };
 
-  // Stats
-  const totalTasks = tasks.length;
-  const completedTasks = tasks.filter(t => t.status === 'done').length;
-  const inProgressTasks = tasks.filter(t => t.status === 'in-progress').length;
-  const overdueTasks = tasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== 'done').length;
+  // Stats - calculate based on current filter
+  const currentTasks = useMemo(() => {
+    if (selectedProjectId) {
+      return tasks.filter(task => task.projectId === selectedProjectId);
+    }
+    return tasks;
+  }, [tasks, selectedProjectId]);
+
+  const totalTasks = currentTasks.length;
+  const completedTasks = currentTasks.filter(t => t.status === 'done').length;
+  const inProgressTasks = currentTasks.filter(t => t.status === 'in-progress').length;
+  const overdueTasks = currentTasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== 'done').length;
 
   const stats = [
     {
@@ -200,12 +220,20 @@ export function TasksPage() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="min-w-0 flex-1">
-          <h1 className="text-3xl font-bold tracking-tight mb-2">Все задачи</h1>
+          <h1 className="text-3xl font-bold tracking-tight mb-2">
+            {selectedProjectId ? 'Задачи проекта' : 'Все задачи'}
+          </h1>
           <p className="text-muted-foreground">
-            Управление задачами по всем проектам
+            {selectedProjectId 
+              ? `Проект "${projects.find(p => p.id === selectedProjectId)?.name || 'Неизвестный проект'}"`
+              : 'Управление задачами по всем проектам'
+            }
           </p>
         </div>
-        <Button className="gap-2 ml-4 flex-shrink-0 bg-[#2c5545] text-white hover:bg-[#2c5545]/90">
+        <Button 
+          onClick={() => setIsCreateModalOpen(true)}
+          className="gap-2 ml-4 flex-shrink-0 bg-[#2c5545] text-white hover:bg-[#2c5545]/90"
+        >
           <Plus className="h-4 w-4" />
           Создать задачу
         </Button>
@@ -412,6 +440,12 @@ export function TasksPage() {
         isOpen={!!selectedTask}
         onClose={() => setSelectedTask(null)}
         task={selectedTask}
+      />
+
+      {/* Create Task Modal */}
+      <TaskModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
       />
     </div>
   );

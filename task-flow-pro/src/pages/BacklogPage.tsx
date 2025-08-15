@@ -26,7 +26,7 @@ import { cn } from "@/lib/utils";
 import { useAppStore } from "@/store";
 import { Task } from "@/types";
 
-function SortableTaskCard({ task, onEdit, onDelete }: { task: Task, onEdit: () => void, onDelete: () => void }) {
+function SortableTaskCard({ task, onEdit, onDelete, onClick }: { task: Task, onEdit: () => void, onDelete: () => void, onClick: () => void }) {
   const {
     attributes,
     listeners,
@@ -45,16 +45,16 @@ function SortableTaskCard({ task, onEdit, onDelete }: { task: Task, onEdit: () =
   // For now, we will not implement the modals inside the sortable card
   // to keep it simple.
   return (
-    <TaskCard
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...listeners}
-      task={task}
-      isDragging={isDragging}
-      onEdit={onEdit}
-      onDelete={onDelete}
-    />
+    <div ref={setNodeRef} style={style} {...attributes}>
+      <TaskCard
+        task={task}
+        isDragging={isDragging}
+        onClick={onClick}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        dragHandleProps={listeners}
+      />
+    </div>
   );
 }
 
@@ -240,6 +240,7 @@ export function BacklogPage() {
                 <SortableTaskCard
                   key={task.id}
                   task={task}
+                  onClick={() => handleTaskClick(task)}
                   onEdit={() => openEditModal(task.id)}
                   onDelete={() => handleDeleteRequest(task)}
                 />

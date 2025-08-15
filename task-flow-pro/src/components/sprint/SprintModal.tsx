@@ -333,6 +333,7 @@ export function SprintModal({ isOpen, onClose, sprintId }: SprintModalProps) {
                 type="submit" 
                 disabled={isSubmitting || !selectedProjectId}
                 className="min-w-[120px]"
+                data-testid="sprint-submit"
               >
                 {isSubmitting ? "Сохранение..." : (sprintId ? "Обновить спринт" : "Создать спринт")}
               </Button>

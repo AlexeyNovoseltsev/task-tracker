@@ -8,6 +8,7 @@ import {
 } from "@dnd-kit/core";
 import { SortableContext, useSortable, arrayMove } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useDroppable } from "@dnd-kit/core";
 import { Plus, Edit } from "lucide-react";
 import { useState, useMemo } from "react";
 
@@ -41,6 +42,13 @@ function KanbanColumn({
   onTaskClick: (task: Task) => void;
 }) {
   const taskIds = useMemo(() => tasks.map((t) => t.id), [tasks]);
+  const { setNodeRef, isOver } = useDroppable({ 
+    id,
+    data: {
+      type: 'column',
+      status: id
+    }
+  });
 
   return (
     <div className={cn("rounded-lg p-4 flex flex-col", bgColor)}>
@@ -48,18 +56,26 @@ function KanbanColumn({
         <h3 className="font-semibold text-lg">{title}</h3>
         <span className="text-sm text-muted-foreground">{tasks.length}</span>
       </div>
-      <SortableContext items={taskIds} id={id}>
-        <div className="space-y-3 flex-1 overflow-y-auto">
-          {tasks.map((task) => (
-            <SortableTaskItem key={task.id} task={task} onClick={() => onTaskClick(task)} />
-          ))}
-          {tasks.length === 0 && (
-            <div className="text-center text-muted-foreground text-sm py-8">
-              Перетащите задачи сюда
-            </div>
-          )}
-        </div>
-      </SortableContext>
+      <div 
+        ref={setNodeRef}
+        className={cn(
+          "flex-1 transition-colors min-h-[200px]",
+          isOver && "bg-primary/5 ring-2 ring-primary/50 rounded-lg"
+        )}
+      >
+        <SortableContext items={taskIds} id={id}>
+          <div className="space-y-3 overflow-y-auto">
+            {tasks.map((task) => (
+              <SortableTaskItem key={task.id} task={task} onClick={() => onTaskClick(task)} />
+            ))}
+            {tasks.length === 0 && (
+              <div className="text-center text-muted-foreground text-sm py-8 border-2 border-dashed border-muted-foreground/20 rounded-lg">
+                Перетащите задачи сюда
+              </div>
+            )}
+          </div>
+        </SortableContext>
+      </div>
     </div>
   );
 }
@@ -80,8 +96,14 @@ function SortableTaskItem({ task, onClick }: { task: Task; onClick: () => void }
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <TaskCard task={task} onClick={onClick} isDragging={isDragging} compact />
+    <div ref={setNodeRef} style={style} {...attributes}>
+      <TaskCard 
+        task={task} 
+        onClick={onClick} 
+        isDragging={isDragging} 
+        compact 
+        dragHandleProps={listeners}
+      />
     </div>
   );
 }
@@ -108,6 +130,7 @@ export function KanbanPage() {
   }, [projectTasks]);
 
   const findContainer = (id: UniqueIdentifier) => {
+    // Check if it's a task
     for (const status of Object.keys(tasksByStatus) as Status[]) {
       if (tasksByStatus[status].some(task => task.id === id)) {
         return status;
@@ -146,21 +169,31 @@ export function KanbanPage() {
     if (!over) return;
 
     const activeContainer = findContainer(active.id);
-    const overContainerId = over.data.current?.sortable?.containerId || findContainer(over.id);
 
-    if (!activeContainer || !overContainerId) return;
-
-    if (activeContainer !== overContainerId) {
-      // Task moved to a new column
-      updateTask(active.id as string, { status: overContainerId as Status });
+    // Check if dropping on a column
+    if (over.data.current?.type === 'column') {
+      const targetStatus = over.data.current.status as Status;
+      if (activeContainer !== targetStatus) {
+        updateTask(active.id as string, { status: targetStatus });
+      }
+      return;
     }
 
-    // Handle reordering within the same or new column
-    const activeIndex = tasksByStatus[activeContainer].findIndex(t => t.id === active.id);
-    const overIndex = tasksByStatus[overContainerId].findIndex(t => t.id === over.id);
+    // Check if dropping on another task
+    const overTaskContainer = findContainer(over.id);
+    if (!activeContainer || !overTaskContainer) return;
 
-    if (activeIndex !== overIndex) {
-      reorderTasks(active.id as string, over.id as string);
+    if (activeContainer !== overTaskContainer) {
+      // Task moved to a new column - update status
+      updateTask(active.id as string, { status: overTaskContainer as Status });
+    } else {
+      // Same column - handle reordering
+      const activeIndex = tasksByStatus[activeContainer].findIndex(t => t.id === active.id);
+      const overIndex = tasksByStatus[overTaskContainer].findIndex(t => t.id === over.id);
+
+      if (activeIndex !== overIndex) {
+        reorderTasks(active.id as string, over.id as string);
+      }
     }
   };
 
