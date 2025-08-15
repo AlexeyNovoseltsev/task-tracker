@@ -11,6 +11,8 @@ import { useTheme } from "@/hooks/useTheme";
 import { AnalyticsPage } from "@/pages/AnalyticsPage";
 import ApiTestPage from "@/pages/ApiTestPage";
 import { BacklogPage } from "@/pages/BacklogPage";
+import { CalendarPage } from "@/pages/CalendarPage";
+import { ColorPickerDemo } from "@/pages/ColorPickerDemo";
 import { DashboardPage } from "@/pages/DashboardPage";
 import FavoritesPage from "@/pages/FavoritesPage";
 import { KanbanPage } from "@/pages/KanbanPage";
@@ -85,6 +87,10 @@ function App() {
         action: () => navigate('/analytics'),
       },
       {
+        ...GLOBAL_SHORTCUTS.CALENDAR,
+        action: () => navigate('/calendar'),
+      },
+      {
         ...GLOBAL_SHORTCUTS.SETTINGS,
         action: () => navigate('/settings'),
       },
@@ -103,8 +109,10 @@ function App() {
           <Route path="sprints" element={<SprintsPage />} />
           <Route path="kanban" element={<KanbanPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
+          <Route path="calendar" element={<CalendarPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="api-test" element={<ApiTestPage />} />
+          <Route path="color-demo" element={<ColorPickerDemo />} />
         </Route>
       </Routes>
       

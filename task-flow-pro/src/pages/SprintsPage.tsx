@@ -120,11 +120,15 @@ export function SprintsPage() {
   };
 
   const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('ru-RU', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
+    const months = [
+      'янв', 'фев', 'мар', 'апр', 'май', 'июн',
+      'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'
+    ];
+    const d = new Date(date);
+    const day = d.getDate();
+    const month = months[d.getMonth()];
+    const year = d.getFullYear();
+    return `${day} ${month} ${year}`;
   };
 
   const getDaysRemaining = (endDate: Date) => {

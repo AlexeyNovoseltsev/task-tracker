@@ -1,61 +1,57 @@
-import { LucideIcon } from "lucide-react"
-import * as React from "react"
+import React from 'react';
+import { LucideIcon } from 'lucide-react';
 
-import { Button } from "./button"
+import { Button } from './button';
+import { cn } from '@/lib/utils';
 
-import { cn } from "@/lib/utils"
-
-export interface EmptyStateProps {
+interface EmptyStateProps {
   icon?: LucideIcon;
   title: string;
   description?: string;
   action?: {
     label: string;
     onClick: () => void;
-    variant?: "default" | "outline" | "ghost";
+    variant?: 'default' | 'outline' | 'secondary';
   };
   className?: string;
 }
 
-const EmptyState = React.forwardRef<HTMLDivElement, EmptyStateProps>(
-  ({ icon: Icon, title, description, action, className }, ref) => {
-    return (
-      <div
-        ref={ref}
-        className={cn(
-          "flex flex-col items-center justify-center p-8 text-center",
-          className
-        )}
-      >
-        {Icon && (
-          <div className="w-16 h-16 rounded-modern bg-muted/50 flex items-center justify-center mb-4">
-            <Icon className="h-8 w-8 text-muted-foreground" />
-          </div>
-        )}
-        
-        <h3 className="text-lg font-semibold text-foreground mb-2">
-          {title}
-        </h3>
-        
-        {description && (
-          <p className="text-sm text-muted-foreground mb-6 max-w-sm">
-            {description}
-          </p>
-        )}
-        
-        {action && (
-          <Button
-            onClick={action.onClick}
-            variant={action.variant || "default"}
-            size="sm"
-          >
-            {action.label}
-          </Button>
-        )}
-      </div>
-    )
-  }
-)
-EmptyState.displayName = "EmptyState"
-
-export { EmptyState } 
+export function EmptyState({
+  icon: Icon,
+  title,
+  description,
+  action,
+  className
+}: EmptyStateProps) {
+  return (
+    <div className={cn(
+      "flex flex-col items-center justify-center py-12 text-center",
+      className
+    )}>
+      {Icon && (
+        <div className="p-4 bg-muted/50 rounded-full mb-4">
+          <Icon className="h-8 w-8 text-muted-foreground" />
+        </div>
+      )}
+      
+      <h3 className="text-lg font-semibold text-foreground mb-2">
+        {title}
+      </h3>
+      
+      {description && (
+        <p className="text-muted-foreground mb-6 max-w-sm">
+          {description}
+        </p>
+      )}
+      
+      {action && (
+        <Button
+          onClick={action.onClick}
+          variant={action.variant || 'default'}
+        >
+          {action.label}
+        </Button>
+      )}
+    </div>
+  );
+} 

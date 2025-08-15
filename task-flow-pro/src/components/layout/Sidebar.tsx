@@ -7,7 +7,9 @@ import {
   Settings,
   Wifi,
   PieChart,
-  Star
+  Star,
+  Calendar,
+  Palette
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
@@ -22,9 +24,11 @@ const navigation = [
   { name: "Бэклог", href: "/backlog", icon: ListTodo, description: "Планирование" },
   { name: "Спринты", href: "/sprints", icon: SprintIcon, description: "Спринт-планирование" },
   { name: "Канбан", href: "/kanban", icon: Kanban, description: "Визуальное управление" },
+  { name: "Календарь", href: "/calendar", icon: Calendar, description: "Планирование задач" },
   { name: "Аналитика", href: "/analytics", icon: PieChart, description: "Отчеты и метрики" },
   { name: "Настройки", href: "/settings", icon: Settings, description: "Конфигурация" },
   { name: "🧪 Тест API", href: "/api-test", icon: Wifi, description: "Тестирование API" },
+  { name: "🎨 Демо цветов", href: "/color-demo", icon: Palette, description: "Современные компоненты" },
 ];
 
 export function Sidebar() {

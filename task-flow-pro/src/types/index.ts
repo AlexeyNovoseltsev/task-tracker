@@ -48,6 +48,7 @@ export interface Task {
   dueDate?: Date;
   estimatedHours?: number;
   loggedHours?: number;
+  color?: string; // Цвет карточки задачи в календаре
   watchers: string[]; // user IDs
   attachments: Attachment[];
   linkedTasks: TaskLink[];

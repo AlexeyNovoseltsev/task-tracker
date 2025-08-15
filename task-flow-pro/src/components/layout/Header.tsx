@@ -49,11 +49,11 @@ export function Header() {
   const ThemeIcon = getThemeIcon();
 
   return (
-    <header className="h-20 border-b border-border/60 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex h-full items-center justify-between px-8 max-w-7xl mx-auto">
+    <header className="h-20 border-b border-border/60 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 relative z-[99998]">
+      <div className="flex h-full items-center justify-between px-6">
         <div className="flex items-center space-x-4">
                      {/* Project Selector */}
-           <div className="relative" ref={dropdownRef} style={{ position: 'relative', zIndex: 999999 }}>
+           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setShowProjectDropdown(!showProjectDropdown)}
               className="flex items-center space-x-4 px-6 py-3 rounded-modern border bg-card hover:bg-accent transition-all duration-200 text-base font-medium shadow-sm hover:shadow-md"
@@ -83,7 +83,7 @@ export function Header() {
 
             {/* Dropdown */}
             {showProjectDropdown && (
-              <div className="absolute top-full left-0 mt-2 w-80 bg-card border rounded-modern shadow-lg animate-fadeIn backdrop-blur-sm" style={{ position: 'absolute', zIndex: 999999 }}>
+              <div className="absolute top-full left-0 mt-2 w-80 bg-card border rounded-modern shadow-lg animate-fadeIn backdrop-blur-sm z-[99999]">
                 <div className="p-4 border-b border-border/30">
                   <h3 className="font-semibold text-sm mb-1">Проекты</h3>
                   <p className="text-xs text-muted-foreground">Выберите проект для работы</p>

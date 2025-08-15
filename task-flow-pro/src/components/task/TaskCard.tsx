@@ -164,10 +164,13 @@ export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({
     if (diffDays < 0) return `${Math.abs(diffDays)} дн. назад`;
     if (diffDays <= 7) return `${diffDays} дн.`;
     
-    return new Intl.DateTimeFormat('ru-RU', {
-      month: 'short',
-      day: 'numeric'
-    }).format(taskDate);
+    const months = [
+      'янв', 'фев', 'мар', 'апр', 'май', 'июн',
+      'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'
+    ];
+    const month = months[taskDate.getMonth()];
+    const day = taskDate.getDate();
+    return `${day} ${month}`;
   };
 
   const isOverdue = task.dueDate && new Date(task.dueDate) < new Date();

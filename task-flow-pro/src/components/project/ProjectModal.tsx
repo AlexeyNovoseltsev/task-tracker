@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
+import { ColorPicker } from "@/components/ui/color-picker";
 import { useToast } from "@/hooks/useToast";
 import { useAppStore } from "@/store";
 import type { Project } from "@/types";
@@ -225,28 +226,11 @@ export function ProjectModal({ isOpen, onClose, projectId }: ProjectModalProps) 
               <Palette className="h-4 w-4" />
               <span>Цвет проекта</span>
             </label>
-            <div className="grid grid-cols-5 gap-2">
-              {projectColors.map((color) => (
-                <button
-                  key={color}
-                  type="button"
-                  onClick={() => setValue("color", color)}
-                  className={`w-12 h-12 rounded-lg border-2 transition-all hover:scale-110 ${
-                    watch("color") === color 
-                      ? "border-gray-900 dark:border-gray-100 shadow-lg" 
-                      : "border-gray-200 dark:border-gray-700"
-                  }`}
-                  style={{ backgroundColor: color }}
-                  title={color}
-                >
-                  {watch("color") === color && (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <div className="w-2 h-2 bg-white rounded-full"></div>
-                    </div>
-                  )}
-                </button>
-              ))}
-            </div>
+            <ColorPicker
+              value={watch("color") || "#667eea"}
+              onChange={(color) => setValue("color", color)}
+              className="w-full"
+            />
           </div>
 
           {/* Preview */}

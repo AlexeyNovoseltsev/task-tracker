@@ -320,7 +320,7 @@ export function ProjectViewModal({
           <div className="p-8 rounded-2xl border-2 border-dashed border-muted-foreground/30 hover:border-primary/50 transition-all duration-200 hover:bg-primary/5">
             <Button 
               variant="ghost" 
-              className="w-full h-20 text-muted-foreground hover:text-primary transition-all duration-200"
+              className="w-full h-20 text-muted-foreground hover:text-primary transition-all duration-200 hover:bg-[#2c5545]/10"
               onClick={() => info("Быстрое добавление", "Функция в разработке", 2000)}
             >
               <Plus className="w-6 h-6 mr-3" />

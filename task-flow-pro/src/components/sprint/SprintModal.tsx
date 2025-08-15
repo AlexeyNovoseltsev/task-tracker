@@ -309,7 +309,15 @@ export function SprintModal({ isOpen, onClose, sprintId }: SprintModalProps) {
                   )}
                   <div className="flex items-center space-x-4 mt-2 text-xs text-muted-foreground">
                     {watch("startDate") && watch("endDate") && (
-                      <span>📅 {new Date(watch("startDate")).toLocaleDateString()} - {new Date(watch("endDate")).toLocaleDateString()}</span>
+                      <span>📅 {new Date(watch("startDate")).toLocaleDateString('ru-RU', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric'
+                      })} - {new Date(watch("endDate")).toLocaleDateString('ru-RU', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric'
+                      })}</span>
                     )}
                     {watch("capacity") && (
                       <span>🎯 {watch("capacity")} pts capacity</span>

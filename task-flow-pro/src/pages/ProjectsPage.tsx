@@ -459,7 +459,11 @@ export function ProjectsPage() {
                 {/* Updated date and author */}
                 <div className={`text-xs text-muted-foreground ${viewMode === "grid" ? "mt-4 pt-4 border-t" : ""}`}>
                   <div className="flex items-center justify-between">
-                    <span>Обновлен: {new Date(project.updatedAt).toLocaleDateString('ru-RU')}</span>
+                    <span>Обновлен: {new Date(project.updatedAt).toLocaleDateString('ru-RU', {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric'
+                    })}</span>
                     <span>Автор: {project.createdBy || 'Система'}</span>
                   </div>
                 </div>

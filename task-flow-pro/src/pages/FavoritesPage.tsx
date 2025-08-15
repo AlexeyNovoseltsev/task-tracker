@@ -258,7 +258,15 @@ export default function FavoritesPage() {
                             )}
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            {new Date(sprint.startDate).toLocaleDateString()} - {new Date(sprint.endDate).toLocaleDateString()}
+                            {new Date(sprint.startDate).toLocaleDateString('ru-RU', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric'
+                            })} - {new Date(sprint.endDate).toLocaleDateString('ru-RU', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric'
+                            })}
                           </div>
                         </div>
                         <Button

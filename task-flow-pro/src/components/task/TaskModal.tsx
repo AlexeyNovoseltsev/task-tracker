@@ -3,8 +3,10 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
+import { ColorPicker } from "@/components/ui/color-picker";
 import { useToast } from "@/hooks/useToast";
 import { useAppStore } from "@/store";
+import { cn } from "@/lib/utils";
 import type { Task, TaskType, Status, Priority } from "@/types";
 
 interface TaskModalProps {
@@ -23,10 +25,11 @@ interface TaskFormData {
   labels: string;
   dueDate?: string;
   assigneeId?: string;
+  color?: string;
 }
 
 export function TaskModal({ isOpen, onClose, taskId }: TaskModalProps) {
-  const { tasks, addTask, updateTask, selectedProjectId, users } = useAppStore();
+  const { tasks, addTask, updateTask, deleteTask, selectedProjectId, users } = useAppStore();
   const { success, error } = useToast();
   
   const existingTask = taskId ? tasks.find(t => t.id === taskId) : null;
@@ -35,6 +38,7 @@ export function TaskModal({ isOpen, onClose, taskId }: TaskModalProps) {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
     watch
   } = useForm<TaskFormData>({
@@ -48,6 +52,7 @@ export function TaskModal({ isOpen, onClose, taskId }: TaskModalProps) {
       labels: "",
       dueDate: "",
       assigneeId: "user-1",
+      color: "#3b82f6", // Синий цвет по умолчанию
     }
   });
 
@@ -63,6 +68,7 @@ export function TaskModal({ isOpen, onClose, taskId }: TaskModalProps) {
         labels: existingTask.labels?.join(", ") || "",
         dueDate: existingTask.dueDate ? new Date(existingTask.dueDate).toISOString().split('T')[0] : "",
         assigneeId: existingTask.assigneeId || "user-1",
+        color: existingTask.color || "#3b82f6",
       });
     } else {
       reset({
@@ -75,6 +81,7 @@ export function TaskModal({ isOpen, onClose, taskId }: TaskModalProps) {
         labels: "",
         dueDate: "",
         assigneeId: "user-1",
+        color: "#3b82f6",
       });
     }
   }, [existingTask, reset, isOpen]);
@@ -98,6 +105,7 @@ export function TaskModal({ isOpen, onClose, taskId }: TaskModalProps) {
         reporterId: "user-1",
         labels: data.labels.split(",").map(l => l.trim()).filter(Boolean),
         dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
+        color: data.color,
         watchers: [],
         attachments: [],
         linkedTasks: [],
@@ -123,6 +131,21 @@ export function TaskModal({ isOpen, onClose, taskId }: TaskModalProps) {
     }
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
       handleSubmit(onSubmit)();
+    }
+  };
+
+  const handleDeleteTask = () => {
+    if (!taskId) return;
+    
+    const confirmed = window.confirm('Вы уверены, что хотите удалить эту задачу? Это действие нельзя отменить.');
+    if (confirmed) {
+      try {
+        deleteTask(taskId);
+        success("🗑️ Задача успешно удалена!");
+        onClose();
+      } catch (err) {
+        error("Не удалось удалить задачу. Попробуйте еще раз.");
+      }
     }
   };
 
@@ -310,6 +333,19 @@ export function TaskModal({ isOpen, onClose, taskId }: TaskModalProps) {
             </div>
           </div>
 
+          {/* Color */}
+          <div>
+            <label className="block text-sm font-medium mb-2 flex items-center space-x-1">
+              <span>🎨</span>
+              <span>Цвет карточки</span>
+            </label>
+            <ColorPicker
+              value={watch("color") || "#667eea"}
+              onChange={(color) => setValue("color", color)}
+              className="w-full"
+            />
+          </div>
+
           {/* Preview */}
           {watch("title") && (
             <div className="p-4 bg-muted rounded-lg">
@@ -346,6 +382,20 @@ export function TaskModal({ isOpen, onClose, taskId }: TaskModalProps) {
                   </div>
                 </div>
               </div>
+              
+              {/* Предпросмотр в календаре */}
+              <div className="mt-3 pt-3 border-t border-border/50">
+                <h5 className="text-sm font-medium mb-2">В календаре:</h5>
+                <div 
+                  className="p-2 rounded text-xs text-white font-medium truncate"
+                  style={{ 
+                    backgroundColor: watch("color") || '#3b82f6',
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                  }}
+                >
+                  {watch("title")}
+                </div>
+              </div>
             </div>
           )}
 
@@ -355,13 +405,23 @@ export function TaskModal({ isOpen, onClose, taskId }: TaskModalProps) {
               💡 Совет: Используйте Ctrl+Enter для быстрого сохранения
             </div>
             <div className="flex space-x-2">
+              {taskId && (
+                <Button 
+                  type="button" 
+                  variant="destructive" 
+                  onClick={handleDeleteTask}
+                  className="min-w-[100px]"
+                >
+                  Удалить
+                </Button>
+              )}
               <Button type="button" variant="outline" onClick={onClose}>
                 Отмена
               </Button>
               <Button 
                 type="submit" 
                 disabled={isSubmitting || !selectedProjectId}
-                className="min-w-[100px]"
+                className="min-w-[100px] bg-[#2c5545] hover:bg-[#2c5545]/90 text-white"
               >
                 {isSubmitting ? "Сохранение..." : (taskId ? "Обновить задачу" : "Создать задачу")}
               </Button>

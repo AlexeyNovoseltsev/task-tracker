@@ -1,29 +1,23 @@
-// Core components
-export { Button, buttonVariants } from "./button"
-export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./card"
-export { Badge, badgeVariants } from "./badge"
-export { Avatar, AvatarFallback, AvatarImage } from "./avatar"
-export { Progress } from "./progress"
+// Основные UI компоненты
+export { Button } from './button';
+export { Card, CardContent, CardHeader, CardTitle } from './card';
+export { Badge } from './badge';
+export { Select } from './Select';
+export { Input } from './Input';
+export { Progress } from './progress';
+export { Avatar, AvatarFallback, AvatarImage } from './avatar';
+export { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './dialog';
+export { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from './DropdownMenu';
+export { Toaster } from './toaster';
 
-// Dialog components
-export {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "./dialog"
+// Унифицированные компоненты
+export { PageHeader } from './page-header';
+export { EmptyState } from './empty-state';
+export { TaskCard } from './task-card';
+export { StatsCard } from './stats-card';
+export { FilterBar } from './filter-bar';
+export { CalendarStats } from './calendar-stats';
 
-// Form components
-export { SearchInput } from "./search-input"
-export { FilterButton } from "./filter-button"
-
-// Feedback components
-export { LoadingSpinner, spinnerVariants } from "./loading-spinner"
-export { EmptyState } from "./empty-state"
-export { StatCard } from "./stat-card"
-
-// Toast components
-export { Toaster } from "./toaster" 
+// Цветовые компоненты
+export { ColorPicker } from './color-picker';
+export { CompactColorPicker } from './compact-color-picker'; 

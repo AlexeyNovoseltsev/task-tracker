@@ -72,6 +72,7 @@ export const GLOBAL_SHORTCUTS = {
   BACKLOG: { key: '4', ctrlKey: true, description: 'Перейти к Бэклогу' },
   SPRINTS: { key: '5', ctrlKey: true, description: 'Перейти к Спринтам' },
   KANBAN: { key: '6', ctrlKey: true, description: 'Перейти к Канбану' },
-  ANALYTICS: { key: '7', ctrlKey: true, description: 'Перейти к Аналитике' },
-  SETTINGS: { key: '8', ctrlKey: true, description: 'Перейти к Настройкам' },
+  CALENDAR: { key: '7', ctrlKey: true, description: 'Перейти к Календарю' },
+  ANALYTICS: { key: '8', ctrlKey: true, description: 'Перейти к Аналитике' },
+  SETTINGS: { key: '9', ctrlKey: true, description: 'Перейти к Настройкам' },
 } as const;
