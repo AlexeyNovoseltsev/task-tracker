@@ -1,0 +1,105 @@
+/* Улучшенные стили для drag & drop */
+
+/* Высокий z-index для перетаскиваемых элементов */
+[data-dragging="true"] {
+  z-index: 9999 !important;
+  position: fixed !important;
+  pointer-events: none !important;
+}
+
+/* Стили для перетаскиваемых карточек */
+.task-card-dragging {
+  z-index: 9999 !important;
+  position: fixed !important;
+  transform: rotate(2deg) scale(1.02) !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+  opacity: 0.8 !important;
+  pointer-events: none !important;
+}
+
+/* Стили для контейнеров при перетаскивании */
+.kanban-column-droppable {
+  position: relative;
+  z-index: 1;
+}
+
+.kanban-column-droppable[data-over="true"] {
+  background-color: rgba(59, 130, 246, 0.1) !important;
+  border: 2px dashed rgba(59, 130, 246, 0.5) !important;
+  border-radius: 8px;
+}
+
+/* Анимации для плавного перетаскивания */
+.task-card {
+  transition: all 0.2s ease-in-out;
+}
+
+.task-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Стили для drag handle */
+.drag-handle {
+  cursor: grab;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.drag-handle:hover {
+  cursor: grabbing;
+}
+
+.task-card:hover .drag-handle {
+  opacity: 1;
+}
+
+/* Улучшенные стили для пустых колонок */
+.kanban-column-empty {
+  border: 2px dashed rgba(156, 163, 175, 0.3);
+  border-radius: 8px;
+  background-color: rgba(156, 163, 175, 0.05);
+  transition: all 0.2s ease-in-out;
+}
+
+.kanban-column-empty:hover {
+  border-color: rgba(156, 163, 175, 0.5);
+  background-color: rgba(156, 163, 175, 0.1);
+}
+
+/* Стили для активного перетаскивания */
+[data-dnd-kit-dragging="true"] {
+  z-index: 9999 !important;
+  position: fixed !important;
+  pointer-events: none !important;
+}
+
+/* Улучшенные тени для перетаскиваемых элементов */
+[data-dnd-kit-dragging="true"] .task-card {
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(59, 130, 246, 0.1) !important;
+}
+
+/* Глобальные стили для всех перетаскиваемых элементов */
+[data-dnd-kit-dragging="true"],
+[data-dragging="true"],
+.task-card-dragging {
+  z-index: 9999 !important;
+  position: fixed !important;
+  pointer-events: none !important;
+}
+
+/* Стили для контейнеров канбан-доски */
+.kanban-column-droppable {
+  position: relative;
+  z-index: 1;
+}
+
+/* Убеждаемся, что колонки не перекрывают перетаскиваемые элементы */
+.kanban-column-droppable[data-over="true"] {
+  z-index: 10 !important;
+  background-color: rgba(59, 130, 246, 0.1) !important;
+  border: 2px dashed rgba(59, 130, 246, 0.5) !important;
+  border-radius: 8px;
+}

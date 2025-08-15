@@ -1,31 +1,13 @@
 import { 
-  Search, 
-  Filter, 
-  SortAsc, 
-  SortDesc,
   Grid3X3, 
   List,
-  CheckSquare,
-  Circle,
   AlertCircle,
   CheckCircle2,
-  Calendar,
-  User,
-  Tag,
-  MoreVertical,
-  Eye,
-  Edit,
-  Trash2,
-  Plus,
-  ArrowUpDown,
-  Folder,
-  Target,
-  Zap,
-  Clock
+  Plus
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 
-import { CustomTaskIcon, InProgressIcon } from '@/components/icons';
+
 import { TaskCard } from '@/components/task/TaskCard';
 import { TaskDetailModal } from '@/components/task/TaskDetailModal';
 import { TaskModal } from '@/components/task/TaskModal';
@@ -36,7 +18,7 @@ import { FilterButton } from '@/components/ui/filter-button';
 import { SearchInput } from '@/components/ui/search-input';
 import { StatCard } from '@/components/ui/stat-card';
 import { useToast } from '@/hooks/useToast';
-import { useAppStore, useShowStoryPoints } from '@/store';
+import { useAppStore } from '@/store';
 import type { Task } from '@/types';
 
 type ViewMode = 'list' | 'grid';
@@ -45,23 +27,11 @@ type SortOrder = 'asc' | 'desc';
 type StatusFilter = 'all' | 'todo' | 'in-progress' | 'in-review' | 'done';
 type PriorityFilter = 'all' | 'low' | 'medium' | 'high';
 
-const statusConfig = {
-  'todo': { icon: Circle, label: 'К выполнению', color: 'text-muted-foreground', bg: 'bg-muted' },
-  'in-progress': { icon: InProgressIcon, label: 'В работе', color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950' },
-  'in-review': { icon: AlertCircle, label: 'На проверке', color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-950' },
-  'done': { icon: CheckCircle2, label: 'Выполнено', color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-950' },
-};
 
-const priorityConfig = {
-  'low': { label: 'Низкий', color: 'text-gray-600', bg: 'bg-gray-50 dark:bg-gray-900' },
-  'medium': { label: 'Средний', color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-950' },
-  'high': { label: 'Высокий', color: 'text-red-600', bg: 'bg-red-50 dark:bg-red-950' },
-};
 
 export function TasksPage() {
   const { tasks, projects, selectedProjectId } = useAppStore();
-  const { success, info } = useToast();
-  const showStoryPoints = useShowStoryPoints();
+  const { success } = useToast();
 
   // State for filters and sorting
   const [searchQuery, setSearchQuery] = useState('');
@@ -118,11 +88,12 @@ export function TasksPage() {
           aValue = a.status;
           bValue = b.status;
           break;
-        case 'priority':
+        case 'priority': {
           const priorityOrder = { 'high': 3, 'medium': 2, 'low': 1, 'urgent': 4 };
           aValue = priorityOrder[a.priority];
           bValue = priorityOrder[b.priority];
           break;
+        }
         case 'createdAt':
           aValue = new Date(a.createdAt).getTime();
           bValue = new Date(b.createdAt).getTime();
@@ -148,25 +119,11 @@ export function TasksPage() {
     return filtered;
   }, [tasks, searchQuery, statusFilter, priorityFilter, projectFilter, sortField, sortOrder]);
 
-  const getProjectName = (projectId: string) => {
-    const project = projects.find(p => p.id === projectId);
-    return project?.name || 'Неизвестный проект';
-  };
-
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   const handleTaskClick = (task: Task) => {
     setSelectedTask(task);
     success("Задача", `Открываем детали задачи "${task.title}"`, 2000);
-  };
-
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortOrder('asc');
-    }
   };
 
   const clearFilters = () => {
@@ -198,14 +155,14 @@ export function TasksPage() {
       title: "Всего задач",
       value: totalTasks,
       description: "в системе",
-             icon: CustomTaskIcon,
+      icon: CheckCircle2,
       variant: "default" as const,
     },
     {
       title: "В работе",
       value: inProgressTasks,
       description: "активных",
-      icon: InProgressIcon,
+      icon: CheckCircle2,
       variant: "info" as const,
     },
     {
@@ -406,9 +363,9 @@ export function TasksPage() {
 
       {/* Tasks */}
       {filteredTasks.length === 0 ? (
-                 <EmptyState
-           icon={CustomTaskIcon}
-           title="Задачи не найдены"
+                         <EmptyState
+          icon={CheckCircle2}
+          title="Задачи не найдены"
           description={
             searchQuery || statusFilter !== 'all' || priorityFilter !== 'all' || projectFilter !== 'all'
               ? 'Попробуйте изменить фильтры поиска'

@@ -51,7 +51,7 @@ function KanbanColumn({
   });
 
   return (
-    <div className={cn("rounded-lg p-4 flex flex-col", bgColor)}>
+    <div className={cn("rounded-lg p-4 flex flex-col", bgColor)} style={{ zIndex: 1 }}>
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-semibold text-lg">{title}</h3>
         <span className="text-sm text-muted-foreground">{tasks.length}</span>
@@ -59,9 +59,10 @@ function KanbanColumn({
       <div 
         ref={setNodeRef}
         className={cn(
-          "flex-1 transition-colors min-h-[200px]",
+          "flex-1 transition-colors min-h-[200px] relative kanban-column-droppable",
           isOver && "bg-primary/5 ring-2 ring-primary/50 rounded-lg"
         )}
+        data-over={isOver}
       >
         <SortableContext items={taskIds} id={id}>
           <div className="space-y-3 overflow-y-auto">
@@ -69,7 +70,7 @@ function KanbanColumn({
               <SortableTaskItem key={task.id} task={task} onClick={() => onTaskClick(task)} />
             ))}
             {tasks.length === 0 && (
-              <div className="text-center text-muted-foreground text-sm py-8 border-2 border-dashed border-muted-foreground/20 rounded-lg">
+              <div className="text-center text-muted-foreground text-sm py-8 kanban-column-empty">
                 Перетащите задачи сюда
               </div>
             )}
@@ -93,10 +94,17 @@ function SortableTaskItem({ task, onClick }: { task: Task; onClick: () => void }
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+    zIndex: isDragging ? 9999 : undefined,
+    position: isDragging ? 'fixed' as const : undefined,
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes}>
+    <div 
+      ref={setNodeRef} 
+      style={style} 
+      {...attributes}
+      data-dnd-kit-dragging={isDragging}
+    >
       <TaskCard 
         task={task} 
         onClick={onClick} 
@@ -254,7 +262,7 @@ export function KanbanPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-4 gap-6 flex-1">
+        <div className="grid grid-cols-4 gap-6 flex-1 relative" style={{ zIndex: 1 }}>
           {statusColumns.map((column) => (
             <KanbanColumn
               key={column.id}

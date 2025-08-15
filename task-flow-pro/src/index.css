@@ -93,6 +93,28 @@
   * {
     @apply border-border;
   }
+  
+  /* Глобальные стили для перетаскивания */
+  [data-dnd-kit-dragging="true"],
+  [data-dragging="true"],
+  .task-card-dragging {
+    z-index: 9999 !important;
+    position: fixed !important;
+    pointer-events: none !important;
+  }
+  
+  /* Стили для контейнеров канбан-доски */
+  .kanban-column-droppable {
+    position: relative !important;
+    z-index: 1 !important;
+  }
+  
+  .kanban-column-droppable[data-over="true"] {
+    z-index: 10 !important;
+    background-color: rgba(59, 130, 246, 0.1) !important;
+    border: 2px dashed rgba(59, 130, 246, 0.5) !important;
+    border-radius: 8px;
+  }
   body {
     @apply bg-background text-foreground;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;

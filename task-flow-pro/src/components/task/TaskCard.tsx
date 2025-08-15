@@ -186,12 +186,13 @@ export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({
       ref={ref}
       {...props}
       className={cn(
-        "bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group relative overflow-hidden",
+        "bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group relative overflow-hidden task-card",
         "hover:border-gray-300 dark:hover:border-gray-600",
-        isDragging && "opacity-50 rotate-1 scale-105 shadow-xl",
+        isDragging && "task-card-dragging",
         compact ? "p-3" : "p-4",
         className
       )}
+      data-dragging={isDragging}
       onClick={onClick}
     >
       {/* Priority indicator - left border */}
@@ -206,7 +207,7 @@ export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({
       {/* Drag Handle */}
       {dragHandleProps && (
         <div 
-          className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab hover:text-gray-600"
+          className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 drag-handle"
           {...dragHandleProps}
         >
           <GripVertical className="h-4 w-4" />
