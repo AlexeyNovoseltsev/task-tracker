@@ -33,16 +33,11 @@ export default defineConfig({
   /* Configure projects for major browsers */
   projects: [
     {
-      name: 'electron',
+      name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
   ],
 
   /* Run your local dev server before starting the tests */
-  webServer: {
-    command: 'npm run tauri:dev',
-    url: 'http://localhost:1420',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000, // 2 minutes for Tauri to start
-  },
+  webServer: undefined,
 });
