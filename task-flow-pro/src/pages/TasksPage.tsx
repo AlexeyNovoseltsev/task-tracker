@@ -7,7 +7,13 @@ import {
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 
-
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui";
 import { TaskCard } from '@/components/task/TaskCard';
 import { TaskDetailModal } from '@/components/task/TaskDetailModal';
 import { TaskModal } from '@/components/task/TaskModal';
@@ -196,10 +202,7 @@ export function TasksPage() {
             }
           </p>
         </div>
-        <Button 
-          onClick={openCreateTaskModal}
-          className="gap-2 ml-4 flex-shrink-0 bg-[#2c5545] text-white hover:bg-[#2c5545]/90"
-        >
+        <Button onClick={openCreateTaskModal} className="gap-2 ml-4 flex-shrink-0">
           <Plus className="h-4 w-4" />
           Создать задачу
         </Button>
@@ -273,77 +276,76 @@ export function TasksPage() {
 
             {/* Advanced Filters */}
             {showFilters && (
-              <div className="space-y-4 pt-4 border-t border-border">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="space-y-md pt-md border-t">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-md">
                   {/* Status Filter */}
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Статус</label>
-                    <select
-                      value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-                      className="w-full p-2 border border-input rounded-modern focus:outline-none focus:ring-2 focus:ring-ring"
-                    >
-                      <option value="all">Все статусы</option>
-                      <option value="todo">К выполнению</option>
-                      <option value="in-progress">В работе</option>
-                      <option value="in-review">На проверке</option>
-                      <option value="done">Выполнено</option>
-                    </select>
+                  <div className="space-y-sm">
+                    <label className="text-sm font-medium">Статус</label>
+                    <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as StatusFilter)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Все статусы</SelectItem>
+                        <SelectItem value="todo">К выполнению</SelectItem>
+                        <SelectItem value="in-progress">В работе</SelectItem>
+                        <SelectItem value="in-review">На проверке</SelectItem>
+                        <SelectItem value="done">Выполнено</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   {/* Priority Filter */}
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Приоритет</label>
-                    <select
-                      value={priorityFilter}
-                      onChange={(e) => setPriorityFilter(e.target.value as PriorityFilter)}
-                      className="w-full p-2 border border-input rounded-modern focus:outline-none focus:ring-2 focus:ring-ring"
-                    >
-                      <option value="all">Все приоритеты</option>
-                      <option value="high">Высокий</option>
-                      <option value="medium">Средний</option>
-                      <option value="low">Низкий</option>
-                    </select>
+                  <div className="space-y-sm">
+                    <label className="text-sm font-medium">Приоритет</label>
+                    <Select value={priorityFilter} onValueChange={(value) => setPriorityFilter(value as PriorityFilter)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Все приоритеты</SelectItem>
+                        <SelectItem value="high">Высокий</SelectItem>
+                        <SelectItem value="medium">Средний</SelectItem>
+                        <SelectItem value="low">Низкий</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   {/* Project Filter */}
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Проект</label>
-                    <select
-                      value={projectFilter}
-                      onChange={(e) => setProjectFilter(e.target.value)}
-                      className="w-full p-2 border border-input rounded-modern focus:outline-none focus:ring-2 focus:ring-ring"
-                    >
-                      <option value="all">Все проекты</option>
-                      {projects.map(project => (
-                        <option key={project.id} value={project.id}>
-                          {project.name}
-                        </option>
-                      ))}
-                    </select>
+                  <div className="space-y-sm">
+                    <label className="text-sm font-medium">Проект</label>
+                    <Select value={projectFilter} onValueChange={setProjectFilter}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Все проекты</SelectItem>
+                        {projects.map(project => (
+                          <SelectItem key={project.id} value={project.id}>
+                            {project.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   {/* Sort */}
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Сортировка</label>
-                    <select
+                  <div className="space-y-sm">
+                    <label className="text-sm font-medium">Сортировка</label>
+                    <Select
                       value={`${sortField}-${sortOrder}`}
-                      onChange={(e) => {
-                        const [field, order] = e.target.value.split('-');
+                      onValueChange={(value) => {
+                        const [field, order] = value.split('-');
                         setSortField(field as SortField);
                         setSortOrder(order as SortOrder);
                       }}
-                      className="w-full p-2 border border-input rounded-modern focus:outline-none focus:ring-2 focus:ring-ring"
                     >
-                      <option value="createdAt-desc">Дата создания (новые)</option>
-                      <option value="createdAt-asc">Дата создания (старые)</option>
-                      <option value="title-asc">Название (А-Я)</option>
-                      <option value="title-desc">Название (Я-А)</option>
-                      <option value="priority-desc">Приоритет (высокий)</option>
-                      <option value="priority-asc">Приоритет (низкий)</option>
-                      <option value="status-asc">Статус</option>
-                      <option value="dueDate-asc">Срок выполнения</option>
-                    </select>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="createdAt-desc">Дата создания (новые)</SelectItem>
+                        <SelectItem value="createdAt-asc">Дата создания (старые)</SelectItem>
+                        <SelectItem value="title-asc">Название (А-Я)</SelectItem>
+                        <SelectItem value="title-desc">Название (Я-А)</SelectItem>
+                        <SelectItem value="priority-desc">Приоритет (высокий)</SelectItem>
+                        <SelectItem value="priority-asc">Приоритет (низкий)</SelectItem>
+                        <SelectItem value="status-asc">Статус</SelectItem>
+                        <SelectItem value="dueDate-asc">Срок выполнения</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
