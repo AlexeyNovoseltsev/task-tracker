@@ -111,35 +111,25 @@ export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'urgent': return 'border-red-500/20 bg-red-50/50 dark:bg-red-900/10';
-      case 'high': return 'border-orange-500/20 bg-orange-50/50 dark:bg-orange-900/10';
-      case 'medium': return 'border-yellow-500/20 bg-yellow-50/50 dark:bg-yellow-900/10';
-      case 'low': return 'border-green-500/20 bg-green-50/50 dark:bg-green-900/10';
-      default: return 'border-border bg-muted/30';
-    }
+  const PriorityIcon = ({ priority, className }: { priority: Task['priority'], className?: string }) => {
+    const priorityMap = {
+      urgent: { icon: AlertCircle, className: "text-destructive" },
+      high: { icon: Flag, className: "text-warning" },
+      medium: { icon: Flag, className: "text-primary" },
+      low: { icon: Flag, className: "text-muted-foreground" },
+    };
+    const { icon: Icon, className: colorClass } = priorityMap[priority] || priorityMap.low;
+    return <Icon className={cn("h-4 w-4", colorClass, className)} />;
   };
 
-  const getPriorityIcon = (priority: string, compact: boolean = false) => {
-    const size = compact ? "h-3 w-3" : "h-4 w-4";
-    switch (priority) {
-      case 'urgent': return <AlertCircle className={`${size} text-red-500`} />;
-      case 'high': return <Flag className={`${size} text-orange-500`} />;
-      case 'medium': return <Flag className={`${size} text-yellow-500`} />;
-      case 'low': return <Flag className={`${size} text-green-500`} />;
-      default: return <Flag className={`${size} text-muted-foreground`} />;
-    }
-  };
-
-  const getTypeIcon = (type: string, compact: boolean = false) => {
-    const size = compact ? "h-3 w-3" : "h-4 w-4";
-    switch (type) {
-      case 'bug': return <AlertCircle className={`${size} text-red-500`} />;
-      case 'story': return <CheckSquare className={`${size} text-blue-500`} />;
-      case 'epic': return <Flag className={`${size} text-purple-500`} />;
-      default: return <CheckSquare className={`${size} text-muted-foreground`} />;
-    }
+  const TypeIcon = ({ type, className }: { type: Task['type'], className?: string }) => {
+    const typeMap = {
+      bug: { icon: AlertCircle, className: "text-destructive" },
+      story: { icon: CheckSquare, className: "text-primary" },
+      epic: { icon: Flag, className: "text-purple-500" }, // Keep one non-theme color for variety example
+    };
+    const { icon: Icon, className: colorClass } = typeMap[type] || typeMap.story;
+    return <Icon className={cn("h-4 w-4", colorClass, className)} />;
   };
 
   const getStatusColor = (status: string) => {
@@ -189,87 +179,62 @@ export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({
       ref={ref}
       {...props}
       className={cn(
-        "bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group relative overflow-hidden task-card",
-        "hover:border-gray-300 dark:hover:border-gray-600",
-        isDragging && "task-card-dragging",
-        compact ? "p-3" : "p-4",
+        "group relative cursor-pointer rounded-lg border bg-card text-card-foreground shadow-sm transition-all hover:shadow-md",
+        isDragging && "z-50 scale-105 shadow-xl",
+        compact ? "p-sm" : "p-md space-y-sm", // Use theme spacing
         className
       )}
-      data-dragging={isDragging}
       onClick={onClick}
     >
       {/* Priority indicator - left border */}
-      <div className={cn(
-        "absolute left-0 top-0 bottom-0 w-1",
-        task.priority === 'urgent' && "bg-red-500",
-        task.priority === 'high' && "bg-orange-500", 
-        task.priority === 'medium' && "bg-yellow-500",
-        task.priority === 'low' && "bg-green-500"
-      )} />
+      <div
+        className={cn(
+          "absolute left-0 top-0 bottom-0 w-1 rounded-l-lg",
+          task.priority === 'urgent' && "bg-destructive",
+          task.priority === 'high' && "bg-warning",
+          task.priority === 'medium' && "bg-primary",
+          task.priority === 'low' && "bg-muted"
+        )}
+      />
 
-      {/* Drag Handle */}
-      {dragHandleProps && (
-        <div 
-          className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 drag-handle"
-          {...dragHandleProps}
-        >
-          <GripVertical className="h-4 w-4" />
-        </div>
-      )}
-
-      {/* Status indicator */}
-      <div className={cn(
-        "absolute top-4 right-4 w-3 h-3 rounded-full border-2 border-white dark:border-gray-800 shadow-sm",
-        getStatusColor(task.status)
-      )} />
-
-      {/* Header - Compact Layout */}
-      <div className={cn("flex items-center justify-between", compact ? "mb-2" : "mb-3")}>
-        <div className="flex items-center space-x-2 flex-1 min-w-0">
-          {getTypeIcon(task.type, compact)}
-          <span className={cn("font-medium text-gray-600 dark:text-gray-400 font-mono", compact ? "text-xs" : "text-sm")}>
+      {/* Header */}
+      <div className="flex items-start justify-between gap-sm">
+        <div className="flex min-w-0 items-center gap-sm">
+          <TypeIcon type={task.type} />
+          <span className="truncate font-mono text-sm text-muted-foreground">
             {project?.key}-{task.id.slice(-4).toUpperCase()}
           </span>
-          {showProject && project && (
-            <>
-              <div 
-                className={cn("rounded-full", compact ? "w-2 h-2" : "w-3 h-3")}
-                style={{ backgroundColor: project.color }}
-              />
-              <span className={cn("text-gray-600 dark:text-gray-400 font-medium truncate", compact ? "text-xs" : "text-sm")}>
-                {project.name}
-              </span>
-            </>
-          )}
         </div>
-        
-        <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+
+        <div className="flex items-center opacity-0 transition-opacity group-hover:opacity-100">
           <Button
             variant="ghost"
-            size="sm"
+            size="icon"
             onClick={handleToggleFavorite}
             disabled={isLoadingFavorite}
-            className={cn("hover:bg-gray-100 dark:hover:bg-gray-800", compact ? "p-1 h-6 w-6" : "p-2 h-8 w-8")}
+            className="h-8 w-8"
           >
-            <Star className={cn(
-              compact ? "h-3 w-3" : "h-4 w-4",
-              isFavorited ? "fill-yellow-400 text-yellow-500" : "text-gray-400 hover:text-yellow-500"
-            )} />
+            <Star
+              className={cn(
+                "h-4 w-4",
+                isFavorited ? "fill-yellow-400 text-yellow-500" : "text-muted-foreground"
+              )}
+            />
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className={cn("hover:bg-gray-100 dark:hover:bg-gray-800", compact ? "p-1 h-6 w-6" : "p-2 h-8 w-8")} onClick={(e) => e.stopPropagation()}>
-                <MoreVertical className={cn(compact ? "h-3 w-3" : "h-4 w-4")} />
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
+                <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
+            <DropdownMenuContent onClick={(e) => e.stopPropagation()} align="end">
               <DropdownMenuItem onClick={onEdit}>
                 <Edit className="mr-2 h-4 w-4" />
-                <span>Редактировать</span>
+                Редактировать
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={onDelete} className="text-red-500">
+              <DropdownMenuItem onClick={onDelete} className="text-destructive">
                 <Trash2 className="mr-2 h-4 w-4" />
-                <span>Удалить</span>
+                Удалить
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -277,134 +242,102 @@ export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({
       </div>
 
       {/* Title */}
-      <h3 className={cn(
-        "font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2 break-words leading-tight",
-        compact ? "text-sm mb-2" : "text-base mb-3"
-      )}>
+      <h3
+        className={cn(
+          "font-semibold leading-tight tracking-tight text-foreground transition-colors group-hover:text-primary",
+          compact ? "text-base" : "text-lg"
+        )}
+      >
         {task.title}
       </h3>
 
-      {/* Description - Only show in non-compact mode */}
+      {/* Description */}
       {task.description && !compact && (
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2 break-words leading-relaxed">
+        <p className="text-sm leading-relaxed text-muted-foreground line-clamp-2">
           {task.description}
         </p>
       )}
 
-      {/* Labels - Compact Layout */}
-      {task.labels.length > 0 && (
-        <div className={cn("flex flex-wrap gap-1", compact ? "mb-2" : "mb-3")}>
-          {task.labels.slice(0, compact ? 2 : 3).map((label, index) => (
-            <Badge key={index} variant="secondary" className={cn("bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-0", compact ? "text-xs px-1.5 py-0.5" : "text-xs px-2 py-1")}>
+      {/* Labels */}
+      {task.labels && task.labels.length > 0 && (
+        <div className="flex flex-wrap gap-xs">
+          {task.labels.slice(0, 3).map((label) => (
+            <Badge key={label} variant="secondary">
               {label}
             </Badge>
           ))}
-          {task.labels.length > (compact ? 2 : 3) && (
-            <Badge variant="outline" className={cn("border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400", compact ? "text-xs px-1.5 py-0.5" : "text-xs px-2 py-1")}>
-              +{task.labels.length - (compact ? 2 : 3)}
-            </Badge>
+          {task.labels.length > 3 && (
+            <Badge variant="outline">+{task.labels.length - 3}</Badge>
           )}
         </div>
       )}
 
-      {/* Progress & Time - Compact Layout */}
-      {(task.estimatedHours || task.loggedHours) && (
-        <div className={cn(compact ? "mb-2" : "mb-3")}>
-          <div className={cn("flex items-center justify-between text-gray-600 dark:text-gray-400", compact ? "text-xs mb-1" : "text-sm mb-2")}>
-            <span className="font-medium">Прогресс</span>
-            <span className="font-mono">
-              {task.loggedHours || 0}ч / {task.estimatedHours || 0}ч
-            </span>
-          </div>
-          <Progress 
-            value={Math.min(100, ((task.loggedHours || 0) / (task.estimatedHours || 1)) * 100)}
-            variant="default"
-            size="sm"
-            className={cn("bg-gray-200 dark:bg-gray-700", compact ? "h-1.5" : "h-2")}
-          />
-        </div>
-      )}
-
-      {/* Footer - Compact Layout */}
-      <div className={cn("flex items-center justify-between", compact ? "text-xs" : "text-sm", "text-gray-600 dark:text-gray-400")}>
-        <div className={cn("flex items-center", compact ? "space-x-1.5" : "space-x-3")}>
-          {/* Due Date */}
-          {task.dueDate && (
-            <div className={cn(
-              "flex items-center font-medium",
-              compact ? "space-x-1" : "space-x-1.5",
-              isOverdue && "text-red-500",
-              isDueSoon && !isOverdue && "text-orange-500"
-            )}>
-              <CalendarDays className={cn(compact ? "h-3 w-3" : "h-4 w-4")} />
-              <span className={cn(compact ? "text-xs" : "text-sm")}>{formatDate(task.dueDate)}</span>
-            </div>
-          )}
-          
-          {/* Story Points */}
-          {showStoryPoints && task.storyPoints && (
-            <div className="flex items-center space-x-1">
-              <Badge variant="outline" className={cn("border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300", compact ? "text-xs px-1.5 py-0.5" : "text-xs px-2 py-1")}>
-                {task.storyPoints} pts
-              </Badge>
-            </div>
-          )}
-
-          {/* Priority */}
-          <div className={cn("flex items-center", compact ? "space-x-1" : "space-x-1")}>
-            {getPriorityIcon(task.priority, compact)}
-            <span className={cn("font-medium capitalize", compact ? "text-xs" : "text-xs")}>
-              {task.priority === 'urgent' && 'Срочно'}
-              {task.priority === 'high' && 'Высокий'}
-              {task.priority === 'medium' && 'Средний'}
-              {task.priority === 'low' && 'Низкий'}
-            </span>
-          </div>
-        </div>
-        
-        <div className={cn("flex items-center", compact ? "space-x-1.5" : "space-x-2")}>
-          {/* Activity indicators */}
-          {mockCommentCount > 0 && (
-            <div className={cn("flex items-center", compact ? "space-x-1" : "space-x-1.5")}>
-              <MessageSquare className={cn(compact ? "h-3 w-3" : "h-4 w-4")} />
-              <span className={cn("font-medium", compact ? "text-xs" : "text-sm")}>{mockCommentCount}</span>
-            </div>
-          )}
-          
-          {mockAttachmentCount > 0 && (
-            <div className={cn("flex items-center", compact ? "space-x-1" : "space-x-1.5")}>
-              <Paperclip className={cn(compact ? "h-3 w-3" : "h-4 w-4")} />
-              <span className={cn("font-medium", compact ? "text-xs" : "text-sm")}>{mockAttachmentCount}</span>
-            </div>
-          )}
-
-          {mockWatcherCount > 0 && (
-            <div className={cn("flex items-center", compact ? "space-x-1" : "space-x-1.5")}>
-              <Eye className={cn(compact ? "h-3 w-3" : "h-4 w-4")} />
-              <span className={cn("font-medium", compact ? "text-xs" : "text-sm")}>{mockWatcherCount}</span>
-            </div>
-          )}
-
+      {/* Footer */}
+      <div className="flex items-center justify-between pt-sm text-sm text-muted-foreground">
+        <div className="flex items-center gap-md">
           {/* Assignee */}
           {assignee ? (
-            <Avatar className={cn("border-2 border-white dark:border-gray-800 shadow-sm", compact ? "w-6 h-6" : "w-8 h-8")}>
-              <AvatarFallback className={cn("font-semibold bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300", compact ? "text-xs" : "text-sm")}>
+            <Avatar className="h-8 w-8">
+              <AvatarFallback className="text-xs font-semibold">
                 {assignee.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
           ) : (
-            <Avatar className={cn("border-2 border-white dark:border-gray-800 shadow-sm", compact ? "w-6 h-6" : "w-8 h-8")}>
-              <AvatarFallback className={cn("bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400", compact ? "text-xs" : "text-sm")}>
-                <User className={cn(compact ? "h-3 w-3" : "h-4 w-4")} />
+            <Avatar className="h-8 w-8">
+              <AvatarFallback>
+                <User className="h-4 w-4" />
               </AvatarFallback>
             </Avatar>
           )}
+
+          <div className="flex items-center gap-xs">
+            <PriorityIcon priority={task.priority} />
+            <span className="font-medium capitalize">
+              {task.priority}
+            </span>
+          </div>
+
+          {/* Due Date */}
+          {task.dueDate && (
+            <div
+              className={cn(
+                "flex items-center gap-xs font-medium",
+                isOverdue && "text-destructive",
+                isDueSoon && !isOverdue && "text-warning"
+              )}
+            >
+              <CalendarDays className="h-4 w-4" />
+              <span>{formatDate(task.dueDate)}</span>
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center gap-sm">
+          {/* Story Points */}
+          {showStoryPoints && task.storyPoints && (
+            <Badge variant="outline" className="px-sm py-xs">
+              {task.storyPoints} pts
+            </Badge>
+          )}
+
+          {/* Activity */}
+          <div className="flex items-center gap-xs">
+            {mockCommentCount > 0 && (
+              <div className="flex items-center gap-xs">
+                <MessageSquare className="h-4 w-4" />
+                <span>{mockCommentCount}</span>
+              </div>
+            )}
+            {mockAttachmentCount > 0 && (
+              <div className="flex items-center gap-xs">
+                <Paperclip className="h-4 w-4" />
+                <span>{mockAttachmentCount}</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-
-      {/* Hover effect */}
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
     </div>
   );
 });
-(TaskCard as any).displayName = 'TaskCard'
+(TaskCard as any).displayName = 'TaskCard';
