@@ -24,7 +24,7 @@ import { Task } from '@/types';
 const router = Router();
 
 // Middleware to check project_id query param and authorize
-const checkProjectQueryParam = asyncHandler(async (req, res, next) => {
+const checkProjectQueryParam = asyncHandler(async (req: any, res: any, next: any) => {
   if (!req.user) throw new AuthorizationError('Authentication required');
   const { project_id } = req.query;
   if (!project_id) {
@@ -35,7 +35,7 @@ const checkProjectQueryParam = asyncHandler(async (req, res, next) => {
 });
 
 // Middleware to load a task by ID, attach it to the request, and authorize
-const loadTaskAndAuthorize = asyncHandler(async (req, res, next) => {
+const loadTaskAndAuthorize = asyncHandler(async (req: any, res: any, next: any) => {
   if (!req.user) throw new AuthorizationError('Authentication required');
   const { id } = req.params;
   const { data: task, error } = await supabaseAdmin
@@ -54,7 +54,7 @@ const loadTaskAndAuthorize = asyncHandler(async (req, res, next) => {
 });
 
 // Middleware to check project membership before creating a task
-const checkProjectForCreate = asyncHandler(async (req, res, next) => {
+const checkProjectForCreate = asyncHandler(async (req: any, res: any, next: any) => {
   if (!req.user) throw new AuthorizationError('Authentication required');
   const { project_id } = req.body;
   if (!project_id) {
@@ -79,7 +79,7 @@ router.get(
   validateTaskFilters(),
   validationErrorHandler,
   checkProjectQueryParam,
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: any, res: any) => {
     if (!req.user) throw new AuthorizationError('User not found');
     const {
       project_id,
@@ -123,7 +123,7 @@ router.get(
   validateUUIDParam('id'),
   validationErrorHandler,
   loadTaskAndAuthorize,
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: any, res: any) => {
     securityLogger.dataAccess(req.user!.id, 'task', 'view', req.task!.id);
     return successResponse(res, req.task, 'Task retrieved successfully');
   })
@@ -135,7 +135,7 @@ router.post(
   validateCreateTask(),
   validationErrorHandler,
   checkProjectForCreate,
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: any, res: any) => {
     if (!req.user) throw new AuthorizationError('User not found');
     const { project_id, ...taskData } = req.body;
 
@@ -168,7 +168,7 @@ router.patch(
   validateUpdateTask(),
   validationErrorHandler,
   loadTaskAndAuthorize,
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: any, res: any) => {
     const { id } = req.params;
     const { data: updatedTask, error } = await supabaseAdmin
       .from('tasks')
@@ -195,7 +195,7 @@ router.delete(
   validateUUIDParam('id'),
   validationErrorHandler,
   loadTaskAndAuthorize,
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: any, res: any) => {
     const task = req.task as Task;
 
     const { error } = await supabaseAdmin.from('tasks').delete().eq('id', task.id);

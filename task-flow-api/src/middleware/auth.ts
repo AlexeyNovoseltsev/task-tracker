@@ -291,7 +291,7 @@ export const requireResourceOwnership = (resourceType: 'task' | 'comment' | 'pro
         throw new AuthorizationError('Resource not found');
       }
 
-      if (resource[ownerField] !== req.user.id) {
+      if ((resource as any)[ownerField] !== req.user.id) {
         throw new AuthorizationError('Access denied to this resource');
       }
 
@@ -304,6 +304,10 @@ export const requireResourceOwnership = (resourceType: 'task' | 'comment' | 'pro
 
 // Generate JWT token
 export const generateToken = (user: AuthUser): string => {
+  if (!config.jwt.secret) {
+    throw new Error('JWT secret is not configured');
+  }
+  
   return jwt.sign(
     {
       id: user.id,
@@ -313,12 +317,16 @@ export const generateToken = (user: AuthUser): string => {
     config.jwt.secret,
     {
       expiresIn: config.jwt.expiresIn,
-    }
+    } as jwt.SignOptions
   );
 };
 
 // Generate refresh token
 export const generateRefreshToken = (user: AuthUser): string => {
+  if (!config.jwt.secret) {
+    throw new Error('JWT secret is not configured');
+  }
+  
   return jwt.sign(
     {
       id: user.id,
@@ -327,7 +335,7 @@ export const generateRefreshToken = (user: AuthUser): string => {
     config.jwt.secret,
     {
       expiresIn: config.jwt.refreshExpiresIn,
-    }
+    } as jwt.SignOptions
   );
 };
 

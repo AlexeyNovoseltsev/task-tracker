@@ -141,7 +141,7 @@ export const errorHandler = (
 
   // Add error code if available
   if (error.code) {
-    response.error = {
+    (response as any).error = {
       message: error.message,
       code: error.code,
     };
@@ -149,7 +149,7 @@ export const errorHandler = (
 
   // Add stack trace in development
   if (config.server.nodeEnv === 'development') {
-    response.stack = err.stack;
+    (response as any).stack = err.stack;
   }
 
   return res.status(error.statusCode || 500).json(response);

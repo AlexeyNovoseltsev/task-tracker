@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 
 import { Icon3dCalendar } from "@/components/icons/Icon3dCalendar";
 import { Icon3dClipboard } from "@/components/icons/Icon3dClipboard";
@@ -24,6 +25,7 @@ import { ProjectViewModal } from "@/components/project/ProjectViewModal";
 import { TaskDetailModal } from "@/components/task/TaskDetailModal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AnimatedPage, FadeInContent, StaggeredList } from "@/components/ui/PageTransition";
 import { useToast } from "@/hooks/useToast";
 import { useAppStore, useSettings } from "@/store";
 // --- Новые импорты 3D иконок ---
@@ -234,56 +236,102 @@ export function DashboardPage() {
   ];
 
   return (
-    <div className="p-8 space-y-8 max-w-7xl mx-auto">
+    <AnimatedPage className="p-8 space-y-8 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex items-start justify-between pt-4">
-        <div className="min-w-0 flex-1">
-          <h1 className="text-4xl font-bold tracking-tight mb-3">Дашборд</h1>
-          <p className="text-lg text-muted-foreground">Обзор ваших проектов и активности</p>
-        </div>
-        <div className="flex items-center space-x-4 ml-6 flex-shrink-0">
-          <Button 
-            onClick={() => setProjectModalOpen(true)} 
-            size="lg"
-            className="gap-3 text-base bg-[#2c5545] text-white hover:bg-[#2c5545]/90"
+      <FadeInContent delay={0.1}>
+        <div className="flex items-start justify-between pt-4">
+          <div className="min-w-0 flex-1">
+            <motion.h1 
+              className="text-4xl font-bold tracking-tight mb-3"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+            >
+              Дашборд
+            </motion.h1>
+            <motion.p 
+              className="text-lg text-muted-foreground"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
+            >
+              Обзор ваших проектов и активности
+            </motion.p>
+          </div>
+          <motion.div 
+            className="flex items-center space-x-4 ml-6 flex-shrink-0"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
           >
-            <FolderPlus className="h-5 w-5" />
-            Создать проект
-          </Button>
-          {projects.length === 0 && (
-            <Button onClick={handleCreateSampleProject} size="lg" className="gap-3 text-base">
-              <Zap className="h-5 w-5" />
-              Создать демо проект
+            <Button 
+              onClick={() => setProjectModalOpen(true)} 
+              size="lg"
+              className="gap-3 text-base bg-[#2c5545] text-white hover:bg-[#2c5545]/90"
+            >
+              <FolderPlus className="h-5 w-5" />
+              Создать проект
             </Button>
-          )}
+            {projects.length === 0 && (
+              <Button onClick={handleCreateSampleProject} size="lg" className="gap-3 text-base">
+                <Zap className="h-5 w-5" />
+                Создать демо проект
+              </Button>
+            )}
+          </motion.div>
         </div>
-      </div>
+      </FadeInContent>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat) => (
-          <Card 
+      <StaggeredList className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" staggerDelay={0.1}>
+        {stats.map((stat, index) => (
+          <motion.div
             key={stat.name}
-            className="interactive-card cursor-pointer group"
-            onClick={stat.onClick}
-            style={{ zIndex: 1 }}
+            whileHover={{ 
+              y: -8,
+              transition: { duration: 0.2 }
+            }}
+            whileTap={{ scale: 0.98 }}
           >
-                         <CardContent className="p-6">
-                                                                                            <div className="flex items-center justify-between">
-                                     <div className="flex items-center justify-center">
-                       <stat.icon className={`h-24 w-24`} />
-                     </div>
-                                                                               <div className="text-right">
-                       <p className="text-lg font-medium text-muted-foreground mb-1">{stat.name}</p>
-                       <p className="text-3xl font-bold">{stat.value}</p>
-                       <p className="text-base text-muted-foreground mt-1">{stat.description}</p>
-                     </div>
-                   <ArrowUpRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                 </div>
-            </CardContent>
-          </Card>
+            <Card 
+              className="interactive-card cursor-pointer group h-full"
+              onClick={stat.onClick}
+              style={{ zIndex: 1 }}
+            >
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <motion.div 
+                    className="flex items-center justify-center"
+                    whileHover={{ scale: 1.1, rotate: 5 }}
+                    transition={{ type: "spring", stiffness: 300 }}
+                  >
+                    <stat.icon className={`h-24 w-24`} />
+                  </motion.div>
+                  <div className="text-right">
+                    <p className="text-lg font-medium text-muted-foreground mb-1">{stat.name}</p>
+                    <motion.p 
+                      className="text-3xl font-bold"
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ delay: index * 0.1 + 0.3, duration: 0.3, type: "spring" }}
+                    >
+                      {stat.value}
+                    </motion.p>
+                    <p className="text-base text-muted-foreground mt-1">{stat.description}</p>
+                  </div>
+                  <motion.div
+                    initial={{ opacity: 0, x: -10 }}
+                    whileHover={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
+                  </motion.div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
         ))}
-      </div>
+      </StaggeredList>
 
       {projects.length > 0 && (
         <div className="space-y-6">
@@ -557,6 +605,6 @@ export function DashboardPage() {
         onClose={() => setSelectedTask(null)}
         task={selectedTask}
       />
-    </div>
+    </AnimatedPage>
   );
 } 

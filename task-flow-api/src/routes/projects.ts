@@ -61,7 +61,7 @@ router.get('/',
       const totalCount = projects?.[0]?.total_count || 0;
 
       // The RPC function returns ProjectWithStats compatible objects, but we need to remove the total_count field
-      const projectsWithStats: ProjectWithStats[] = (projects || []).map(p => {
+      const projectsWithStats: ProjectWithStats[] = (projects || []).map((p: any) => {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { total_count, ...rest } = p;
         return rest as ProjectWithStats;

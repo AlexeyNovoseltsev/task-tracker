@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useState, useEffect, useCallback, forwardRef, useMemo } from 'react';
 import type { HTMLAttributes } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -42,6 +43,7 @@ interface TaskCardProps extends HTMLAttributes<HTMLDivElement> {
   showProject?: boolean;
   compact?: boolean;
   dragHandleProps?: any;
+  index?: number;
 }
 
 export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({ 
@@ -54,6 +56,7 @@ export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({
   showProject = false,
   compact = false,
   dragHandleProps,
+  index = 0,
   ...props
 }, ref) => {
   const { users, projects } = useAppStore();
@@ -183,7 +186,7 @@ export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({
   const mockWatcherCount = useMemo(() => task.watchers?.length || (task.id.charCodeAt(2) % 4), [task.id, task.watchers]);
 
   return (
-    <div
+    <motion.div
       data-testid="task-card"
       data-task-id={task.id}
       ref={ref}
@@ -197,44 +200,81 @@ export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({
       )}
       data-dragging={isDragging}
       onClick={onClick}
+      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -20, scale: 0.95 }}
+      transition={{
+        delay: index * 0.1,
+        duration: 0.3,
+        type: "spring",
+        stiffness: 300,
+        damping: 24,
+      }}
+      whileHover={{
+        y: -4,
+        boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
+        transition: { duration: 0.2 }
+      }}
+      whileTap={{ scale: 0.98 }}
     >
       {/* Priority indicator - left border */}
-      <div className={cn(
-        "absolute left-0 top-0 bottom-0 w-1",
-        task.priority === 'urgent' && "bg-red-500",
-        task.priority === 'high' && "bg-orange-500", 
-        task.priority === 'medium' && "bg-yellow-500",
-        task.priority === 'low' && "bg-green-500"
-      )} />
+      <motion.div 
+        className={cn(
+          "absolute left-0 top-0 bottom-0 w-1",
+          task.priority === 'urgent' && "bg-red-500",
+          task.priority === 'high' && "bg-orange-500", 
+          task.priority === 'medium' && "bg-yellow-500",
+          task.priority === 'low' && "bg-green-500"
+        )}
+        initial={{ scaleY: 0 }}
+        animate={{ scaleY: 1 }}
+        transition={{ delay: index * 0.1 + 0.2, duration: 0.3 }}
+      />
 
       {/* Drag Handle */}
       {dragHandleProps && (
-        <div 
+        <motion.div 
           className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 drag-handle"
           {...dragHandleProps}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
         >
           <GripVertical className="h-4 w-4" />
-        </div>
+        </motion.div>
       )}
 
       {/* Status indicator */}
-      <div className={cn(
-        "absolute top-4 right-4 w-3 h-3 rounded-full border-2 border-white dark:border-gray-800 shadow-sm",
-        getStatusColor(task.status)
-      )} />
+      <motion.div 
+        className={cn(
+          "absolute top-4 right-4 w-3 h-3 rounded-full border-2 border-white dark:border-gray-800 shadow-sm",
+          getStatusColor(task.status)
+        )}
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ delay: index * 0.1 + 0.3, type: "spring", stiffness: 500 }}
+      />
 
       {/* Header - Compact Layout */}
       <div className={cn("flex items-center justify-between", compact ? "mb-2" : "mb-3")}>
         <div className="flex items-center space-x-2 flex-1 min-w-0">
-          {getTypeIcon(task.type, compact)}
+          <motion.div
+            initial={{ rotate: -180, opacity: 0 }}
+            animate={{ rotate: 0, opacity: 1 }}
+            transition={{ delay: index * 0.1 + 0.1, duration: 0.3 }}
+          >
+            {getTypeIcon(task.type, compact)}
+          </motion.div>
           <span className={cn("font-medium text-gray-600 dark:text-gray-400 font-mono", compact ? "text-xs" : "text-sm")}>
             {project?.key}-{task.id.slice(-4).toUpperCase()}
           </span>
           {showProject && project && (
             <>
-              <div 
+              <motion.div 
                 className={cn("rounded-full", compact ? "w-2 h-2" : "w-3 h-3")}
                 style={{ backgroundColor: project.color }}
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: index * 0.1 + 0.2, type: "spring" }}
               />
               <span className={cn("text-gray-600 dark:text-gray-400 font-medium truncate", compact ? "text-xs" : "text-sm")}>
                 {project.name}
@@ -243,7 +283,12 @@ export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({
           )}
         </div>
         
-        <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <motion.div 
+          className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity"
+          initial={{ opacity: 0, x: 20 }}
+          whileHover={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.2 }}
+        >
           <Button
             variant="ghost"
             size="sm"
@@ -251,10 +296,15 @@ export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({
             disabled={isLoadingFavorite}
             className={cn("hover:bg-gray-100 dark:hover:bg-gray-800", compact ? "p-1 h-6 w-6" : "p-2 h-8 w-8")}
           >
-            <Star className={cn(
-              compact ? "h-3 w-3" : "h-4 w-4",
-              isFavorited ? "fill-yellow-400 text-yellow-500" : "text-gray-400 hover:text-yellow-500"
-            )} />
+            <motion.div
+              animate={isLoadingFavorite ? { rotate: 360 } : {}}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            >
+              <Star className={cn(
+                compact ? "h-3 w-3" : "h-4 w-4",
+                isFavorited ? "fill-yellow-400 text-yellow-500" : "text-gray-400 hover:text-yellow-500"
+              )} />
+            </motion.div>
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -273,43 +323,76 @@ export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </div>
+        </motion.div>
       </div>
 
       {/* Title */}
-      <h3 className={cn(
-        "font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2 break-words leading-tight",
-        compact ? "text-sm mb-2" : "text-base mb-3"
-      )}>
+      <motion.h3 
+        className={cn(
+          "font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2 break-words leading-tight",
+          compact ? "text-sm mb-2" : "text-base mb-3"
+        )}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: index * 0.1 + 0.2, duration: 0.3 }}
+      >
         {task.title}
-      </h3>
+      </motion.h3>
 
       {/* Description - Only show in non-compact mode */}
       {task.description && !compact && (
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2 break-words leading-relaxed">
+        <motion.p 
+          className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2 break-words leading-relaxed"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: index * 0.1 + 0.3, duration: 0.3 }}
+        >
           {task.description}
-        </p>
+        </motion.p>
       )}
 
       {/* Labels - Compact Layout */}
       {task.labels.length > 0 && (
-        <div className={cn("flex flex-wrap gap-1", compact ? "mb-2" : "mb-3")}>
-          {task.labels.slice(0, compact ? 2 : 3).map((label, index) => (
-            <Badge key={index} variant="secondary" className={cn("bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-0", compact ? "text-xs px-1.5 py-0.5" : "text-xs px-2 py-1")}>
-              {label}
-            </Badge>
+        <motion.div 
+          className={cn("flex flex-wrap gap-1", compact ? "mb-2" : "mb-3")}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: index * 0.1 + 0.4, duration: 0.3 }}
+        >
+          {task.labels.slice(0, compact ? 2 : 3).map((label, labelIndex) => (
+            <motion.div
+              key={labelIndex}
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: index * 0.1 + 0.4 + labelIndex * 0.1, type: "spring" }}
+            >
+              <Badge variant="secondary" className={cn("bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-0", compact ? "text-xs px-1.5 py-0.5" : "text-xs px-2 py-1")}>
+                {label}
+              </Badge>
+            </motion.div>
           ))}
           {task.labels.length > (compact ? 2 : 3) && (
-            <Badge variant="outline" className={cn("border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400", compact ? "text-xs px-1.5 py-0.5" : "text-xs px-2 py-1")}>
-              +{task.labels.length - (compact ? 2 : 3)}
-            </Badge>
+            <motion.div
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: index * 0.1 + 0.5, type: "spring" }}
+            >
+              <Badge variant="outline" className={cn("border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400", compact ? "text-xs px-1.5 py-0.5" : "text-xs px-2 py-1")}>
+                +{task.labels.length - (compact ? 2 : 3)}
+              </Badge>
+            </motion.div>
           )}
-        </div>
+        </motion.div>
       )}
 
       {/* Progress & Time - Compact Layout */}
       {(task.estimatedHours || task.loggedHours) && (
-        <div className={cn(compact ? "mb-2" : "mb-3")}>
+        <motion.div 
+          className={cn(compact ? "mb-2" : "mb-3")}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: index * 0.1 + 0.5, duration: 0.3 }}
+        >
           <div className={cn("flex items-center justify-between text-gray-600 dark:text-gray-400", compact ? "text-xs mb-1" : "text-sm mb-2")}>
             <span className="font-medium">Прогресс</span>
             <span className="font-mono">
@@ -322,36 +405,53 @@ export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({
             size="sm"
             className={cn("bg-gray-200 dark:bg-gray-700", compact ? "h-1.5" : "h-2")}
           />
-        </div>
+        </motion.div>
       )}
 
       {/* Footer - Compact Layout */}
-      <div className={cn("flex items-center justify-between", compact ? "text-xs" : "text-sm", "text-gray-600 dark:text-gray-400")}>
+      <motion.div 
+        className={cn("flex items-center justify-between", compact ? "text-xs" : "text-sm", "text-gray-600 dark:text-gray-400")}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: index * 0.1 + 0.6, duration: 0.3 }}
+      >
         <div className={cn("flex items-center", compact ? "space-x-1.5" : "space-x-3")}>
           {/* Due Date */}
           {task.dueDate && (
-            <div className={cn(
-              "flex items-center font-medium",
-              compact ? "space-x-1" : "space-x-1.5",
-              isOverdue && "text-red-500",
-              isDueSoon && !isOverdue && "text-orange-500"
-            )}>
+            <motion.div 
+              className={cn(
+                "flex items-center font-medium",
+                compact ? "space-x-1" : "space-x-1.5",
+                isOverdue && "text-red-500",
+                isDueSoon && !isOverdue && "text-orange-500"
+              )}
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: "spring", stiffness: 400 }}
+            >
               <CalendarDays className={cn(compact ? "h-3 w-3" : "h-4 w-4")} />
               <span className={cn(compact ? "text-xs" : "text-sm")}>{formatDate(task.dueDate)}</span>
-            </div>
+            </motion.div>
           )}
           
           {/* Story Points */}
           {showStoryPoints && task.storyPoints && (
-            <div className="flex items-center space-x-1">
+            <motion.div 
+              className="flex items-center space-x-1"
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: "spring", stiffness: 400 }}
+            >
               <Badge variant="outline" className={cn("border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300", compact ? "text-xs px-1.5 py-0.5" : "text-xs px-2 py-1")}>
                 {task.storyPoints} pts
               </Badge>
-            </div>
+            </motion.div>
           )}
 
           {/* Priority */}
-          <div className={cn("flex items-center", compact ? "space-x-1" : "space-x-1")}>
+          <motion.div 
+            className={cn("flex items-center", compact ? "space-x-1" : "space-x-1")}
+            whileHover={{ scale: 1.05 }}
+            transition={{ type: "spring", stiffness: 400 }}
+          >
             {getPriorityIcon(task.priority, compact)}
             <span className={cn("font-medium capitalize", compact ? "text-xs" : "text-xs")}>
               {task.priority === 'urgent' && 'Срочно'}
@@ -359,52 +459,79 @@ export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({
               {task.priority === 'medium' && 'Средний'}
               {task.priority === 'low' && 'Низкий'}
             </span>
-          </div>
+          </motion.div>
         </div>
         
         <div className={cn("flex items-center", compact ? "space-x-1.5" : "space-x-2")}>
           {/* Activity indicators */}
           {mockCommentCount > 0 && (
-            <div className={cn("flex items-center", compact ? "space-x-1" : "space-x-1.5")}>
+            <motion.div 
+              className={cn("flex items-center", compact ? "space-x-1" : "space-x-1.5")}
+              whileHover={{ scale: 1.1 }}
+              transition={{ type: "spring", stiffness: 400 }}
+            >
               <MessageSquare className={cn(compact ? "h-3 w-3" : "h-4 w-4")} />
               <span className={cn("font-medium", compact ? "text-xs" : "text-sm")}>{mockCommentCount}</span>
-            </div>
+            </motion.div>
           )}
           
           {mockAttachmentCount > 0 && (
-            <div className={cn("flex items-center", compact ? "space-x-1" : "space-x-1.5")}>
+            <motion.div 
+              className={cn("flex items-center", compact ? "space-x-1" : "space-x-1.5")}
+              whileHover={{ scale: 1.1 }}
+              transition={{ type: "spring", stiffness: 400 }}
+            >
               <Paperclip className={cn(compact ? "h-3 w-3" : "h-4 w-4")} />
               <span className={cn("font-medium", compact ? "text-xs" : "text-sm")}>{mockAttachmentCount}</span>
-            </div>
+            </motion.div>
           )}
 
           {mockWatcherCount > 0 && (
-            <div className={cn("flex items-center", compact ? "space-x-1" : "space-x-1.5")}>
+            <motion.div 
+              className={cn("flex items-center", compact ? "space-x-1" : "space-x-1.5")}
+              whileHover={{ scale: 1.1 }}
+              transition={{ type: "spring", stiffness: 400 }}
+            >
               <Eye className={cn(compact ? "h-3 w-3" : "h-4 w-4")} />
               <span className={cn("font-medium", compact ? "text-xs" : "text-sm")}>{mockWatcherCount}</span>
-            </div>
+            </motion.div>
           )}
 
           {/* Assignee */}
           {assignee ? (
-            <Avatar className={cn("border-2 border-white dark:border-gray-800 shadow-sm", compact ? "w-6 h-6" : "w-8 h-8")}>
-              <AvatarFallback className={cn("font-semibold bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300", compact ? "text-xs" : "text-sm")}>
-                {assignee.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+            <motion.div
+              whileHover={{ scale: 1.1 }}
+              transition={{ type: "spring", stiffness: 400 }}
+            >
+              <Avatar className={cn("border-2 border-white dark:border-gray-800 shadow-sm", compact ? "w-6 h-6" : "w-8 h-8")}>
+                <AvatarFallback className={cn("font-semibold bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300", compact ? "text-xs" : "text-sm")}>
+                  {assignee.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            </motion.div>
           ) : (
-            <Avatar className={cn("border-2 border-white dark:border-gray-800 shadow-sm", compact ? "w-6 h-6" : "w-8 h-8")}>
-              <AvatarFallback className={cn("bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400", compact ? "text-xs" : "text-sm")}>
-                <User className={cn(compact ? "h-3 w-3" : "h-4 w-4")} />
-              </AvatarFallback>
-            </Avatar>
+            <motion.div
+              whileHover={{ scale: 1.1 }}
+              transition={{ type: "spring", stiffness: 400 }}
+            >
+              <Avatar className={cn("border-2 border-white dark:border-gray-800 shadow-sm", compact ? "w-6 h-6" : "w-8 h-8")}>
+                <AvatarFallback className={cn("bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400", compact ? "text-xs" : "text-sm")}>
+                  <User className={cn(compact ? "h-3 w-3" : "h-4 w-4")} />
+                </AvatarFallback>
+              </Avatar>
+            </motion.div>
           )}
         </div>
-      </div>
+      </motion.div>
 
       {/* Hover effect */}
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-    </div>
+      <motion.div 
+        className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+        initial={{ opacity: 0 }}
+        whileHover={{ opacity: 1 }}
+        transition={{ duration: 0.2 }}
+      />
+    </motion.div>
   );
 });
 (TaskCard as any).displayName = 'TaskCard'

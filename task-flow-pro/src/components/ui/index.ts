@@ -1,14 +1,24 @@
 // Основные UI компоненты
-export { Button } from './button';
-export { Card, CardContent, CardHeader, CardTitle } from './card';
-export { Badge } from './badge';
-export { Select } from './Select';
-export { Input } from './Input';
-export { Progress } from './progress';
+export { Button, buttonVariants } from './Button';
+export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './Card';
+export { Badge } from './Badge';
 export { Avatar, AvatarFallback, AvatarImage } from './avatar';
+export { Progress } from './progress';
+export { Switch } from './switch';
+export { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
 export { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './dialog';
 export { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from './DropdownMenu';
-export { Toaster } from './toaster';
+export { Popover, PopoverContent, PopoverTrigger } from './popover';
+export { Toast, ToastAction, ToastClose, ToastDescription, ToastProvider, ToastTitle, ToastViewport } from './toaster';
+
+// Анимированные компоненты
+export { Icon, IconButton } from './Icon';
+export { AnimatedList, AnimatedListItem, AnimatedContainer } from './AnimatedList';
+export { PageTransition, AnimatedPage, FadeInContent, StaggeredList } from './PageTransition';
+export { AnimatedNotification, NotificationStack } from './AnimatedNotification';
+
+// Утилиты
+export { cn } from '@/lib/utils';
 
 // Унифицированные компоненты
 export { PageHeader } from './page-header';
