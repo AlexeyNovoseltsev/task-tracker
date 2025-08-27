@@ -16,18 +16,21 @@ import {
 } from '@dnd-kit/sortable';
 import { Plus, Search, Filter, ArrowRight } from 'lucide-react';
 import { useAppStore } from '@/store';
+import { ConfirmationDialog } from '@/components/common/ConfirmationDialog';
 import { Task, Sprint } from '@/types';
 import { Button } from '@/components/ui/button';
 import { TaskCard } from '@/components/task/TaskCard';
 import { TaskModal } from '@/components/task/TaskModal';
 
 export function BacklogPage() {
-  const { tasks, sprints, selectedProjectId, updateTask, addTask } = useAppStore();
+  const { tasks, sprints, selectedProjectId, updateTask, addTask, deleteTask } = useAppStore();
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [priorityFilter, setPriorityFilter] = useState<'all' | 'urgent' | 'high' | 'medium' | 'low'>('all');
   const [selectedSprint, setSelectedSprint] = useState<string>('');
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [pendingDeleteTaskId, setPendingDeleteTaskId] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -87,8 +90,16 @@ export function BacklogPage() {
   };
 
   const handleDeleteTask = (taskId: string) => {
-    // TODO: Add confirmation dialog and delete functionality
-    console.log('Delete task:', taskId);
+    setPendingDeleteTaskId(taskId);
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const confirmDeleteTask = () => {
+    if (pendingDeleteTaskId) {
+      deleteTask(pendingDeleteTaskId);
+      setPendingDeleteTaskId(null);
+      setIsDeleteConfirmOpen(false);
+    }
   };
 
   const handleAssignToSprint = () => {
@@ -281,6 +292,16 @@ export function BacklogPage() {
         onClose={() => setIsTaskModalOpen(false)}
         task={editingTask}
         defaultStatus="todo"
+      />
+
+      <ConfirmationDialog
+        isOpen={isDeleteConfirmOpen}
+        onClose={() => setIsDeleteConfirmOpen(false)}
+        onConfirm={confirmDeleteTask}
+        title="Удалить задачу?"
+        description="Это действие нельзя отменить. Задача будет удалена без возможности восстановления."
+        confirmText="Удалить"
+        cancelText="Отмена"
       />
     </div>
   );

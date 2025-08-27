@@ -9,7 +9,7 @@ export { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 export { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './dialog';
 export { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from './DropdownMenu';
 export { Popover, PopoverContent, PopoverTrigger } from './popover';
-export { Toast, ToastAction, ToastClose, ToastDescription, ToastProvider, ToastTitle, ToastViewport } from './toaster';
+export { Toaster, toast } from './toaster';
 
 // Анимированные компоненты
 export { Icon, IconButton } from './Icon';

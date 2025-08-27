@@ -15,6 +15,7 @@ import {
 } from '@dnd-kit/sortable';
 import { Task, Status } from '@/types';
 import { useAppStore } from '@/store';
+import { ConfirmationDialog } from '@/components/common/ConfirmationDialog';
 import { KanbanColumn } from './KanbanColumn';
 import { TaskModal } from '@/components/task/TaskModal';
 
@@ -26,10 +27,12 @@ const columns: { status: Status; title: string }[] = [
 ];
 
 export function KanbanBoard() {
-  const { tasks, updateTask, selectedProjectId } = useAppStore();
+  const { tasks, updateTask, deleteTask, selectedProjectId } = useAppStore();
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [newTaskStatus, setNewTaskStatus] = useState<Status>('todo');
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [pendingDeleteTaskId, setPendingDeleteTaskId] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -121,8 +124,16 @@ export function KanbanBoard() {
   };
 
   const handleDeleteTask = (taskId: string) => {
-    // TODO: Add confirmation dialog
-    // deleteTask(taskId);
+    setPendingDeleteTaskId(taskId);
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const confirmDeleteTask = () => {
+    if (pendingDeleteTaskId) {
+      deleteTask(pendingDeleteTaskId);
+      setPendingDeleteTaskId(null);
+      setIsDeleteConfirmOpen(false);
+    }
   };
 
   return (
@@ -169,6 +180,16 @@ export function KanbanBoard() {
         onClose={() => setIsTaskModalOpen(false)}
         task={editingTask}
         defaultStatus={newTaskStatus}
+      />
+
+      <ConfirmationDialog
+        isOpen={isDeleteConfirmOpen}
+        onClose={() => setIsDeleteConfirmOpen(false)}
+        onConfirm={confirmDeleteTask}
+        title="Удалить задачу?"
+        description="Это действие нельзя отменить. Задача будет удалена без возможности восстановления."
+        confirmText="Удалить"
+        cancelText="Отмена"
       />
     </div>
   );

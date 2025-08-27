@@ -29,6 +29,7 @@ import {
   LogOut
 } from "lucide-react";
 import { useState } from "react";
+import { z } from "zod";
 
 import { ConfirmationDialog } from "@/components/common/ConfirmationDialog";
 import { Button } from "@/components/ui/button";
@@ -90,8 +91,41 @@ export function SettingsPage() {
       reader.onload = (e) => {
         try {
           const importedSettings = JSON.parse(e.target?.result as string);
-          // TODO: Add validation for imported settings object
-          updateSettings(importedSettings);
+
+          const settingsSchema = z.object({
+            language: z.string().optional(),
+            timezone: z.string().optional(),
+            dateFormat: z.string().optional(),
+            timeFormat: z.enum(["24h", "12h"]).optional(),
+            pushNotifications: z.boolean().optional(),
+            emailNotifications: z.boolean().optional(),
+            soundEnabled: z.boolean().optional(),
+            taskReminders: z.boolean().optional(),
+            projectUpdates: z.boolean().optional(),
+            mentionNotifications: z.boolean().optional(),
+            profileVisibility: z.enum(["public", "team", "private"]).optional(),
+            activityTracking: z.boolean().optional(),
+            dataCollection: z.boolean().optional(),
+            theme: z.enum(["light", "dark", "system"]).optional(),
+            compactMode: z.boolean().optional(),
+            showAvatars: z.boolean().optional(),
+            animationsEnabled: z.boolean().optional(),
+            showStoryPoints: z.boolean().optional(),
+            autoSave: z.boolean().optional(),
+            autoBackup: z.boolean().optional(),
+            cacheSize: z.string().optional(),
+            syncInterval: z.string().optional(),
+            autoExportBackups: z.boolean().optional(),
+            exportFormat: z.enum(["json", "csv", "xlsx"]).optional(),
+            includeAttachments: z.boolean().optional(),
+          }).strict();
+
+          const parsed = settingsSchema.safeParse(importedSettings);
+          if (!parsed.success) {
+            error("Ошибка импорта", "Неверная структура настроек. Проверьте файл.");
+            return;
+          }
+          updateSettings(parsed.data);
           success("Настройки успешно импортированы");
         } catch (err) {
           error("Ошибка импорта", "Неверный формат файла или поврежденные данные.");
