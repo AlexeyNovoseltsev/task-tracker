@@ -1,7 +1,10 @@
 // Основные UI компоненты
-export { Button, buttonVariants } from './Button';
-export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './Card';
-export { Badge } from './Badge';
+export { Button } from './button';
+export { Card, CardContent, CardHeader, CardTitle } from './card';
+export { Badge } from './badge';
+export { Select, SelectGroup, SelectValue, SelectTrigger, SelectContent, SelectLabel, SelectItem, SelectSeparator } from './Select';
+export { Input } from './Input';
+export { Progress } from './progress';
 export { Avatar, AvatarFallback, AvatarImage } from './avatar';
 export { Progress } from './progress';
 export { Switch } from './switch';

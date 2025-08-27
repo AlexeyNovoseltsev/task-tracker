@@ -6,7 +6,7 @@ import { Calendar, ChevronLeft, ChevronRight, Plus, Filter, Sparkles, CheckSquar
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui";
 import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { TaskCard } from "@/components/ui/task-card";
@@ -132,10 +132,7 @@ export function CalendarPage() {
         icon={Calendar}
                  actions={
            <div className="flex items-center gap-2">
-                           <Button 
-                onClick={handleCreateTask}
-                className="bg-[#2c5545] hover:bg-[#2c5545]/90 text-white"
-              >
+              <Button onClick={handleCreateTask}>
                 <Plus className="h-4 w-4 mr-2" />
                 Создать задачу
               </Button>
@@ -372,7 +369,7 @@ export function CalendarPage() {
                       })}
                                              <Button 
                          size="sm" 
-                         className="w-full bg-[#2c5545] hover:bg-[#2c5545]/90 text-white border-[#2c5545]"
+                         className="w-full"
                          onClick={handleCreateTask}
                        >
                          <Plus className="h-4 w-4 mr-1" />

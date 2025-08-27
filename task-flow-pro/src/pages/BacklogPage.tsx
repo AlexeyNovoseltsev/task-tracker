@@ -13,15 +13,7 @@ import { ConfirmationDialog } from "@/components/common/ConfirmationDialog";
 import { TaskCard } from "@/components/task/TaskCard";
 import { TaskDetailModal } from "@/components/task/TaskDetailModal";
 import { TaskModal } from "@/components/task/TaskModal";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/Select";
+import { Button, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/store";
 import { Task } from "@/types";
@@ -88,24 +80,6 @@ export function BacklogPage() {
     })
     .sort((a, b) => (a.position || 0) - (b.position || 0));
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "high": return "text-red-600 bg-red-100 dark:bg-red-900/30";
-      case "medium": return "text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30";
-      case "low": return "text-green-600 bg-green-100 dark:bg-green-900/30";
-      default: return "text-gray-600 bg-gray-100 dark:bg-gray-900/30";
-    }
-  };
-
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case "bug": return "🐛";
-      case "story": return "📖";
-      case "task": return "✅";
-      default: return "📝";
-    }
-  };
-
   const openCreateModal = () => {
     setEditingTaskId(undefined);
     setTaskModalOpen(true);
@@ -168,7 +142,7 @@ export function BacklogPage() {
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">Бэклог продукта</h1>
-        <Button onClick={openCreateModal} className="bg-[#2c5545] hover:bg-[#2c5545]/90 text-white">
+        <Button onClick={openCreateModal}>
           <Plus className="h-4 w-4 mr-2" />
           Добавить задачу
         </Button>
@@ -208,15 +182,15 @@ export function BacklogPage() {
         <h3 className="font-semibold mb-2">Руководство по приоритетам</h3>
         <div className="flex space-x-4 text-sm">
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-red-500 rounded"></div>
+            <div className="w-3 h-3 bg-destructive rounded"></div>
             <span>Высокий - критичные проблемы, блокирующие функции</span>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-yellow-500 rounded"></div>
+            <div className="w-3 h-3 bg-warning rounded"></div>
             <span>Средний - важные функции, запланированная работа</span>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-green-500 rounded"></div>
+            <div className="w-3 h-3 bg-success rounded"></div>
             <span>Низкий - желательные функции, будущие улучшения</span>
           </div>
         </div>
@@ -257,7 +231,7 @@ export function BacklogPage() {
           <div className="text-sm text-muted-foreground">Всего в бэклоге</div>
         </div>
         <div className="bg-card p-4 rounded-lg border text-center">
-          <div className="text-2xl font-bold text-red-500">
+          <div className="text-2xl font-bold text-destructive">
             {backlogTasks.filter(t => t.priority === "high").length}
           </div>
           <div className="text-sm text-muted-foreground">Высокий приоритет</div>
@@ -269,7 +243,7 @@ export function BacklogPage() {
           <div className="text-sm text-muted-foreground">Всего очков</div>
         </div>
         <div className="bg-card p-4 rounded-lg border text-center">
-          <div className="text-2xl font-bold text-green-500">
+          <div className="text-2xl font-bold text-success">
             {backlogTasks.filter(t => t.type === "story").length}
           </div>
           <div className="text-sm text-muted-foreground">Пользов. истории</div>
