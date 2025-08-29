@@ -64,6 +64,9 @@
   body {
     @apply bg-background text-foreground;
   }
+  button {
+    @apply whitespace-nowrap;
+  }
 }
 
 @layer utilities {
