@@ -214,10 +214,10 @@ export function TaskCard({
               </div>
             )}
             
-            {task.assignee && (
+            {task.assigneeId && (
               <div className="flex items-center gap-1">
                 <User className="h-3 w-3" />
-                <span>{task.assignee}</span>
+                <span>{task.assigneeId}</span>
               </div>
             )}
           </div>
@@ -225,9 +225,9 @@ export function TaskCard({
         
         <div className="flex items-center justify-between pt-2 border-t border-border/50">
           <Badge className={cn("text-xs", getStatusColor(task.status))}>
-            {task.status === 'completed' && 'Завершено'}
-            {task.status === 'in_progress' && 'В работе'}
-            {task.status === 'blocked' && 'Заблокировано'}
+            {task.status === 'done' && 'Завершено'}
+            {task.status === 'in-progress' && 'В работе'}
+            {task.status === 'in-review' && 'На проверке'}
             {task.status === 'todo' && 'К выполнению'}
           </Badge>
           

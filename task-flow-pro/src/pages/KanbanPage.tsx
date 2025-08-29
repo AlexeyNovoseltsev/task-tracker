@@ -455,7 +455,7 @@ function DragOverlayContent({ task }: { task: Task | null }) {
 }
 
 // Основной компонент Канбан-страницы
-export function KanbanPage() {
+export default function KanbanPage() {
   const { tasks, updateTask, reorderTasks, selectedProjectId, users } = useAppStore();
   const [taskModalOpen, setTaskModalOpen] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<string | undefined>();

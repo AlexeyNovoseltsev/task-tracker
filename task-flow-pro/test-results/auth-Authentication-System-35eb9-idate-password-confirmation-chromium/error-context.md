@@ -1,0 +1,48 @@
+# Page snapshot
+
+```yaml
+- heading "TaskFlow Pro" [level=1]
+- paragraph: Современное управление задачами
+- heading "Создать аккаунт" [level=2]
+- paragraph: Присоединяйтесь к тысячам пользователей
+- text: Полное имя
+- img
+- textbox "Иван Иванов"
+- text: Email
+- img
+- textbox "your@email.com"
+- text: Пароль
+- img
+- textbox "••••••••": password123
+- button:
+  - img
+- text: "Сила пароля: Хороший Требуется: Заглавная буква, Спецсимвол"
+- paragraph: Пароль должен содержать строчные и заглавные буквы, цифры и спецсимволы
+- text: Подтверждение пароля
+- img
+- textbox "••••••••": differentpassword
+- button:
+  - img
+- paragraph: Пароли не совпадают
+- checkbox "Я согласен с условиями использования и политикой конфиденциальности"
+- text: Я согласен с
+- link "условиями использования":
+  - /url: /terms
+- text: и
+- link "политикой конфиденциальности":
+  - /url: /privacy
+- button "Создать аккаунт" [disabled]:
+  - text: Создать аккаунт
+  - img
+- text: Или зарегистрироваться через
+- button "Google":
+  - img
+  - text: Google
+- button "GitHub":
+  - img
+  - text: GitHub
+- text: Демо-режим OAuth интеграция требует настройки на сервере. В production это будет работать с реальными провайдерами. Уже есть аккаунт?
+- link "Войти":
+  - /url: /login
+- text: © 2024 TaskFlow Pro. Все права защищены.
+```

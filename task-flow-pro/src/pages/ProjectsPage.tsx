@@ -23,7 +23,7 @@ import { useToast } from "@/hooks/useToast";
 import { api } from "@/lib/api";
 import { useAppStore } from "@/store";
 
-export function ProjectsPage() {
+export default function ProjectsPage() {
   const { 
     projects, 
     tasks, 

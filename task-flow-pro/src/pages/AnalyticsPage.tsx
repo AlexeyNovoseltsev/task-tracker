@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils";
 import { useAppStore, useSettings } from "@/store";
 
-export function AnalyticsPage() {
+export default function AnalyticsPage() {
   const { tasks, sprints, selectedProjectId } = useAppStore();
   const { showStoryPoints } = useSettings();
   const [selectedSprintId, setSelectedSprintId] = useState('');

@@ -35,7 +35,7 @@ type PriorityFilter = 'all' | 'low' | 'medium' | 'high';
 
 
 
-export function TasksPage() {
+export default function TasksPage() {
   const { tasks, projects, selectedProjectId } = useAppStore();
   const { success } = useToast();
 

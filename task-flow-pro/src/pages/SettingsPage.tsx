@@ -39,7 +39,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { useToast } from "@/hooks/useToast";
 import { useAppStore } from "@/store";
 
-export function SettingsPage() {
+export default function SettingsPage() {
   const { theme, toggleTheme } = useTheme();
   const { success, error, info } = useToast();
   const { settings, updateSettings, resetSettings } = useAppStore();

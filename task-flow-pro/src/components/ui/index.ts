@@ -6,9 +6,7 @@ export { Select, SelectGroup, SelectValue, SelectTrigger, SelectContent, SelectL
 export { Input } from './Input';
 export { Progress } from './progress';
 export { Avatar, AvatarFallback, AvatarImage } from './avatar';
-export { Progress } from './progress';
 export { Switch } from './switch';
-export { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
 export { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './dialog';
 export { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from './DropdownMenu';
 export { Popover, PopoverContent, PopoverTrigger } from './popover';

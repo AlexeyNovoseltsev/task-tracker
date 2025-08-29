@@ -1,9 +1,11 @@
-import { Sun, Moon, Computer, ChevronDown, Folder, Check, Search, Bell, User } from "lucide-react";
+import { Sun, Moon, Computer, ChevronDown, Folder, Check, Search, Bell, User, LogOut, Settings } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/hooks/useTheme";
 import { useToast } from "@/hooks/useToast";
+import { useAuth } from "@/hooks/useAuth";
 import { useSelectedProject, useAppStore } from "@/store";
 
 export function Header() {
@@ -11,25 +13,31 @@ export function Header() {
   const { projects, setSelectedProject } = useAppStore();
   const { success } = useToast();
   const { currentTheme, setTheme } = useTheme();
+  const { user, logout } = useAuth();
   const [showProjectDropdown, setShowProjectDropdown] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const projectDropdownRef = useRef<HTMLDivElement>(null);
+  const userDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (projectDropdownRef.current && !projectDropdownRef.current.contains(event.target as Node)) {
         setShowProjectDropdown(false);
+      }
+      if (userDropdownRef.current && !userDropdownRef.current.contains(event.target as Node)) {
+        setShowUserDropdown(false);
       }
     };
 
-    if (showProjectDropdown) {
+    if (showProjectDropdown || showUserDropdown) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showProjectDropdown]);
+  }, [showProjectDropdown, showUserDropdown]);
 
   const toggleTheme = () => {
     const themes = ['light', 'dark', 'system'] as const;
@@ -53,7 +61,7 @@ export function Header() {
       <div className="flex h-full items-center justify-between px-6">
         <div className="flex items-center space-x-4">
                      {/* Project Selector */}
-           <div className="relative" ref={dropdownRef}>
+           <div className="relative" ref={projectDropdownRef}>
             <button
               onClick={() => setShowProjectDropdown(!showProjectDropdown)}
               className="flex items-center space-x-4 px-6 py-3 rounded-modern border bg-card hover:bg-accent transition-all duration-200 text-base font-medium shadow-sm hover:shadow-md"
@@ -163,12 +171,74 @@ export function Header() {
           
           {/* User Profile */}
           <div className="flex items-center space-x-4 pl-4 border-l border-border/30">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground flex items-center justify-center text-base font-semibold">
-              <User className="h-5 w-5" />
-            </div>
-            <div className="hidden sm:block">
-              <div className="text-base font-medium">Продакт-менеджер</div>
-              <div className="text-sm text-muted-foreground">admin@taskflow.pro</div>
+            <div className="relative" ref={userDropdownRef}>
+              <button
+                onClick={() => setShowUserDropdown(!showUserDropdown)}
+                className="flex items-center space-x-3 p-2 rounded-lg hover:bg-accent transition-colors"
+              >
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground flex items-center justify-center text-base font-semibold">
+                  {user?.avatar_url ? (
+                    <img
+                      src={user.avatar_url}
+                      alt={user.name}
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
+                  ) : (
+                    <User className="h-5 w-5" />
+                  )}
+                </div>
+                <div className="hidden sm:block text-left">
+                  <div className="text-sm font-medium">{user?.name || 'Пользователь'}</div>
+                  <div className="text-xs text-muted-foreground">{user?.email}</div>
+                </div>
+                <ChevronDown className="w-4 h-4 text-muted-foreground transition-transform duration-200" />
+              </button>
+
+              {/* User Dropdown */}
+              {showUserDropdown && (
+                <div className="absolute top-full right-0 mt-2 w-64 bg-card border rounded-modern shadow-lg animate-fadeIn backdrop-blur-sm z-[99999]">
+                  <div className="p-4 border-b border-border/30">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground flex items-center justify-center text-lg font-semibold">
+                        {user?.avatar_url ? (
+                          <img
+                            src={user.avatar_url}
+                            alt={user.name}
+                            className="w-12 h-12 rounded-full object-cover"
+                          />
+                        ) : (
+                          <User className="h-6 w-6" />
+                        )}
+                      </div>
+                      <div>
+                        <div className="font-medium">{user?.name}</div>
+                        <div className="text-sm text-muted-foreground">{user?.email}</div>
+                        <div className="text-xs text-muted-foreground capitalize">{user?.role}</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="py-2">
+                    <Link
+                      to="/settings"
+                      className="flex items-center space-x-3 px-4 py-2 text-sm hover:bg-accent transition-colors"
+                      onClick={() => setShowUserDropdown(false)}
+                    >
+                      <Settings className="w-4 h-4" />
+                      <span>Настройки</span>
+                    </Link>
+                    <button
+                      onClick={() => {
+                        logout();
+                        setShowUserDropdown(false);
+                      }}
+                      className="flex items-center space-x-3 px-4 py-2 text-sm hover:bg-accent transition-colors w-full text-left text-destructive hover:text-destructive"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Выйти</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

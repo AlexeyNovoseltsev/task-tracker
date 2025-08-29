@@ -26,7 +26,7 @@ const formatMonthNominative = (date: Date) => {
   return `${month} ${year}`;
 };
 
-export function CalendarPage() {
+export default function CalendarPage() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [filterProject, setFilterProject] = useState<string>("all");

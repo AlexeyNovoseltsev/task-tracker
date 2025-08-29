@@ -2,24 +2,19 @@ import { useEffect, useState } from "react";
 import { Route, Routes, useNavigate } from "react-router-dom";
 
 import { AppLayout } from "@/components/layout/AppLayout";
+import { PrivateRoute, PublicOnlyRoute } from "@/components/auth/ProtectedRoute";
 import { ProjectModal } from "@/components/project/ProjectModal";
 import { SprintModal } from "@/components/sprint/SprintModal";
 import { TaskModal } from "@/components/task/TaskModal";
 import { Toaster } from "@/components/ui/toaster";
 import { useKeyboardShortcuts, GLOBAL_SHORTCUTS } from "@/hooks/useKeyboardShortcuts";
 import { useTheme } from "@/hooks/useTheme";
-import { AnalyticsPage } from "@/pages/AnalyticsPage";
-import ApiTestPage from "@/pages/ApiTestPage";
-import { BacklogPage } from "@/pages/BacklogPage";
-import { CalendarPage } from "@/pages/CalendarPage";
-import { ColorPickerDemo } from "@/pages/ColorPickerDemo";
-import { DashboardPage } from "@/pages/DashboardPage";
-import FavoritesPage from "@/pages/FavoritesPage";
-import { KanbanPage } from "@/pages/KanbanPage";
-import { ProjectsPage } from "@/pages/ProjectsPage";
-import { SettingsPage } from "@/pages/SettingsPage";
-import { SprintsPage } from "@/pages/SprintsPage";
-import { TasksPage } from "@/pages/TasksPage";
+import { Suspense } from "react";
+import { LazyPages, preloadCriticalPages } from "@/utils/lazyLoad";
+import { PageLoading } from "@/components/ui/LoadingSpinner";
+
+// Preload critical pages
+preloadCriticalPages();
 import { useAppStore } from "@/store";
 
 function App() {
@@ -100,19 +95,95 @@ function App() {
   return (
     <div className={`h-full ${theme}`}>
       <Routes>
-        <Route path="/" element={<AppLayout />}>
-          <Route index element={<DashboardPage />} />
-          <Route path="favorites" element={<FavoritesPage />} />
-          <Route path="projects" element={<ProjectsPage />} />
-          <Route path="tasks" element={<TasksPage />} />
-          <Route path="backlog" element={<BacklogPage />} />
-          <Route path="sprints" element={<SprintsPage />} />
-          <Route path="kanban" element={<KanbanPage />} />
-          <Route path="analytics" element={<AnalyticsPage />} />
-          <Route path="calendar" element={<CalendarPage />} />
-          <Route path="settings" element={<SettingsPage />} />
-          <Route path="api-test" element={<ApiTestPage />} />
-          <Route path="color-demo" element={<ColorPickerDemo />} />
+        {/* Публичные маршруты (доступны только неавторизованным) */}
+                        <Route path="/login" element={
+                  <PublicOnlyRoute>
+                    <Suspense fallback={<PageLoading />}>
+                      <LazyPages.Login />
+                    </Suspense>
+                  </PublicOnlyRoute>
+                } />
+                <Route path="/register" element={
+                  <PublicOnlyRoute>
+                    <Suspense fallback={<PageLoading />}>
+                      <LazyPages.Register />
+                    </Suspense>
+                  </PublicOnlyRoute>
+                } />
+                <Route path="/check-email" element={
+                  <PublicOnlyRoute>
+                    <Suspense fallback={<PageLoading />}>
+                      <LazyPages.CheckEmail />
+                    </Suspense>
+                  </PublicOnlyRoute>
+                } />
+
+        {/* Защищенные маршруты (требуют авторизацию) */}
+        <Route path="/" element={
+          <PrivateRoute>
+            <AppLayout />
+          </PrivateRoute>
+        }>
+          <Route index element={
+            <Suspense fallback={<div>Loading...</div>}>
+              <LazyPages.Dashboard />
+            </Suspense>
+          } />
+          <Route path="favorites" element={
+            <Suspense fallback={<div>Loading...</div>}>
+              <LazyPages.Favorites />
+            </Suspense>
+          } />
+          <Route path="projects" element={
+            <Suspense fallback={<div>Loading...</div>}>
+              <LazyPages.Projects />
+            </Suspense>
+          } />
+          <Route path="tasks" element={
+            <Suspense fallback={<div>Loading...</div>}>
+              <LazyPages.Tasks />
+            </Suspense>
+          } />
+          <Route path="backlog" element={
+            <Suspense fallback={<div>Loading...</div>}>
+              <LazyPages.Backlog />
+            </Suspense>
+          } />
+          <Route path="sprints" element={
+            <Suspense fallback={<div>Loading...</div>}>
+              <LazyPages.Sprints />
+            </Suspense>
+          } />
+          <Route path="kanban" element={
+            <Suspense fallback={<div>Loading...</div>}>
+              <LazyPages.Kanban />
+            </Suspense>
+          } />
+          <Route path="analytics" element={
+            <Suspense fallback={<div>Loading...</div>}>
+              <LazyPages.Analytics />
+            </Suspense>
+          } />
+          <Route path="calendar" element={
+            <Suspense fallback={<div>Loading...</div>}>
+              <LazyPages.Calendar />
+            </Suspense>
+          } />
+          <Route path="settings" element={
+            <Suspense fallback={<div>Loading...</div>}>
+              <LazyPages.Settings />
+            </Suspense>
+          } />
+          <Route path="api-test" element={
+            <Suspense fallback={<div>Loading...</div>}>
+              <LazyPages.ApiTest />
+            </Suspense>
+          } />
+          <Route path="color-demo" element={
+            <Suspense fallback={<div>Loading...</div>}>
+              <LazyPages.ColorDemo />
+            </Suspense>
+          } />
         </Route>
       </Routes>
       

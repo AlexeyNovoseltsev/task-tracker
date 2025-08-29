@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import { Router, Request, Response, NextFunction } from 'express';
 import { body } from 'express-validator';
 
+import config from '@/config';
 import { supabaseAdmin } from '@/config/supabase';
 import {
   generateToken,
@@ -109,6 +110,32 @@ router.post('/login',
     const clientIp = req.ip || 'unknown';
     const userAgent = req.get('User-Agent') || 'unknown';
 
+    // Debug demo flag
+    if (config.server.nodeEnv !== 'production') {
+      console.log('[AUTH] login attempt', { email, demoEnabled: config.demo.enabled });
+    }
+
+    // DEMО режим: если включен ИЛИ Supabase не сконфигурирован, принимаем DEMO_EMAIL
+    const isDemoLogin = (config.demo.enabled || !config.supabase.url) &&
+      email?.toLowerCase() === config.demo.userEmail.toLowerCase();
+    if (isDemoLogin) {
+      const authUser: AuthUser = {
+        id: 'demo-user-id',
+        email: config.demo.userEmail,
+        name: config.demo.userName,
+        role: config.demo.userRole,
+        avatar_url: undefined,
+      };
+
+      const accessToken = generateToken(authUser);
+      const refreshToken = generateRefreshToken(authUser);
+
+      return successResponse(res, {
+        user: authUser,
+        tokens: { access: accessToken, refresh: refreshToken },
+      }, 'Login successful (demo)');
+    }
+
     // Find user by email
     const { data: user, error } = await supabaseAdmin
       .from('users')
@@ -116,7 +143,20 @@ router.post('/login',
       .eq('email', email)
       .single();
 
-    if (error || !user) {
+    if ((error || !user)) {
+      // Fallback: если демо включен, все равно логиним демо-пользователя
+      if ((config.demo.enabled || !config.supabase.url) && email?.toLowerCase() === config.demo.userEmail.toLowerCase()) {
+        const authUser: AuthUser = {
+          id: 'demo-user-id',
+          email: config.demo.userEmail,
+          name: config.demo.userName,
+          role: config.demo.userRole,
+          avatar_url: undefined,
+        };
+        const accessToken = generateToken(authUser);
+        const refreshToken = generateRefreshToken(authUser);
+        return successResponse(res, { user: authUser, tokens: { access: accessToken, refresh: refreshToken } }, 'Login successful (demo)');
+      }
       securityLogger.loginAttempt(email, false, clientIp, userAgent);
       throw new AuthenticationError('Invalid email or password');
     }

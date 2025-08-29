@@ -61,16 +61,29 @@ export const authMiddleware = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    // Skip auth for certain routes
+    // Skip auth for certain routes (handle mounting at '/api')
     const publicRoutes = [
       '/api/auth/login',
       '/api/auth/register',
       '/api/auth/refresh',
       '/api/health',
-      '/health'
+      '/health',
+      '/health/detailed',
+      '/health/ready',
+      '/health/live',
+      '/auth/login',
+      '/auth/register',
+      '/auth/refresh',
     ];
-    
-    if (publicRoutes.includes(req.path)) {
+
+    const currentPath = (req.originalUrl || req.path).split('?')[0];
+    if (
+      publicRoutes.includes(currentPath) ||
+      currentPath.startsWith('/api/auth') ||
+      currentPath.startsWith('/auth') ||
+      currentPath.startsWith('/health') ||
+      currentPath === '/api/health'
+    ) {
       return next();
     }
 

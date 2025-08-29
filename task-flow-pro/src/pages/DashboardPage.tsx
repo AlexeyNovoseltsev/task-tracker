@@ -31,7 +31,7 @@ import { useAppStore, useSettings } from "@/store";
 // --- Новые импорты 3D иконок ---
 import type { Task } from "@/types";
 
-export function DashboardPage() {
+export default function DashboardPage() {
   const { projects, tasks, sprints, addProject, addTask, addSprint, setSelectedProject } = useAppStore();
   const { showStoryPoints } = useSettings();
   const { success } = useToast();

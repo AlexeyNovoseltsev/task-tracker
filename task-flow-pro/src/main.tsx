@@ -6,6 +6,18 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import "./index.css";
 import "./styles/drag-drop.css";
+import { initSentry } from "./lib/monitoring";
+import { analytics } from "./lib/analytics";
+import { performanceMonitor } from "./lib/performance";
+
+// Initialize error tracking and monitoring
+initSentry();
+
+// Initialize analytics
+analytics.init();
+
+// Initialize performance monitoring
+performanceMonitor.init();
 
 // Create a client
 const queryClient = new QueryClient({

@@ -50,7 +50,7 @@ function SortableTaskCard({ task, onEdit, onDelete, onClick }: { task: Task, onE
   );
 }
 
-export function BacklogPage() {
+export default function BacklogPage() {
   const { tasks, selectedProjectId, deleteTask, reorderTasks } = useAppStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");

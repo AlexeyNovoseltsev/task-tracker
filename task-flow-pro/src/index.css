@@ -1,6 +1,7 @@
 /* Import modern fonts */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import './styles/auth.css';
 
 @tailwind base;
 @tailwind components;
@@ -92,6 +93,10 @@
 @layer base {
   * {
     @apply border-border;
+  }
+  /* Глобально запрещаем переносы текста на кнопках */
+  button {
+    @apply whitespace-nowrap;
   }
   
   /* Глобальные стили для перетаскивания */

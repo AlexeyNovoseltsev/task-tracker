@@ -1,0 +1,75 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.0.0)'
+        required: true
+        type: string
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: npm
+          registry-url: 'https://registry.npmjs.org'
+      
+      - name: Install and build frontend
+        working-directory: task-flow-pro
+        run: |
+          npm ci
+          npm run build
+      
+      - name: Install and build backend
+        working-directory: task-flow-api
+        run: |
+          npm ci
+          npm run build
+      
+      - name: Create build artifacts
+        run: |
+          tar -czf taskflow-frontend-${{ github.ref_name }}.tar.gz -C task-flow-pro/dist .
+          tar -czf taskflow-backend-${{ github.ref_name }}.tar.gz -C task-flow-api/dist .
+      
+      - name: Generate changelog
+        id: changelog
+        run: |
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          git log $(git describe --tags --abbrev=0 HEAD^)..HEAD --pretty=format:"- %s (%h)" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          body: |
+            ## Changes in this Release
+            ${{ steps.changelog.outputs.changelog }}
+            
+            ## Installation
+            Download the artifacts below and deploy to your server.
+          draft: false
+          prerelease: false
+          files: |
+            ./taskflow-frontend-${{ github.ref_name }}.tar.gz
+            ./taskflow-backend-${{ github.ref_name }}.tar.gz

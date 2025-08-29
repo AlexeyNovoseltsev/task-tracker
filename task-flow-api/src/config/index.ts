@@ -43,6 +43,12 @@ interface Config {
     enabled: boolean;
     healthCheckInterval: number;
   };
+  demo: {
+    enabled: boolean;
+    userEmail: string;
+    userName: string;
+    userRole: 'admin' | 'user' | 'viewer';
+  };
 }
 
 const config: Config = {
@@ -84,6 +90,13 @@ const config: Config = {
   monitoring: {
     enabled: process.env.ENABLE_MONITORING === 'true',
     healthCheckInterval: parseInt(process.env.HEALTH_CHECK_INTERVAL || '30000', 10),
+  },
+  demo: {
+    // По умолчанию включаем демо в development. Можно выключить DEMO_ENABLED=false
+    enabled: process.env.DEMO_ENABLED ? (process.env.DEMO_ENABLED === 'true') : (process.env.NODE_ENV !== 'production'),
+    userEmail: process.env.DEMO_USER_EMAIL || 'demo@taskflow.pro',
+    userName: process.env.DEMO_USER_NAME || 'Demo User',
+    userRole: (process.env.DEMO_USER_ROLE as 'admin' | 'user' | 'viewer') || 'admin',
   },
 };
 

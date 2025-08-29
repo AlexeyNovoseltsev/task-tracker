@@ -29,7 +29,7 @@ const FilterButton = React.forwardRef<HTMLButtonElement, FilterButtonProps>(
     return (
       <button
         className={cn(
-          "inline-flex items-center justify-center rounded-modern text-sm font-medium ring-offset-background transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+          "inline-flex items-center justify-center whitespace-nowrap gap-2 rounded-modern text-sm font-medium ring-offset-background transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
           {
             "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm": variant === "default" && isActive,
             "bg-muted text-muted-foreground hover:bg-muted/80": variant === "default" && !isActive,
@@ -44,7 +44,7 @@ const FilterButton = React.forwardRef<HTMLButtonElement, FilterButtonProps>(
         ref={ref}
         {...props}
       >
-        <Filter className="mr-2 h-3 w-3" />
+        <Filter className="h-3 w-3" />
         {children}
         {count !== undefined && count > 0 && (
           <Badge 

@@ -16,7 +16,7 @@ import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useAppStore , useShowStoryPoints } from "@/store";
 
-export function SprintsPage() {
+export default function SprintsPage() {
   const { sprints, tasks, selectedProjectId, updateSprint, initializeWithDemoData } = useAppStore();
   const showStoryPoints = useShowStoryPoints();
   const { success, error } = useToast();

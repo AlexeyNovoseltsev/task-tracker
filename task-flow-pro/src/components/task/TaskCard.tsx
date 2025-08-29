@@ -257,7 +257,7 @@ export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </motion.div>
+        </div>
       </div>
 
       {/* Title */}
@@ -268,13 +268,13 @@ export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({
         )}
       >
         {task.title}
-      </motion.h3>
+      </h3>
 
       {/* Description */}
       {task.description && !compact && (
         <p className="text-sm leading-relaxed text-muted-foreground line-clamp-2">
           {task.description}
-        </motion.p>
+        </p>
       )}
 
       {/* Labels */}
@@ -288,7 +288,7 @@ export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({
           {task.labels.length > 3 && (
             <Badge variant="outline">+{task.labels.length - 3}</Badge>
           )}
-        </motion.div>
+        </div>
       )}
 
       {/* Footer */}
@@ -356,7 +356,7 @@ export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 });
 (TaskCard as any).displayName = 'TaskCard';

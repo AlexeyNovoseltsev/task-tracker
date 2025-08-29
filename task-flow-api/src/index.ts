@@ -8,7 +8,8 @@ import helmet from 'helmet';
 import { Server as SocketIOServer } from 'socket.io';
 
 import config from '@/config';
-import { authMiddleware } from '@/middleware/auth';
+import { authMiddleware, generateToken, generateRefreshToken } from '@/middleware/auth';
+import { AuthUser } from '@/types';
 import { errorHandler, notFoundHandler } from '@/middleware/errorHandler';
 import { requestLogger } from '@/middleware/logger';
 import { validationErrorHandler } from '@/middleware/validation';
@@ -118,11 +119,34 @@ app.use(requestLogger);
 app.use('/health', healthRoutes);
 app.use('/api/health', healthRoutes);
 
+// Lightweight fallback login handler for demo mode (before routers)
+app.post('/api/auth/login', (req, res, next) => {
+  try {
+    const email = (req.body?.email || '').toLowerCase();
+    const isDemo = (config.demo.enabled || !config.supabase.url);
+    if (isDemo && email === config.demo.userEmail.toLowerCase()) {
+      const user: AuthUser = {
+        id: 'demo-user-id',
+        email: config.demo.userEmail,
+        name: config.demo.userName,
+        role: config.demo.userRole,
+        avatar_url: undefined,
+      };
+      const access = generateToken(user);
+      const refresh = generateRefreshToken(user);
+      return res.status(200).json({ success: true, data: { user, tokens: { access, refresh } }, message: 'Login successful (demo-fallback)' });
+    }
+    return next();
+  } catch (err) {
+    return next(err);
+  }
+});
+
+// Public auth routes should be registered BEFORE global /api auth middleware
+app.use('/api/auth', authRoutes);
+
 // Authentication middleware for protected routes
 app.use('/api', authMiddleware);
-
-// API Routes
-app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/sprints', sprintRoutes);

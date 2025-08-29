@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ColorPicker, CompactColorPicker } from '@/components/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-export function ColorPickerDemo() {
+export default function ColorPickerDemo() {
   const [selectedColor, setSelectedColor] = useState('#667eea');
   const [compactColor, setCompactColor] = useState('#f093fb');
 
