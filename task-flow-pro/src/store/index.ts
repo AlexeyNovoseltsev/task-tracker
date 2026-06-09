@@ -89,6 +89,10 @@ interface AppState {
   
   // Initialization
   initializeWithDemoData: () => void;
+  hydrateFromApi: (projects: Project[], tasks: Task[]) => void;
+  setUsers: (users: User[]) => void;
+  importTask: (task: Task) => void;
+  importProject: (project: Project) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -195,6 +199,7 @@ export const useAppStore = create<AppState>()(
         const task: Task = {
           ...taskData,
           id: generateId(),
+          coAssigneeIds: taskData.coAssigneeIds || [],
           watchers: [],
           attachments: [],
           linkedTasks: [],
@@ -445,6 +450,46 @@ export const useAppStore = create<AppState>()(
       }),
       
       // Initialization
+      hydrateFromApi: (projects, tasks) => set((state) => {
+        state.projects = projects;
+        state.tasks = tasks;
+        if (!state.selectedProjectId && projects[0]) {
+          state.selectedProjectId = projects[0].id;
+        }
+      }),
+
+      setUsers: (users) => set((state) => {
+        state.users = users;
+      }),
+
+      importTask: (task) => set((state) => {
+        const index = state.tasks.findIndex(t => t.id === task.id);
+        if (index === -1) {
+          state.tasks.push(task);
+        } else {
+          const prev = state.tasks[index];
+          state.tasks[index] = {
+            ...prev,
+            ...task,
+            watchers: task.watchers?.length ? task.watchers : prev.watchers,
+            attachments: task.attachments?.length ? task.attachments : prev.attachments,
+            linkedTasks: task.linkedTasks?.length ? task.linkedTasks : prev.linkedTasks,
+          };
+        }
+      }),
+
+      importProject: (project) => set((state) => {
+        const index = state.projects.findIndex(p => p.id === project.id);
+        if (index === -1) {
+          state.projects.push(project);
+        } else {
+          state.projects[index] = project;
+        }
+        if (!state.selectedProjectId) {
+          state.selectedProjectId = project.id;
+        }
+      }),
+
       initializeWithDemoData: () => set((state) => {
         // Добавляем проекты
         const projectIds = new Map<string, string>();

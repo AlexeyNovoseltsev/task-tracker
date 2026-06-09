@@ -8,14 +8,12 @@ import {
   AlertCircle,
   Eye,
   CalendarDays,
-  Star,
   GripVertical,
   Edit,
   Trash2
 } from 'lucide-react';
-import { useState, useEffect, useCallback, forwardRef, useMemo } from 'react';
-import type { HTMLAttributes } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { forwardRef, useMemo, type HTMLAttributes, type PointerEvent } from 'react';
+import { motion } from 'framer-motion';
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -26,11 +24,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/DropdownMenu";
+import { FavoriteButton } from '@/components/ui/FavoriteButton';
+import { OverflowChipList } from '@/components/ui/OverflowChipList';
 import { Progress } from '@/components/ui/progress';
-import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { useAppStore, useSettings } from '@/store';
-import { useToast } from '@/hooks/useToast';
 import { Task } from '@/types';
 
 interface TaskCardProps extends HTMLAttributes<HTMLDivElement> {
@@ -61,58 +59,9 @@ export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({
 }, ref) => {
   const { users, projects } = useAppStore();
   const { showStoryPoints } = useSettings();
-  const { success, error } = useToast();
-  const [isFavorited, setIsFavorited] = useState(false);
-  const [favoriteId, setFavoriteId] = useState<string | null>(null);
-  const [isLoadingFavorite, setIsLoadingFavorite] = useState(false);
   
   const assignee = useMemo(() => users.find(u => u.id === task.assigneeId), [users, task.assigneeId]);
   const project = useMemo(() => projects.find(p => p.id === task.projectId), [projects, task.projectId]);
-
-  const checkFavoriteStatus = useCallback(async () => {
-    try {
-      const response = await api.checkIfFavorited('task', task.id);
-      if (response.success) {
-        setIsFavorited(response.data.is_favorited);
-        setFavoriteId(response.data.favorite?.id || null);
-      }
-    } catch (err) {
-      // Silent fail for favorite check
-    }
-  }, [task.id]);
-
-  // Check if task is favorited on mount
-  useEffect(() => {
-    checkFavoriteStatus();
-  }, [checkFavoriteStatus]);
-
-  const handleToggleFavorite = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsLoadingFavorite(true);
-    
-    try {
-      if (isFavorited && favoriteId) {
-        await api.removeFromFavorites(favoriteId);
-        setIsFavorited(false);
-        setFavoriteId(null);
-        success('Удалено из избранного', 'Задача удалена из избранного');
-      } else {
-        const response = await api.addToFavorites({
-          itemType: 'task',
-          itemId: task.id
-        });
-        if (response.success) {
-          setIsFavorited(true);
-          setFavoriteId(response.data.id);
-          success('Добавлено в избранное', 'Задача добавлена в избранное');
-        }
-      }
-    } catch (err) {
-      error('Ошибка', 'Не удалось обновить избранное');
-    } finally {
-      setIsLoadingFavorite(false);
-    }
-  };
 
   const PriorityIcon = ({ priority, className }: { priority: Task['priority'], className?: string }) => {
     const priorityMap = {
@@ -175,35 +124,56 @@ export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({
   const mockAttachmentCount = useMemo(() => task.id.charCodeAt(1) % 3, [task.id]);
   const mockWatcherCount = useMemo(() => task.watchers?.length || (task.id.charCodeAt(2) % 4), [task.id, task.watchers]);
 
+  const isKanbanDraggable = Boolean(dragHandleProps);
+  const blockDragStart = (e: PointerEvent) => e.stopPropagation();
+
   return (
     <motion.div
       data-testid="task-card"
       data-task-id={task.id}
       ref={ref}
       {...props}
+      {...(isKanbanDraggable ? dragHandleProps : {})}
       className={cn(
-        "group relative cursor-pointer rounded-lg border bg-card text-card-foreground shadow-sm transition-all hover:shadow-md",
-        isDragging && "z-50 scale-105 shadow-xl",
-        compact ? "p-sm" : "p-md space-y-sm", // Use theme spacing
+        "group relative rounded-lg border bg-card text-card-foreground shadow-sm transition-shadow hover:shadow-md",
+        isKanbanDraggable
+          ? "cursor-grab touch-none active:cursor-grabbing select-none"
+          : "cursor-pointer",
+        isDragging && "z-50 scale-[1.03] shadow-2xl ring-2 ring-primary/25",
+        compact ? "px-4 py-3.5 space-y-2.5" : "p-4 space-y-3",
         className
       )}
       onClick={onClick}
-      initial={{ opacity: 0, y: 20, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -20, scale: 0.95 }}
-      transition={{
-        delay: index * 0.1,
-        duration: 0.3,
-        type: "spring",
-        stiffness: 300,
-        damping: 24,
-      }}
-      whileHover={{
-        y: -4,
-        boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
-        transition: { duration: 0.2 }
-      }}
-      whileTap={{ scale: 0.98 }}
+      initial={isKanbanDraggable ? false : { opacity: 0, y: 20, scale: 0.95 }}
+      animate={isKanbanDraggable ? undefined : { opacity: 1, y: 0, scale: 1 }}
+      exit={isKanbanDraggable ? undefined : { opacity: 0, y: -20, scale: 0.95 }}
+      transition={
+        isKanbanDraggable
+          ? { duration: 0.15 }
+          : {
+              delay: index * 0.1,
+              duration: 0.3,
+              type: "spring",
+              stiffness: 300,
+              damping: 24,
+            }
+      }
+      whileHover={
+        isDragging
+          ? undefined
+          : compact
+            ? {
+                y: -2,
+                boxShadow: "0 8px 24px -6px rgb(0 0 0 / 0.12)",
+                transition: { type: "spring", stiffness: 400, damping: 28 },
+              }
+            : {
+                y: -4,
+                boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
+                transition: { duration: 0.2 },
+              }
+      }
+      whileTap={isKanbanDraggable ? undefined : { scale: 0.98 }}
     >
       {/* Priority indicator - left border */}
       <div
@@ -219,30 +189,31 @@ export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({
       {/* Header */}
       <div className="flex items-start justify-between gap-sm">
         <div className="flex min-w-0 items-center gap-sm">
+          {isKanbanDraggable && (
+            <GripVertical
+              className="h-4 w-4 shrink-0 text-muted-foreground/40 transition-colors group-hover:text-muted-foreground/70"
+              aria-hidden
+            />
+          )}
           <TypeIcon type={task.type} />
           <span className="truncate font-mono text-sm text-muted-foreground">
             {project?.key}-{task.id.slice(-4).toUpperCase()}
           </span>
         </div>
 
-        <div className="flex items-center opacity-0 transition-opacity group-hover:opacity-100">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleToggleFavorite}
-            disabled={isLoadingFavorite}
-            className="h-8 w-8"
-          >
-            <Star
-              className={cn(
-                "h-4 w-4",
-                isFavorited ? "fill-yellow-400 text-yellow-500" : "text-muted-foreground"
-              )}
-            />
-          </Button>
+        <div
+          className="flex items-center gap-0.5"
+          onPointerDown={blockDragStart}
+        >
+          <FavoriteButton
+            itemType="task"
+            itemId={task.id}
+            itemTitle={task.title}
+            revealOnHover
+          />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
+              <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 transition-opacity group-hover:opacity-100" onClick={(e) => e.stopPropagation()}>
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -279,20 +250,18 @@ export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(({
 
       {/* Labels */}
       {task.labels && task.labels.length > 0 && (
-        <div className="flex flex-wrap gap-xs">
-          {task.labels.slice(0, 3).map((label) => (
-            <Badge key={label} variant="secondary">
-              {label}
-            </Badge>
-          ))}
-          {task.labels.length > 3 && (
-            <Badge variant="outline">+{task.labels.length - 3}</Badge>
-          )}
-        </div>
+        <OverflowChipList
+          items={task.labels.map((label) => ({ id: label, label }))}
+          chipClassName="rounded-md bg-secondary px-2 py-0.5 text-[11px] font-medium"
+          overflowClassName="h-6 min-w-6 border-solid"
+        />
       )}
 
       {/* Footer */}
-      <div className="flex items-center justify-between pt-sm text-sm text-muted-foreground">
+      <div className={cn(
+        "flex items-center justify-between text-sm text-muted-foreground",
+        compact ? "pt-0.5" : "pt-1"
+      )}>
         <div className="flex items-center gap-md">
           {/* Assignee */}
           {assignee ? (

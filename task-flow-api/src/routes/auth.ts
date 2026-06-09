@@ -26,6 +26,37 @@ import { AuthUser } from '@/types';
 
 const router = Router();
 
+async function getPasswordHash(userId: string): Promise<string | null> {
+  const { data, error } = await supabaseAdmin
+    .from('user_credentials')
+    .select('password_hash')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error || !data?.password_hash) {
+    return null;
+  }
+
+  return data.password_hash;
+}
+
+async function savePasswordHash(userId: string, password: string): Promise<void> {
+  const saltRounds = 12;
+  const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+  const { error } = await supabaseAdmin
+    .from('user_credentials')
+    .upsert({
+      user_id: userId,
+      password_hash: hashedPassword,
+      password_changed_at: new Date().toISOString(),
+    });
+
+  if (error) {
+    throw new ValidationError('Failed to save credentials');
+  }
+}
+
 // Register new user
 router.post('/register', 
   validateCreateUser(),
@@ -46,10 +77,6 @@ router.post('/register',
       throw new ConflictError('User with this email already exists');
     }
 
-    // Hash password
-    const saltRounds = 12;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
-
     // Create user
     const { data: newUser, error } = await supabaseAdmin
       .from('users')
@@ -57,7 +84,7 @@ router.post('/register',
         email,
         name,
         role,
-        // Note: We'll store password in a separate table for security
+        email_verified: false,
       })
       .select()
       .single();
@@ -66,9 +93,12 @@ router.post('/register',
       throw new ValidationError('Failed to create user');
     }
 
-    // Store password hash separately (in production, use auth.users table)
-    // For now, we'll use Supabase Auth or a separate secure table
-    
+    await savePasswordHash(newUser.id, password);
+
+    await supabaseAdmin
+      .from('user_settings')
+      .upsert({ user_id: newUser.id }, { onConflict: 'user_id' });
+
     const user: AuthUser = {
       id: newUser.id,
       email: newUser.email,
@@ -161,9 +191,10 @@ router.post('/login',
       throw new AuthenticationError('Invalid email or password');
     }
 
-    // For demo purposes, we'll accept any password for existing users
-    // In production, verify password hash from secure storage
-    const isPasswordValid = true; // await bcrypt.compare(password, user.password_hash);
+    const passwordHash = await getPasswordHash(user.id);
+    const isPasswordValid = passwordHash
+      ? await bcrypt.compare(password, passwordHash)
+      : false;
 
     if (!isPasswordValid) {
       securityLogger.loginAttempt(email, false, clientIp, userAgent);
@@ -369,16 +400,13 @@ router.post('/change-password',
 
     const { currentPassword, newPassword } = req.body;
 
-    // In production, verify current password against stored hash
-    // For demo, we'll skip this verification
+    const currentHash = await getPasswordHash(req.user.id);
+    if (!currentHash || !(await bcrypt.compare(currentPassword, currentHash))) {
+      throw new AuthenticationError('Current password is incorrect');
+    }
 
-    // Hash new password
-    const saltRounds = 12;
-    const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
+    await savePasswordHash(req.user.id, newPassword);
 
-    // In production, update password hash in secure storage
-    // For demo, we'll just log this action
-    
     securityLogger.dataAccess(req.user.id, 'password', 'change');
 
     return successResponse(res, null, 'Password changed successfully');

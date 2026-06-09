@@ -20,7 +20,9 @@ import { ProjectModal } from "@/components/project/ProjectModal";
 import { ProjectViewModal } from "@/components/project/ProjectViewModal";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/useToast";
+import { ApiError } from "@/lib/api";
 import { api } from "@/lib/api";
+import { isApiMode, isUuid } from "@/lib/dataSync";
 import { useAppStore } from "@/store";
 
 export default function ProjectsPage() {
@@ -48,14 +50,15 @@ export default function ProjectsPage() {
   useEffect(() => {
     const loadFavoriteStatus = async () => {
       try {
-        const promises = projects.map(async (project) => {
+        const apiProjects = projects.filter((p) => isApiMode() && isUuid(p.id));
+        const promises = apiProjects.map(async (project) => {
           try {
-            const response = await api.checkIfFavorited('project', project.id);
+            const data = await api.checkIfFavorited('project', project.id) as { is_favorited: boolean };
             return {
               projectId: project.id,
-              isFavorited: response.success && response.data.is_favorited
+              isFavorited: Boolean(data?.is_favorited)
             };
-          } catch (err) {
+          } catch {
             return { projectId: project.id, isFavorited: false };
           }
         });
@@ -122,36 +125,42 @@ export default function ProjectsPage() {
     }
   };
 
-  const handleFavoriteToggle = async (projectId: string) => {
+  const handleFavoriteToggle = async (projectId: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
     const project = projects.find(p => p.id === projectId);
     if (!project) return;
 
-    try {
-      // Проверяем текущий статус избранного
-      const response = await api.checkIfFavorited('project', projectId);
-      const isCurrentlyFavorited = response.success && response.data.is_favorited;
-      const currentFavoriteId = response.data.favorite?.id;
+    if (!isApiMode() || !isUuid(projectId)) {
+      return;
+    }
 
-      if (isCurrentlyFavorited && currentFavoriteId) {
-        // Удаляем из избранного
-        await api.removeFromFavorites(currentFavoriteId);
-        setFavoritedProjects(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(projectId);
-          return newSet;
+    try {
+      if (favoritedProjects.has(projectId)) {
+        const data = await api.checkIfFavorited('project', projectId) as {
+          favorite?: { id: string } | null;
+        };
+        if (data?.favorite?.id) {
+          await api.removeFromFavorites(data.favorite.id);
+        }
+        setFavoritedProjects((prev) => {
+          const next = new Set(prev);
+          next.delete(projectId);
+          return next;
         });
-        success('Удалено из избранного', 'Проект удален из избранного');
+        success('Убрано из избранного', `«${project.name}» убран из избранного`);
       } else {
-        // Добавляем в избранное
         await api.addToFavorites({
           itemType: 'project',
-          itemId: projectId
+          itemId: projectId,
         });
-        setFavoritedProjects(prev => new Set([...prev, projectId]));
-        success('Добавлено в избранное', 'Проект добавлен в избранное');
+        setFavoritedProjects((prev) => new Set([...prev, projectId]));
+        success('В избранном', `«${project.name}» добавлен в избранное`);
       }
     } catch (err) {
-      error('Ошибка', 'Не удалось обновить избранное');
+      const message = err instanceof ApiError
+        ? err.message
+        : 'Не удалось обновить избранное';
+      error('Ошибка избранного', message);
     }
   };
 
@@ -352,11 +361,11 @@ export default function ProjectsPage() {
                         <span className="text-sm text-muted-foreground font-mono">
                           {project.key}
                         </span>
-                        {isFavorite && <Star className="h-3 w-3 text-yellow-500 fill-current" />}
+                        {isFavorite && <Star className="h-3 w-3 text-amber-500 fill-amber-400" />}
                       </div>
                     </div>
                   </div>
-                  
+
                   {viewMode === "grid" && (
                     <div className="relative group">
                       <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
@@ -373,16 +382,15 @@ export default function ProjectsPage() {
                           <Edit className="h-3 w-3" />
                           Изменить
                         </button>
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleFavoriteToggle(project.id);
-                          }}
-                          className="w-full text-left px-2 py-1 text-sm hover:bg-muted rounded flex items-center gap-2 whitespace-nowrap"
-                        >
-                          {isFavorite ? <StarOff className="h-3 w-3" /> : <Star className="h-3 w-3" />}
-                          {isFavorite ? "Убрать из избранного" : "В избранное"}
-                        </button>
+                        {isApiMode() && isUuid(project.id) && (
+                          <button 
+                            onClick={(e) => handleFavoriteToggle(project.id, e)}
+                            className="w-full text-left px-2 py-1 text-sm hover:bg-muted rounded flex items-center gap-2 whitespace-nowrap"
+                          >
+                            {isFavorite ? <StarOff className="h-3 w-3" /> : <Star className="h-3 w-3" />}
+                            {isFavorite ? "Убрать из избранного" : "В избранное"}
+                          </button>
+                        )}
                         <button 
                           onClick={(e) => {
                             e.stopPropagation();

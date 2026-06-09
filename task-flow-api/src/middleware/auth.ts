@@ -200,6 +200,11 @@ export const requireProjectMembership = async (
       throw new AuthorizationError('Project ID is required');
     }
 
+    if (req.user.role === 'admin') {
+      req.projectRole = 'admin';
+      return next();
+    }
+
     // Check if user is a member of the project
     const { data: membership, error } = await supabaseAdmin
       .from('project_members')
@@ -236,6 +241,11 @@ export const requireProjectAdmin = async (
     
     if (!projectId) {
       throw new AuthorizationError('Project ID is required');
+    }
+
+    if (req.user.role === 'admin') {
+      req.projectRole = 'admin';
+      return next();
     }
 
     // Check if user is admin/owner of the project

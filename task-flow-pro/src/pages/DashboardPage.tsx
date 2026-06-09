@@ -65,7 +65,6 @@ export default function DashboardPage() {
 
   const handleTaskClick = (task: Task) => {
     setSelectedTask(task);
-    success("Задача", `Открываем детали задачи "${task.title}"`, 2000);
   };
 
   const handleCreateSampleProject = () => {

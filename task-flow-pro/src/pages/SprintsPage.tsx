@@ -35,10 +35,10 @@ export default function SprintsPage() {
       try {
         const promises = sprints.map(async (sprint) => {
           try {
-            const response = await api.checkIfFavorited('sprint', sprint.id);
+            const data = await api.checkIfFavorited('sprint', sprint.id) as { is_favorited: boolean };
             return {
               sprintId: sprint.id,
-              isFavorited: response.success && response.data.is_favorited
+              isFavorited: Boolean(data?.is_favorited)
             };
           } catch (err) {
             return { sprintId: sprint.id, isFavorited: false };
@@ -64,9 +64,12 @@ export default function SprintsPage() {
   const handleFavoriteToggle = async (sprintId: string) => {
     try {
       // Проверяем текущий статус избранного
-      const response = await api.checkIfFavorited('sprint', sprintId);
-      const isCurrentlyFavorited = response.success && response.data.is_favorited;
-      const currentFavoriteId = response.data.favorite?.id;
+      const data = await api.checkIfFavorited('sprint', sprintId) as {
+        is_favorited: boolean;
+        favorite?: { id: string } | null;
+      };
+      const isCurrentlyFavorited = Boolean(data?.is_favorited);
+      const currentFavoriteId = data?.favorite?.id;
 
       if (isCurrentlyFavorited && currentFavoriteId) {
         // Удаляем из избранного

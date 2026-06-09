@@ -39,9 +39,10 @@ export interface Task {
   priority: Priority;
   storyPoints?: number;
   position?: number;
-  projectId: string;
+  projectId?: string;
   epicId?: string;
   assigneeId?: string;
+  coAssigneeIds?: string[];
   reporterId?: string;
   sprintId?: string;
   labels: string[];

@@ -15,19 +15,33 @@ import { PageLoading } from "@/components/ui/LoadingSpinner";
 
 // Preload critical pages
 preloadCriticalPages();
+import { useAuth } from "@/hooks/useAuth";
+import { prefetchFavorites } from "@/lib/favoritesCache";
+import { fetchAllFromApi, fetchUsersFromApi, isApiMode } from "@/lib/dataSync";
 import { useAppStore } from "@/store";
 
 function App() {
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
-  const { initializeWithDemoData, projects } = useAppStore();
+  const { isAuthenticated } = useAuth();
+  const { initializeWithDemoData, hydrateFromApi, setUsers, projects } = useAppStore();
 
   useEffect(() => {
-    // Initialize with demo data if the store is empty
+    if (isAuthenticated && isApiMode()) {
+      Promise.all([fetchAllFromApi(), fetchUsersFromApi()])
+        .then(([{ projects: apiProjects, tasks }, apiUsers]) => {
+          hydrateFromApi(apiProjects, tasks);
+          if (apiUsers.length > 0) setUsers(apiUsers);
+          void prefetchFavorites();
+        })
+        .catch((err) => console.error('Failed to load data from API:', err));
+      return;
+    }
+
     if (projects.length === 0) {
       initializeWithDemoData();
     }
-  }, [initializeWithDemoData, projects.length]);
+  }, [isAuthenticated, initializeWithDemoData, hydrateFromApi, projects.length]);
   
   // Modal states
   const [taskModalOpen, setTaskModalOpen] = useState(false);

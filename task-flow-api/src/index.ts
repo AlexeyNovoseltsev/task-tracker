@@ -19,6 +19,7 @@ import analyticsRoutes from '@/routes/analytics';
 import attachmentRoutes from '@/routes/attachments';
 import authRoutes from '@/routes/auth';
 import commentRoutes from '@/routes/comments';
+import favoritesRoutes from '@/routes/favorites';
 import healthRoutes from '@/routes/health';
 import projectRoutes from '@/routes/projects';
 import sprintRoutes from '@/routes/sprints';
@@ -105,7 +106,9 @@ const limiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => {
-    // Skip rate limiting for health checks and internal requests
+    if (config.server.nodeEnv === 'development') return true;
+    const ip = req.ip || '';
+    if (ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1') return true;
     return req.path === '/health' || req.path === '/api/health';
   },
 });
@@ -154,6 +157,7 @@ app.use('/api/comments', commentRoutes);
 app.use('/api/attachments', attachmentRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/favorites', favoritesRoutes);
 
 // Validation error handler
 app.use(validationErrorHandler);

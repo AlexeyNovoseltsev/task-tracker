@@ -11,6 +11,8 @@
     "lint": "eslint .",
     "db:migrate": "tsx src/scripts/migrate.ts",
     "db:seed": "tsx src/scripts/seed.ts",
+    "db:seed-admin": "tsx src/scripts/create-admin.ts",
+    "db:seed-users": "tsx src/scripts/seed-users.ts",
     "figma:pull": "tsx pullFigma.ts",
     "figma:pull:arg": "tsx pullFigma.ts",
     "figma:list": "tsx listFigmaFiles.ts",

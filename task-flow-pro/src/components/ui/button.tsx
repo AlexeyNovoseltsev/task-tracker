@@ -51,11 +51,13 @@ export interface ButtonProps
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, loading = false, children, disabled, ...props }, ref) => {
     const Comp = asChild ? Slot : "button";
-    
+    const isFullWidth = typeof className === 'string' && className.includes('w-full');
+
     return (
       <motion.div
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
+        className={cn(isFullWidth && 'block w-full min-w-0')}
+        whileHover={isFullWidth ? undefined : { scale: 1.02 }}
+        whileTap={isFullWidth ? undefined : { scale: 0.98 }}
         transition={{ type: "spring", stiffness: 400, damping: 17 }}
       >
         <Comp
@@ -80,7 +82,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             </motion.div>
           ) : (
             <motion.div
-              className="flex items-center gap-2"
+              className={cn('flex items-center gap-2', isFullWidth && 'w-full min-w-0')}
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.2 }}

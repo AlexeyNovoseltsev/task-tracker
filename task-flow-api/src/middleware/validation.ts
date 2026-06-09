@@ -194,10 +194,15 @@ export const validateCreateTask = (): ValidationChain[] => {
       .isInt({ min: 0, max: 100 })
       .withMessage('Story points must be between 0 and 100'),
     body('project_id')
+      .optional({ checkFalsy: true })
       .isUUID()
       .withMessage('Project ID must be a valid UUID'),
-    body('assignee_id')
+    body('status')
       .optional()
+      .isIn(['todo', 'in-progress', 'in-review', 'done'])
+      .withMessage('Status must be one of: todo, in-progress, in-review, done'),
+    body('assignee_id')
+      .optional({ checkFalsy: true })
       .isUUID()
       .withMessage('Assignee ID must be a valid UUID'),
     body('epic_id')
@@ -259,13 +264,25 @@ export const validateUpdateTask = (): ValidationChain[] => {
       .isInt({ min: 0, max: 100 })
       .withMessage('Story points must be between 0 and 100'),
     body('assignee_id')
-      .optional()
+      .optional({ values: 'null' })
       .isUUID()
       .withMessage('Assignee ID must be a valid UUID'),
+    body('project_id')
+      .optional({ values: 'null' })
+      .isUUID()
+      .withMessage('Project ID must be a valid UUID'),
     body('sprint_id')
-      .optional()
+      .optional({ values: 'null' })
       .isUUID()
       .withMessage('Sprint ID must be a valid UUID'),
+    body('co_assignee_ids')
+      .optional()
+      .isArray()
+      .withMessage('Co-assignee IDs must be an array'),
+    body('co_assignee_ids.*')
+      .optional()
+      .isUUID()
+      .withMessage('Each co-assignee ID must be a valid UUID'),
     body('labels')
       .optional()
       .isArray()

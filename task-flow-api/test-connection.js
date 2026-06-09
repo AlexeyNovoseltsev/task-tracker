@@ -27,7 +27,7 @@ async function testConnection() {
     
     if (error) {
       console.error('❌ Ошибка подключения:', error.message);
-      return;
+      process.exit(1);
     }
     
     console.log('✅ Подключение к базе данных успешно!');

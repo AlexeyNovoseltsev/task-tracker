@@ -1,15 +1,22 @@
 # TaskFlow Pro - Скрипт запуска
+$Root = Split-Path -Parent $MyInvocation.MyCommand.Path
+Set-Location $Root
+
 Write-Host "🚀 Запуск TaskFlow Pro..." -ForegroundColor Green
 
-# Проверяем, что мы в правильной директории
 if (-not (Test-Path "task-flow-api") -or -not (Test-Path "task-flow-pro")) {
     Write-Host "❌ Ошибка: Запустите скрипт из корневой директории task-tracker" -ForegroundColor Red
     exit 1
 }
 
 Write-Host ""
+Write-Host "🔑 Синхронизация .env..." -ForegroundColor Yellow
+& "$Root\sync-supabase-env.ps1"
+if ($LASTEXITCODE -ne 0) { exit 1 }
+
+Write-Host ""
 Write-Host "📡 Тестируем подключение к Supabase..." -ForegroundColor Yellow
-cd task-flow-api
+Set-Location "$Root\task-flow-api"
 node test-connection.js
 
 if ($LASTEXITCODE -ne 0) {
@@ -19,7 +26,7 @@ if ($LASTEXITCODE -ne 0) {
 
 Write-Host ""
 Write-Host "🔧 Запускаем Backend API..." -ForegroundColor Yellow
-Start-Process PowerShell -ArgumentList "-NoExit", "-Command", "cd '$PWD'; npm run dev" -WindowStyle Normal
+Start-Process cmd -ArgumentList "/k", "cd /d `"$Root\task-flow-api`" && title TaskFlow Backend && npm run dev" -WindowStyle Normal
 
 # Ждем запуска backend
 Write-Host "⏳ Ждем запуска backend (5 секунд)..." -ForegroundColor Yellow
@@ -37,8 +44,9 @@ try {
 
 Write-Host ""
 Write-Host "🎨 Запускаем Frontend..." -ForegroundColor Yellow
-cd ..\task-flow-pro
-Start-Process PowerShell -ArgumentList "-NoExit", "-Command", "cd '$PWD'; npm run dev" -WindowStyle Normal
+Start-Process cmd -ArgumentList "/k", "cd /d `"$Root\task-flow-pro`" && title TaskFlow Frontend && npm run dev" -WindowStyle Normal
+Start-Sleep 4
+Start-Process "http://localhost:1420"
 
 Write-Host ""
 Write-Host "🎉 TaskFlow Pro запущен!" -ForegroundColor Green
@@ -49,7 +57,7 @@ Write-Host "   Backend:   http://localhost:3001" -ForegroundColor White
 Write-Host "   API Test:  http://localhost:1420/api-test" -ForegroundColor White
 Write-Host ""
 Write-Host "🔧 Для остановки сервисов:" -ForegroundColor Cyan
-Write-Host "   Закройте окна PowerShell с серверами" -ForegroundColor White
+Write-Host "   Закройте окна TaskFlow Backend / Frontend или stop-taskflow.bat" -ForegroundColor White
 Write-Host ""
 Write-Host "Нажмите любую клавишу для выхода..."
 $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")

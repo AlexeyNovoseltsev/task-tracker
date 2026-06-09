@@ -57,7 +57,7 @@ export function Header() {
   const ThemeIcon = getThemeIcon();
 
   return (
-    <header className="h-20 border-b border-border/60 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 relative z-[99998]">
+    <header className="sticky top-0 h-20 border-b border-border/60 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-30">
       <div className="flex h-full items-center justify-between px-6">
         <div className="flex items-center space-x-4">
                      {/* Project Selector */}
@@ -91,7 +91,7 @@ export function Header() {
 
             {/* Dropdown */}
             {showProjectDropdown && (
-              <div className="absolute top-full left-0 mt-2 w-80 bg-card border rounded-modern shadow-lg animate-fadeIn backdrop-blur-sm z-[99999]">
+              <div className="absolute top-full left-0 mt-2 w-80 bg-card border rounded-modern shadow-lg animate-fadeIn backdrop-blur-sm z-40">
                 <div className="p-4 border-b border-border/30">
                   <h3 className="font-semibold text-sm mb-1">Проекты</h3>
                   <p className="text-xs text-muted-foreground">Выберите проект для работы</p>
@@ -196,7 +196,7 @@ export function Header() {
 
               {/* User Dropdown */}
               {showUserDropdown && (
-                <div className="absolute top-full right-0 mt-2 w-64 bg-card border rounded-modern shadow-lg animate-fadeIn backdrop-blur-sm z-[99999]">
+                <div className="absolute top-full right-0 mt-2 w-64 bg-card border rounded-modern shadow-lg animate-fadeIn backdrop-blur-sm z-40">
                   <div className="p-4 border-b border-border/30">
                     <div className="flex items-center space-x-3">
                       <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground flex items-center justify-center text-lg font-semibold">

@@ -312,18 +312,20 @@ export const broadcastToUser = (io: SocketIOServer, userId: string, event: Socke
 };
 
 // Broadcast task updates
-export const broadcastTaskUpdate = (io: SocketIOServer, taskId: string, projectId: string, task: any, changes: any): void => {
+export const broadcastTaskUpdate = (io: SocketIOServer, taskId: string, projectId: string | null, task: any, changes: any): void => {
   const event: TaskUpdatedEvent = {
     type: 'task:updated',
     payload: {
       task,
       changes,
     },
-    room: `project:${projectId}`,
+    room: projectId ? `project:${projectId}` : `user:${task.reporter_id}`,
     timestamp: new Date().toISOString(),
   };
 
-  broadcastToProject(io, projectId, event);
+  if (projectId) {
+    broadcastToProject(io, projectId, event);
+  }
   broadcastToTask(io, taskId, event);
 };
 

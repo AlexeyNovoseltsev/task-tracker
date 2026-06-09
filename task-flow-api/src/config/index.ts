@@ -78,7 +78,12 @@ const config: Config = {
   },
   rateLimit: {
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10), // 15 minutes
-    maxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100', 10),
+    maxRequests: parseInt(
+      process.env.RATE_LIMIT_MAX_REQUESTS
+        || process.env.RATE_LIMIT_MAX
+        || (process.env.NODE_ENV === 'development' ? '5000' : '500'),
+      10
+    ),
   },
   websocket: {
     corsOrigin: process.env.SOCKET_IO_CORS_ORIGIN || 'http://localhost:1420',

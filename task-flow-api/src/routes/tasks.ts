@@ -18,23 +18,35 @@ import {
   validateUUIDParam,
   validationErrorHandler,
 } from '@/middleware/validation';
+import { logTaskActivity, logTaskFieldChanges } from '@/services/taskActivity';
+import {
+  attachWatchers,
+  enrichTaskWithWatchers,
+  fetchWatchersForTask,
+  fetchWatchersMap,
+} from '@/services/taskWatchers';
 import { broadcastTaskUpdate } from '@/services/websocket';
 import { Task } from '@/types';
 
 const router = Router();
 
-// Middleware to check project_id query param and authorize
-const checkProjectQueryParam = asyncHandler(async (req: any, res: any, next: any) => {
+const canAccessPersonalTask = (task: Task, userId: string, role?: string): boolean => {
+  if (role === 'admin') return true;
+  return task.reporter_id === userId || task.assignee_id === userId;
+};
+
+// Authorize list: project tasks need membership, personal tasks are open to auth user
+const authorizeTaskList = asyncHandler(async (req: any, res: any, next: any) => {
   if (!req.user) throw new AuthorizationError('Authentication required');
   const { project_id } = req.query;
-  if (!project_id) {
-    throw new AuthorizationError('A project_id query parameter is required.');
+  if (project_id) {
+    req.params.projectId = project_id as string;
+    return requireProjectMembership(req, res, next);
   }
-  req.params.projectId = project_id as string;
-  return requireProjectMembership(req, res, next);
+  next();
 });
 
-// Middleware to load a task by ID, attach it to the request, and authorize
+// Load task and authorize access (project member or personal task owner)
 const loadTaskAndAuthorize = asyncHandler(async (req: any, res: any, next: any) => {
   if (!req.user) throw new AuthorizationError('Authentication required');
   const { id } = req.params;
@@ -48,23 +60,30 @@ const loadTaskAndAuthorize = asyncHandler(async (req: any, res: any, next: any) 
     throw new NotFoundError('Task not found');
   }
 
-  req.task = task; // Attach task to request
-  req.params.projectId = task.project_id; // Set projectId for the next middleware
+  req.task = task;
+
+  if (!task.project_id) {
+    if (!canAccessPersonalTask(task, req.user.id, req.user.role)) {
+      throw new AuthorizationError('Access denied to this task');
+    }
+    return next();
+  }
+
+  req.params.projectId = task.project_id;
   return requireProjectMembership(req, res, next);
 });
 
-// Middleware to check project membership before creating a task
-const checkProjectForCreate = asyncHandler(async (req: any, res: any, next: any) => {
+// Authorize create: project tasks need membership, personal tasks only need auth
+const authorizeTaskCreate = asyncHandler(async (req: any, res: any, next: any) => {
   if (!req.user) throw new AuthorizationError('Authentication required');
   const { project_id } = req.body;
-  if (!project_id) {
-    throw new AuthorizationError('project_id is required to create a task.');
+  if (project_id) {
+    req.params.projectId = project_id;
+    return requireProjectMembership(req, res, next);
   }
-  req.params.projectId = project_id;
-  return requireProjectMembership(req, res, next);
+  next();
 });
 
-// Extend Express Request type
 declare global {
   namespace Express {
     interface Request {
@@ -73,12 +92,11 @@ declare global {
   }
 }
 
-// List all tasks for a project
 router.get(
   '/',
   validateTaskFilters(),
   validationErrorHandler,
-  checkProjectQueryParam,
+  authorizeTaskList,
   asyncHandler(async (req: any, res: any) => {
     if (!req.user) throw new AuthorizationError('User not found');
     const {
@@ -98,7 +116,16 @@ router.get(
       .from('tasks')
       .select('*, assignee:users!tasks_assignee_id_fkey(id, name, avatar_url), project:projects(id, name, key)', { count: 'exact' });
 
-    query = query.eq('project_id', project_id as string);
+    if (project_id) {
+      query = query.eq('project_id', project_id as string);
+    } else if (req.user.role === 'admin') {
+      query = query.is('project_id', null);
+    } else {
+      query = query
+        .is('project_id', null)
+        .or(`reporter_id.eq.${req.user.id},assignee_id.eq.${req.user.id}`);
+    }
+
     if (sprint_id) query = query.eq('sprint_id', sprint_id);
     if (assignee_id) query = query.eq('assignee_id', assignee_id);
     if (type) query = query.eq('type', type);
@@ -112,12 +139,157 @@ router.get(
 
     if (error) throw error;
 
-    securityLogger.dataAccess(req.user.id, 'tasks', 'list', project_id as string);
-    return paginatedResponse(res, tasks, { page, limit, total: count || 0 }, 'Tasks retrieved successfully');
+    const taskList = tasks || [];
+    const watchersMap = await fetchWatchersMap(taskList.map((t) => t.id));
+    const tasksWithWatchers = attachWatchers(taskList, watchersMap);
+
+    const scope = project_id ? String(project_id) : 'personal';
+    securityLogger.dataAccess(req.user.id, 'tasks', 'list', scope);
+    return paginatedResponse(res, tasksWithWatchers, { page, limit, total: count || 0 }, 'Tasks retrieved successfully');
   })
 );
 
-// Get a single task by ID
+router.get(
+  '/:id/watchers',
+  validateUUIDParam('id'),
+  validationErrorHandler,
+  loadTaskAndAuthorize,
+  asyncHandler(async (req: any, res: any) => {
+    const { data: rows, error } = await supabaseAdmin
+      .from('task_watchers')
+      .select('user_id')
+      .eq('task_id', req.task!.id);
+
+    if (error) throw error;
+
+    const watchers = (rows || []).map((r) => r.user_id);
+    const watching = Boolean(req.user && watchers.includes(req.user.id));
+
+    return successResponse(res, { watchers, watching }, 'Watchers retrieved successfully');
+  })
+);
+
+router.get(
+  '/:id/activities',
+  validateUUIDParam('id'),
+  validationErrorHandler,
+  loadTaskAndAuthorize,
+  asyncHandler(async (req: any, res: any) => {
+    const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
+
+    const { data: rows, error } = await supabaseAdmin
+      .from('activities')
+      .select('*')
+      .eq('task_id', req.task!.id)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+
+    return successResponse(res, rows || [], 'Task activities retrieved successfully');
+  })
+);
+
+router.post(
+  '/:id/watchers',
+  validateUUIDParam('id'),
+  validationErrorHandler,
+  loadTaskAndAuthorize,
+  asyncHandler(async (req: any, res: any) => {
+    const userId = req.body?.user_id as string | undefined;
+    if (!userId) {
+      throw new AuthorizationError('user_id is required');
+    }
+
+    const { error } = await supabaseAdmin
+      .from('task_watchers')
+      .upsert({ task_id: req.task!.id, user_id: userId });
+
+    if (error) throw error;
+
+    const watchers = await fetchWatchersForTask(req.task!.id);
+
+    await logTaskActivity({
+      type: 'watcher_added',
+      description: 'добавил наблюдателя',
+      taskId: req.task!.id,
+      projectId: req.task!.project_id,
+      userId: req.user!.id,
+      metadata: { watcher_id: userId },
+    });
+
+    return successResponse(res, { watchers }, 'Watcher added successfully');
+  })
+);
+
+router.delete(
+  '/:id/watchers/:userId',
+  validateUUIDParam('id'),
+  validateUUIDParam('userId'),
+  validationErrorHandler,
+  loadTaskAndAuthorize,
+  asyncHandler(async (req: any, res: any) => {
+    const { userId } = req.params;
+
+    const { error } = await supabaseAdmin
+      .from('task_watchers')
+      .delete()
+      .eq('task_id', req.task!.id)
+      .eq('user_id', userId);
+
+    if (error) throw error;
+
+    const watchers = await fetchWatchersForTask(req.task!.id);
+    return successResponse(res, { watchers }, 'Watcher removed successfully');
+  })
+);
+
+router.post(
+  '/:id/watch',
+  validateUUIDParam('id'),
+  validationErrorHandler,
+  loadTaskAndAuthorize,
+  asyncHandler(async (req: any, res: any) => {
+    const { error } = await supabaseAdmin
+      .from('task_watchers')
+      .upsert({ task_id: req.task!.id, user_id: req.user!.id });
+
+    if (error) throw error;
+
+    const watchers = await fetchWatchersForTask(req.task!.id);
+
+    await logTaskActivity({
+      type: 'watcher_added',
+      description: 'начал следить за задачей',
+      taskId: req.task!.id,
+      projectId: req.task!.project_id,
+      userId: req.user!.id,
+      metadata: { watcher_id: req.user!.id },
+    });
+
+    return successResponse(res, { watching: true, watchers }, 'Now watching task');
+  })
+);
+
+router.delete(
+  '/:id/watch',
+  validateUUIDParam('id'),
+  validationErrorHandler,
+  loadTaskAndAuthorize,
+  asyncHandler(async (req: any, res: any) => {
+    const { error } = await supabaseAdmin
+      .from('task_watchers')
+      .delete()
+      .eq('task_id', req.task!.id)
+      .eq('user_id', req.user!.id);
+
+    if (error) throw error;
+
+    const watchers = await fetchWatchersForTask(req.task!.id);
+    return successResponse(res, { watching: false, watchers }, 'Stopped watching task');
+  })
+);
+
 router.get(
   '/:id',
   validateUUIDParam('id'),
@@ -125,16 +297,16 @@ router.get(
   loadTaskAndAuthorize,
   asyncHandler(async (req: any, res: any) => {
     securityLogger.dataAccess(req.user!.id, 'task', 'view', req.task!.id);
-    return successResponse(res, req.task, 'Task retrieved successfully');
+    const taskWithWatchers = await enrichTaskWithWatchers(req.task!);
+    return successResponse(res, taskWithWatchers, 'Task retrieved successfully');
   })
 );
 
-// Create a new task
 router.post(
   '/',
   validateCreateTask(),
   validationErrorHandler,
-  checkProjectForCreate,
+  authorizeTaskCreate,
   asyncHandler(async (req: any, res: any) => {
     if (!req.user) throw new AuthorizationError('User not found');
     const { project_id, ...taskData } = req.body;
@@ -143,7 +315,7 @@ router.post(
       .from('tasks')
       .insert({
         ...taskData,
-        project_id,
+        project_id: project_id || null,
         reporter_id: req.user.id,
       })
       .select('*')
@@ -151,17 +323,26 @@ router.post(
 
     if (error) throw error;
 
+    await logTaskActivity({
+      type: 'created',
+      description: 'создал задачу',
+      taskId: newTask.id,
+      projectId: newTask.project_id,
+      userId: req.user.id,
+      metadata: { title: newTask.title },
+    });
+
     const io = req.app.get('io');
     if (io && newTask) {
       broadcastTaskUpdate(io, newTask.id, newTask.project_id, newTask, taskData);
     }
 
     securityLogger.dataAccess(req.user.id, 'task', 'create', newTask.id);
-    return successResponse(res, newTask, 'Task created successfully', 201);
+    const taskWithWatchers = await enrichTaskWithWatchers(newTask);
+    return successResponse(res, taskWithWatchers, 'Task created successfully', 201);
   })
 );
 
-// Update a task
 router.patch(
   '/:id',
   validateUUIDParam('id'),
@@ -170,6 +351,8 @@ router.patch(
   loadTaskAndAuthorize,
   asyncHandler(async (req: any, res: any) => {
     const { id } = req.params;
+    const before = req.task as Task;
+
     const { data: updatedTask, error } = await supabaseAdmin
       .from('tasks')
       .update(req.body)
@@ -179,17 +362,19 @@ router.patch(
 
     if (error || !updatedTask) throw new NotFoundError('Task not found after update');
 
+    await logTaskFieldChanges(before, req.user!.id, before as unknown as Record<string, unknown>, req.body);
+
     const io = req.app.get('io');
     if (io) {
       broadcastTaskUpdate(io, updatedTask.id, updatedTask.project_id, updatedTask, req.body);
     }
 
     securityLogger.dataAccess(req.user!.id, 'task', 'update', updatedTask.id);
-    return successResponse(res, updatedTask, 'Task updated successfully');
+    const taskWithWatchers = await enrichTaskWithWatchers(updatedTask);
+    return successResponse(res, taskWithWatchers, 'Task updated successfully');
   })
 );
 
-// Delete a task
 router.delete(
   '/:id',
   validateUUIDParam('id'),

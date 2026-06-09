@@ -16,6 +16,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './button';
 import { Input } from './Input';
 import { Badge } from './badge';
+import { OverflowChipList } from './OverflowChipList';
 import { cn } from '@/lib/utils';
 import { Priority, TaskType, User as UserType } from '@/types';
 
@@ -99,6 +100,59 @@ export function FilterPanel({
       return val && val !== '';
     }).length;
   };
+
+  const activeFilterChips = Object.entries(filters).flatMap(([key, value]) => {
+    if (!value || (Array.isArray(value) && value.length === 0)) return [];
+
+    if (key === 'labels' && Array.isArray(value)) {
+      return value.map((label) => ({
+        id: `labels:${label}`,
+        label: `Метка: ${label}`,
+      }));
+    }
+
+    let label = '';
+    let displayValue = '';
+
+    switch (key) {
+      case 'assignee': {
+        const user = users.find((u) => u.id === value);
+        if (!user) return [];
+        label = 'Исполнитель';
+        displayValue = user.name;
+        break;
+      }
+      case 'priority': {
+        const priority = priorityOptions.find((p) => p.value === value);
+        if (!priority) return [];
+        label = 'Приоритет';
+        displayValue = priority.label;
+        break;
+      }
+      case 'type': {
+        const type = typeOptions.find((t) => t.value === value);
+        if (!type) return [];
+        label = 'Тип';
+        displayValue = type.label;
+        break;
+      }
+      case 'dueDate': {
+        const dueDate = dueDateOptions.find((d) => d.value === value);
+        if (!dueDate) return [];
+        label = 'Срок';
+        displayValue = dueDate.label;
+        break;
+      }
+      case 'search':
+        label = 'Поиск';
+        displayValue = String(value);
+        break;
+      default:
+        return [];
+    }
+
+    return [{ id: key, label: `${label}: ${displayValue}` }];
+  });
 
   return (
     <div className={cn("relative", className)}>
@@ -265,67 +319,21 @@ export function FilterPanel({
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Активные фильтры
                   </label>
-                  <div className="flex flex-wrap gap-2">
-                    {Object.entries(filters).map(([key, value]) => {
-                      if (!value || (Array.isArray(value) && value.length === 0)) return null;
-                      
-                      let label = '';
-                      let displayValue = '';
-                      
-                      switch (key) {
-                        case 'assignee':
-                          const user = users.find(u => u.id === value);
-                          if (user) {
-                            label = 'Исполнитель';
-                            displayValue = user.name;
-                          }
-                          break;
-                        case 'priority':
-                          const priority = priorityOptions.find(p => p.value === value);
-                          if (priority) {
-                            label = 'Приоритет';
-                            displayValue = priority.label;
-                          }
-                          break;
-                        case 'type':
-                          const type = typeOptions.find(t => t.value === value);
-                          if (type) {
-                            label = 'Тип';
-                            displayValue = type.label;
-                          }
-                          break;
-                        case 'dueDate':
-                          const dueDate = dueDateOptions.find(d => d.value === value);
-                          if (dueDate) {
-                            label = 'Срок';
-                            displayValue = dueDate.label;
-                          }
-                          break;
-                        case 'search':
-                          label = 'Поиск';
-                          displayValue = value;
-                          break;
+                  <OverflowChipList
+                    items={activeFilterChips}
+                    onRemove={(id) => {
+                      if (id.startsWith('labels:')) {
+                        const label = id.slice('labels:'.length);
+                        updateFilter(
+                          'labels',
+                          filters.labels.filter((l) => l !== label)
+                        );
+                        return;
                       }
-                      
-                      if (!label || !displayValue) return null;
-                      
-                      return (
-                        <Badge
-                          key={key}
-                          variant="secondary"
-                          className="bg-blue-100 text-blue-700 dark:bg-blue-800 dark:text-blue-300"
-                        >
-                          <span className="text-xs">{label}: {displayValue}</span>
-                          <button
-                            onClick={() => clearFilter(key)}
-                            className="ml-1 hover:text-blue-900 dark:hover:text-blue-100"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </Badge>
-                      );
-                    })}
-                  </div>
+                      clearFilter(id);
+                    }}
+                    chipClassName="bg-blue-100 text-blue-700 dark:bg-blue-800 dark:text-blue-300"
+                  />
                 </div>
               )}
             </div>

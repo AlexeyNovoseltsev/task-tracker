@@ -4,7 +4,6 @@ import { X, Filter, CheckSquare, Clock, AlertCircle, CheckCircle2, Activity } fr
 import { CustomTaskIcon } from '@/components/icons/CustomTaskIcon';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/useToast';
 import { useShowStoryPoints } from '@/store';
 import type { Task } from '@/types';
 
@@ -46,7 +45,6 @@ export function TaskListModal({
   filter = 'all',
   projectName 
 }: TaskListModalProps) {
-  const { info } = useToast();
   const showStoryPoints = useShowStoryPoints();
 
   if (!isOpen) return null;
@@ -57,10 +55,6 @@ export function TaskListModal({
     if (filter === 'completed') return task.status === 'done';
     return task.status === filter;
   });
-
-  const handleTaskClick = (task: Task) => {
-    info("Задача", `Открываем детали задачи "${task.title}"`, 3000);
-  };
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
@@ -121,8 +115,7 @@ export function TaskListModal({
                 return (
                   <div
                     key={task.id}
-                    className="p-6 border rounded-2xl hover:bg-muted/50 transition-all duration-200 cursor-pointer group"
-                    onClick={() => handleTaskClick(task)}
+                    className="p-6 border rounded-2xl hover:bg-muted/50 transition-all duration-200 group"
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex items-start gap-4 flex-1">

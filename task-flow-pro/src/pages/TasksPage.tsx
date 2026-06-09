@@ -129,7 +129,6 @@ export default function TasksPage() {
 
   const handleTaskClick = (task: Task) => {
     setSelectedTask(task);
-    success("Задача", `Открываем детали задачи "${task.title}"`, 2000);
   };
 
   const clearFilters = () => {
@@ -387,7 +386,7 @@ export default function TasksPage() {
           }
         />
       ) : (
-        <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-3'}>
+        <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'flex flex-col gap-2.5'}>
           {filteredTasks.map((task) => (
             <TaskCard
               key={task.id}

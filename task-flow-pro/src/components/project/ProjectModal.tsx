@@ -5,6 +5,9 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { ColorPicker } from "@/components/ui/color-picker";
 import { useToast } from "@/hooks/useToast";
+import { ApiError } from "@/lib/api";
+import { createProjectInApi, isApiMode } from "@/lib/dataSync";
+import { generateProjectKey } from "@/lib/projectKey";
 import { useAppStore } from "@/store";
 import type { Project } from "@/types";
 
@@ -35,7 +38,7 @@ const projectColors = [
 ];
 
 export function ProjectModal({ isOpen, onClose, projectId }: ProjectModalProps) {
-  const { projects, addProject, updateProject, setSelectedProject } = useAppStore();
+  const { projects, addProject, updateProject, importProject, setSelectedProject } = useAppStore();
   const { success, error } = useToast();
   
   const existingProject = projectId ? projects.find(p => p.id === projectId) : null;
@@ -78,14 +81,7 @@ export function ProjectModal({ isOpen, onClose, projectId }: ProjectModalProps) 
   // Auto-generate project key from name
   useEffect(() => {
     if (nameValue && !existingProject) {
-      const key = nameValue
-        .toUpperCase()
-        .replace(/[^A-Z0-9\s]/g, "")
-        .split(" ")
-        .map(word => word.slice(0, 3))
-        .join("")
-        .slice(0, 6);
-      setValue("key", key);
+      setValue("key", generateProjectKey(nameValue));
     }
   }, [nameValue, setValue, existingProject]);
 
@@ -101,19 +97,29 @@ export function ProjectModal({ isOpen, onClose, projectId }: ProjectModalProps) 
         return;
       }
 
+      const projectKey = data.key.toUpperCase().trim() || generateProjectKey(data.name);
+      if (!/^[A-Z]{2,10}$/.test(projectKey)) {
+        error("Ключ проекта: 2–10 заглавных латинских букв (A–Z).");
+        return;
+      }
+
       const projectData: Omit<Project, 'id' | 'createdAt' | 'updatedAt'> = {
         name: data.name.trim(),
         description: data.description.trim() || undefined,
-        key: data.key.toUpperCase().trim(),
-        color: data.color,
+        key: projectKey,
+        color: data.color.toUpperCase(),
       };
 
       if (projectId) {
         updateProject(projectId, projectData);
         success("✅ Проект успешно обновлен!");
+      } else if (isApiMode()) {
+        const saved = await createProjectInApi(projectData);
+        importProject(saved);
+        setSelectedProject(saved.id);
+        success("🎉 Проект успешно создан!");
       } else {
         addProject(projectData);
-        // Auto-select the new project
         setTimeout(() => {
           const newProject = projects.find(p => p.key === projectData.key);
           if (newProject) {
@@ -125,7 +131,10 @@ export function ProjectModal({ isOpen, onClose, projectId }: ProjectModalProps) 
       
       onClose();
     } catch (err) {
-      error("Не удалось сохранить проект. Попробуйте еще раз.");
+      const message = err instanceof ApiError
+        ? err.message
+        : "Не удалось сохранить проект. Попробуйте еще раз.";
+      error(message);
     }
   };
 

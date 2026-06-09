@@ -12,8 +12,10 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { TaskCard } from "@/components/ui/task-card";
 import { CalendarStats } from "@/components/ui/calendar-stats";
 import { TaskModal } from "@/components/task/TaskModal";
+import { TaskDetailModal } from "@/components/task/TaskDetailModal";
 import { useAppStore } from "@/store";
 import { cn } from "@/lib/utils";
+import type { Task } from "@/types";
 
 // Функция для форматирования месяца в именительном падеже
 const formatMonthNominative = (date: Date) => {
@@ -32,6 +34,8 @@ export default function CalendarPage() {
   const [filterProject, setFilterProject] = useState<string>("all");
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<string | undefined>();
+  const [taskDetailModalOpen, setTaskDetailModalOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   
   const { tasks, projects } = useAppStore();
 
@@ -108,6 +112,16 @@ export default function CalendarPage() {
   const handleEditTask = (taskId: string) => {
     setEditingTaskId(taskId);
     setIsTaskModalOpen(true);
+  };
+
+  const handleTaskClick = (task: Task) => {
+    setSelectedTask(task);
+    setTaskDetailModalOpen(true);
+  };
+
+  const closeTaskDetailModal = () => {
+    setTaskDetailModalOpen(false);
+    setSelectedTask(null);
   };
 
   const handleCloseTaskModal = () => {
@@ -268,7 +282,7 @@ export default function CalendarPage() {
                                 }}
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleEditTask(task.id);
+                                  handleTaskClick(task);
                                 }}
                                 title={`Кликните для просмотра: ${task.title}`}
                               >
@@ -362,6 +376,7 @@ export default function CalendarPage() {
                              task={task}
                              project={project}
                              variant="compact"
+                             onClick={() => handleTaskClick(task)}
                              onEdit={() => handleEditTask(task.id)}
                              onDelete={handleDeleteTask}
                            />
@@ -390,7 +405,12 @@ export default function CalendarPage() {
          </div>
        </div>
        
-       {/* Модальное окно создания/редактирования задачи */}
+       <TaskDetailModal
+         task={selectedTask}
+         isOpen={taskDetailModalOpen}
+         onClose={closeTaskDetailModal}
+       />
+
        <TaskModal
          isOpen={isTaskModalOpen}
          onClose={handleCloseTaskModal}

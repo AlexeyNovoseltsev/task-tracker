@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { clearFavoritesCache } from '@/lib/favoritesCache';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
 interface User {
@@ -214,10 +215,11 @@ export function useAuth() {
         throw new Error('Failed to refresh token');
       }
 
-      const data: { tokens: AuthTokens } = await response.json();
+      const result = await response.json();
+      const data = result.data as { tokens: AuthTokens };
       const storedUser = localStorage.getItem('auth_user');
 
-      if (storedUser) {
+      if (storedUser && data?.tokens) {
         const user = JSON.parse(storedUser);
         saveAuthToStorage(user, data.tokens);
 
@@ -254,45 +256,7 @@ export function useAuth() {
         return;
       }
 
-      // Если Supabase настроен - используем Supabase
-      if (isSupabaseConfigured()) {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        if (error) {
-          const msg = (error.message || '').toLowerCase();
-          if (msg.includes('confirm')) {
-            setAuthState(prev => ({ ...prev, isLoading: false, error: 'Почта не подтверждена. Проверьте почту и перейдите по ссылке подтверждения.' }));
-            throw new Error('Почта не подтверждена. Проверьте почту и перейдите по ссылке подтверждения.');
-          }
-          throw error;
-        }
-
-        // Преобразуем Supabase user в наш формат
-        const user: User = {
-          id: data.user.id,
-          email: data.user.email!,
-          name: data.user.user_metadata?.name || data.user.email!.split('@')[0],
-          role: data.user.user_metadata?.role || 'user',
-          avatar_url: data.user.user_metadata?.avatar_url,
-          last_active_at: new Date().toISOString(),
-          created_at: data.user.created_at,
-          updated_at: data.user.updated_at,
-        };
-
-        const tokens: AuthTokens = {
-          access: data.session?.access_token || '',
-          refresh: data.session?.refresh_token || '',
-        };
-
-        saveAuthToStorage(user, tokens);
-        setAuthState({ user, tokens, isAuthenticated: true, isLoading: false, error: null });
-        return;
-      }
-
-      // Если Supabase не настроен - используем обычный API
+      // Email/password — через backend API (public.users + user_credentials)
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
@@ -301,12 +265,13 @@ export function useAuth() {
         body: JSON.stringify({ email, password }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Login failed' }));
-        throw new Error(errorData.message || 'Login failed');
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || result.message || 'Неверный email или пароль');
       }
 
-      const data: LoginResponse = await response.json();
+      const data = result.data as LoginResponse;
 
       saveAuthToStorage(data.user, data.tokens);
 
@@ -335,52 +300,6 @@ export function useAuth() {
     setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
 
     try {
-      // Если Supabase настроен - используем Supabase
-      if (isSupabaseConfigured()) {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: typeof window !== 'undefined' ? window.location.origin : undefined,
-            data: {
-              name,
-              role: 'user',
-            }
-          }
-        });
-
-        if (error) throw error;
-
-        // Для Supabase обычно требуется подтверждение email
-        if (data.user && !data.session) {
-          // Требуется подтверждение email
-          setAuthState(prev => ({ ...prev, isLoading: false, error: 'Почта не подтверждена. Мы отправили письмо с подтверждением.' }));
-          return 'pending';
-        }
-
-        // Преобразуем Supabase user в наш формат
-        const user: User = {
-          id: data.user!.id,
-          email: data.user!.email!,
-          name: data.user!.user_metadata?.name || name,
-          role: data.user!.user_metadata?.role || 'user',
-          avatar_url: data.user!.user_metadata?.avatar_url,
-          last_active_at: new Date().toISOString(),
-          created_at: data.user!.created_at,
-          updated_at: data.user!.updated_at,
-        };
-
-        const tokens: AuthTokens = {
-          access: data.session?.access_token || '',
-          refresh: data.session?.refresh_token || '',
-        };
-
-        saveAuthToStorage(user, tokens);
-        setAuthState({ user, tokens, isAuthenticated: true, isLoading: false, error: null });
-        return 'verified';
-      }
-
-      // Если Supabase не настроен - используем обычный API
       const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
         headers: {
@@ -389,12 +308,13 @@ export function useAuth() {
         body: JSON.stringify({ email, password, name }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Registration failed');
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || result.message || 'Registration failed');
       }
 
-      const data: RegisterResponse = await response.json();
+      const data = result.data as RegisterResponse;
 
       saveAuthToStorage(data.user, data.tokens);
 
@@ -440,6 +360,7 @@ export function useAuth() {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
+      clearFavoritesCache();
       clearStoredAuth();
       setAuthState({
         user: null,
@@ -473,7 +394,8 @@ export function useAuth() {
         throw new Error(errorData.message || 'Update failed');
       }
 
-      const updatedUser: User = await response.json();
+      const result = await response.json();
+      const updatedUser: User = result.data ?? result;
       saveAuthToStorage(updatedUser, authState.tokens);
 
       setAuthState(prev => ({
@@ -505,7 +427,8 @@ export function useAuth() {
         throw new Error('Failed to get user');
       }
 
-      const user: User = await response.json();
+      const result = await response.json();
+      const user: User = result.data ?? result;
       setAuthState(prev => ({
         ...prev,
         user,

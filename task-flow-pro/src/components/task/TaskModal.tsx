@@ -5,6 +5,9 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { ColorPicker } from "@/components/ui/color-picker";
 import { useToast } from "@/hooks/useToast";
+import { ApiError } from "@/lib/api";
+import { createTaskInApi, isApiMode, isUuid, updateTaskInApi } from "@/lib/dataSync";
+import { useAuth } from "@/hooks/useAuth";
 import { useAppStore } from "@/store";
 import { cn } from "@/lib/utils";
 import type { Task, TaskType, Status, Priority } from "@/types";
@@ -29,8 +32,10 @@ interface TaskFormData {
 }
 
 export function TaskModal({ isOpen, onClose, taskId }: TaskModalProps) {
-  const { tasks, addTask, updateTask, deleteTask, selectedProjectId, users } = useAppStore();
+  const { tasks, addTask, updateTask, deleteTask, importTask, selectedProjectId, users } = useAppStore();
+  const { user } = useAuth();
   const { success, error } = useToast();
+  const projectIdForTask = selectedProjectId && isUuid(selectedProjectId) ? selectedProjectId : undefined;
   
   const existingTask = taskId ? tasks.find(t => t.id === taskId) : null;
   
@@ -87,11 +92,6 @@ export function TaskModal({ isOpen, onClose, taskId }: TaskModalProps) {
   }, [existingTask, reset, isOpen]);
 
   const onSubmit = async (data: TaskFormData) => {
-    if (!selectedProjectId) {
-      error("Please select a project first");
-      return;
-    }
-
     try {
       const taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt'> = {
         title: data.title.trim(),
@@ -100,9 +100,9 @@ export function TaskModal({ isOpen, onClose, taskId }: TaskModalProps) {
         status: data.status,
         priority: data.priority,
         storyPoints: data.storyPoints,
-        projectId: selectedProjectId,
-        assigneeId: data.assigneeId,
-        reporterId: "user-1",
+        projectId: projectIdForTask,
+        assigneeId: isUuid(data.assigneeId) ? data.assigneeId : undefined,
+        reporterId: user?.id,
         labels: data.labels.split(",").map(l => l.trim()).filter(Boolean),
         dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
         color: data.color,
@@ -111,17 +111,32 @@ export function TaskModal({ isOpen, onClose, taskId }: TaskModalProps) {
         linkedTasks: [],
       };
 
+      const canSync = isApiMode();
+
       if (taskId) {
-        updateTask(taskId, taskData);
+        if (canSync && isUuid(taskId)) {
+          const saved = await updateTaskInApi(taskId, taskData);
+          importTask(saved);
+        } else {
+          updateTask(taskId, taskData);
+        }
         success("✅ Задача успешно обновлена!");
       } else {
-        addTask(taskData);
+        if (canSync) {
+          const saved = await createTaskInApi(taskData, projectIdForTask);
+          importTask(saved);
+        } else {
+          addTask(taskData);
+        }
         success("🎉 Задача успешно создана!");
       }
       
       onClose();
     } catch (err) {
-      error("Не удалось сохранить задачу. Попробуйте еще раз.");
+      const message = err instanceof ApiError
+        ? err.message
+        : "Не удалось сохранить задачу. Попробуйте еще раз.";
+      error(message);
     }
   };
 
@@ -184,11 +199,11 @@ export function TaskModal({ isOpen, onClose, taskId }: TaskModalProps) {
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
-          {!selectedProjectId && (
-            <div className="flex items-center space-x-2 p-3 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
-              <AlertCircle className="h-4 w-4 text-yellow-600" />
-              <span className="text-sm text-yellow-800 dark:text-yellow-200">
-                Please select a project before creating tasks
+          {!projectIdForTask && (
+            <div className="flex items-center space-x-2 p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+              <AlertCircle className="h-4 w-4 text-blue-600" />
+              <span className="text-sm text-blue-800 dark:text-blue-200">
+                Личная задача — без проекта. Выберите проект в сайдбаре, чтобы привязать к нему.
               </span>
             </div>
           )}
@@ -420,7 +435,7 @@ export function TaskModal({ isOpen, onClose, taskId }: TaskModalProps) {
               </Button>
               <Button 
                 type="submit" 
-                disabled={isSubmitting || !selectedProjectId}
+                disabled={isSubmitting}
                 className="min-w-[100px] bg-[#2c5545] hover:bg-[#2c5545]/90 text-white"
               >
                 {isSubmitting ? "Сохранение..." : (taskId ? "Обновить задачу" : "Создать задачу")}

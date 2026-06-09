@@ -62,8 +62,11 @@ import { Badge } from "@/components/ui/badge";
 import { FilterPanel } from "@/components/ui/filter-panel";
 import { KanbanStats } from "@/components/ui/kanban-stats";
 import { cn } from "@/lib/utils";
+import { isApiMode, isUuid, updateTaskInApi } from "@/lib/dataSync";
 import { useAppStore } from "@/store";
 import { Task, Status, User } from "@/types";
+
+const STATUS_IDS: Status[] = ["todo", "in-progress", "in-review", "done"];
 
 // Современные цвета для колонок с градиентами
 const statusColumns: { 
@@ -398,11 +401,11 @@ function SortableTaskItem({
     <motion.div
       ref={setNodeRef}
       style={style}
-      layout
+      layout={!isDragging}
       variants={cardVariants}
       initial="initial"
       animate={isDragging ? "dragging" : "animate"}
-      whileHover="hover"
+      whileHover={isDragging ? undefined : "hover"}
       exit="exit"
       transition={{
         type: "spring",
@@ -412,17 +415,16 @@ function SortableTaskItem({
         delay: index * 0.05,
       }}
       className={cn(
-        "relative",
-        isDragging && "z-50"
+        "relative transition-opacity duration-200",
+        isDragging && "z-0 opacity-30"
       )}
-      {...attributes}
     >
       <TaskCard 
         task={task} 
-        onClick={onClick} 
+        onClick={isDragging ? undefined : onClick} 
         isDragging={isDragging} 
         compact 
-        dragHandleProps={listeners}
+        dragHandleProps={{ ...attributes, ...listeners }}
       />
     </motion.div>
   );
@@ -434,21 +436,30 @@ function DragOverlayContent({ task }: { task: Task | null }) {
 
   return (
     <motion.div
-      initial={{ scale: 0.8, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      exit={{ scale: 0.8, opacity: 0 }}
+      initial={{ scale: 0.92, opacity: 0.85, rotate: -1 }}
+      animate={{
+        scale: 1.04,
+        opacity: 1,
+        rotate: 2.5,
+        y: -6,
+      }}
+      exit={{ scale: 0.95, opacity: 0, rotate: 0 }}
       transition={{
         type: "spring",
-        stiffness: 300,
-        damping: 25,
+        stiffness: 420,
+        damping: 26,
+        mass: 0.75,
       }}
-      className="transform rotate-3"
+      className="pointer-events-none"
+      style={{
+        filter: 'drop-shadow(0 28px 36px rgba(0,0,0,0.18))',
+      }}
     >
       <TaskCard 
         task={task} 
         isDragging={true}
         compact
-        className="shadow-2xl border-2 border-blue-400"
+        className="border-2 border-primary/40 bg-card/95 backdrop-blur-sm"
       />
     </motion.div>
   );
@@ -478,7 +489,7 @@ export default function KanbanPage() {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 6,
       },
     }),
     useSensor(KeyboardSensor),
@@ -587,13 +598,25 @@ export default function KanbanPage() {
   }, [projectTasks]);
 
   const findContainer = (id: UniqueIdentifier) => {
-    for (const status of Object.keys(tasksByStatus) as Status[]) {
+    if (STATUS_IDS.includes(id as Status)) {
+      return id as Status;
+    }
+    for (const status of STATUS_IDS) {
       if (tasksByStatus[status].some(task => task.id === id)) {
         return status;
       }
     }
     return null;
   };
+
+  const persistTaskStatus = useCallback((taskId: string, status: Status) => {
+    updateTask(taskId, { status });
+    if (isApiMode() && isUuid(taskId)) {
+      updateTaskInApi(taskId, { status }).catch((err) => {
+        console.error('Failed to sync kanban status:', err);
+      });
+    }
+  }, [updateTask]);
 
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
@@ -623,22 +646,23 @@ export default function KanbanPage() {
 
     const activeContainer = findContainer(active.id);
 
-    // Проверяем, если сбрасываем на колонку
-    if (over.data.current?.type === 'column') {
-      const targetStatus = over.data.current.status as Status;
+    const overColumn = findContainer(over.id);
+
+    // Сброс на колонку (в т.ч. пустую)
+    if (over.data.current?.type === 'column' || (overColumn && overColumn === over.id)) {
+      const targetStatus = (over.data.current?.status ?? overColumn) as Status;
       if (activeContainer !== targetStatus) {
-        updateTask(active.id as string, { status: targetStatus });
+        persistTaskStatus(active.id as string, targetStatus);
       }
       return;
     }
 
-    // Проверяем, если сбрасываем на другую задачу
+    // Сброс на другую задачу
     const overTaskContainer = findContainer(over.id);
     if (!activeContainer || !overTaskContainer) return;
 
     if (activeContainer !== overTaskContainer) {
-      // Задача перемещена в новую колонку - обновляем статус
-      updateTask(active.id as string, { status: overTaskContainer as Status });
+      persistTaskStatus(active.id as string, overTaskContainer as Status);
     } else {
       // Та же колонка - обрабатываем переупорядочивание
       const activeIndex = tasksByStatus[activeContainer].findIndex(t => t.id === active.id);

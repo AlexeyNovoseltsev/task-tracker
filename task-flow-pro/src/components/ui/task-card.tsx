@@ -14,6 +14,7 @@ interface TaskCardProps {
   project?: Project;
   variant?: 'default' | 'compact' | 'calendar';
   onStatusChange?: (taskId: string, status: string) => void;
+  onClick?: (task: Task) => void;
   onEdit?: (task: Task) => void;
   onDelete?: (taskId: string) => void;
   className?: string;
@@ -24,10 +25,12 @@ export function TaskCard({
   project,
   variant = 'default',
   onStatusChange,
+  onClick,
   onEdit,
   onDelete,
   className
 }: TaskCardProps) {
+  const handleView = () => (onClick ?? onEdit)?.(task);
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
@@ -78,7 +81,7 @@ export function TaskCard({
                  <div className="flex items-start justify-between mb-2">
            <h4 
              className="font-medium text-sm line-clamp-2 cursor-pointer flex-1 hover:text-blue-600 transition-colors"
-             onClick={() => onEdit?.(task)}
+             onClick={handleView}
              title="Кликните для просмотра подробностей"
            >
              {task.title}
@@ -151,7 +154,7 @@ export function TaskCard({
           "p-2 border border-border/50 rounded-modern hover:bg-accent/50 transition-all duration-200 cursor-pointer hover:shadow-sm",
           className
         )}
-        onClick={() => onEdit?.(task)}
+        onClick={handleView}
         title="Кликните для просмотра подробностей"
       >
         <div className="flex items-center justify-between mb-1">

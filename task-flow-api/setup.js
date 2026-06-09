@@ -4,9 +4,9 @@ const fs = require('fs');
 const path = require('path');
 
 // Данные Supabase
-const SUPABASE_URL = 'https://npqtkpcwawrbspqgfcie.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wcXRrcGN3YXdyYnNwcWdmY2llIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4NzIxNzAsImV4cCI6MjA2OTQ0ODE3MH0.uIyMCf7_nGGZ9t2LslPGy_XjASNXuM1s8dRjOVji_oE';
-const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wcXRrcGN3YXdyYnNwcWdmY2llIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mzg3MjE3MCwiZXhwIjoyMDY5NDQ4MTcwfQ.aaGR9HjslgwaOJm_l9MYVeOVfNKGl159wKhfGwo72Qs';
+const SUPABASE_URL = 'https://vsnxgpaocjuasvbjcudv.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZzbnhncGFvY2p1YXN2YmpjdWR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMDM3NTMsImV4cCI6MjA5NjU3OTc1M30.CUm436GgO-8XDeq1iV_hizRWJd4jDU8cPTQgWm7w8ko';
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || '';
 
 console.log('🚀 Настройка TaskFlow Pro...\n');
 
@@ -59,6 +59,8 @@ try {
 console.log('\n📋 Следующие шаги:');
 console.log('1. Перейдите в Supabase Dashboard: https://supabase.com/dashboard');
 console.log('2. Откройте SQL Editor');
-console.log('3. Выполните миграцию из файла src/scripts/schema.sql');
-console.log('4. Запустите сервер: npm run dev');
+console.log('3. Вставьте SUPABASE_SERVICE_KEY из Dashboard → Settings → API');
+console.log('4. Миграция уже в Supabase (src/scripts/schema.sql) или через MCP');
+console.log('5. Создайте админа: npm run db:seed-admin');
+console.log('6. Запустите сервер: npm run dev');
 console.log('\n🎉 Настройка завершена!');
